@@ -35,5 +35,12 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         type : 'basic',
         icon : 'heroicons_outline:chart-pie',
         link : '/example'
+    },
+    {
+        id   : 'solicitud',
+        title: 'Solicitud',
+        type : 'basic',
+        icon : 'heroicons_outline:chart-pie',
+        link : '/example'
     }
 ];

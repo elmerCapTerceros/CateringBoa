@@ -39,8 +39,21 @@ export const horizontalNavigation: ErpNavigationItem[] = [
     {
         id   : 'solicitud',
         title: 'Solicitud',
-        type : 'basic',
+        type : 'collapsable',
         icon : 'heroicons_outline:chart-pie',
-        link : '/example'
+        children:[
+            {
+                id: 'crear_solicitud',
+                title: 'Crear Solicitud',
+                type: 'basic',
+                link : '/solicitud'
+            },
+            {
+                id: 'listar-solictud',
+                title: 'Mis Solicitudes',
+                type: 'basic',
+                link : '/solicitud'
+            }
+        ]
     }
 ];

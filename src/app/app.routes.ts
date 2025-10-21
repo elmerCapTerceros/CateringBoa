@@ -62,7 +62,20 @@ export const appRoutes: Route[] = [
         },
         children: [
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
-            {path: 'solicitud', loadChildren: () => import('app/modules/admin/solicitud/solicitud.routes')},
+            {path: 'solicitud', loadChildren: () => import('app/modules/admin/Solicitud/crear-solicitud/crear-solicitud.routes')},
+        ]
+    },
+    //Solicitudes
+    {
+        path: '',
+        canActivate: [AuthGuard],
+        canActivateChild: [AuthGuard],
+        component: LayoutComponent,
+        resolve: {
+            initialData: initialDataResolver
+        },
+        children: [
+            {path: 'solicitud', loadChildren: () => import('app/modules/admin/Solicitud/crear-solicitud/crear-solicitud.routes')},
         ]
     }
 ];

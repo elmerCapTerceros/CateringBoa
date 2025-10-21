@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core'; // <- CORREGIDO: agregado OnInit
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -17,7 +17,7 @@ interface Almacen {
 }
 
 @Component({
-    selector: 'app-solicitud',
+    selector: 'app-crear-solicitud',
     standalone: true,
     imports: [
         CommonModule,
@@ -32,10 +32,10 @@ interface Almacen {
         MatCardModule,
         MatNativeDateModule
     ],
-    templateUrl: './solicitud.component.html',
-    styleUrls: ['./solicitud.component.scss']
+    templateUrl: './crear-solicitud.component.html',
+    styleUrls: ['./crear-solicitud.component.scss']
 })
-export class SolicitudComponent implements OnInit {
+export class CrearSolicitudComponent implements OnInit {
 
     solicitudForm: FormGroup;
 
@@ -102,8 +102,7 @@ export class SolicitudComponent implements OnInit {
     }
 
     cancelar(): void {
-        this.solicitudForm.reset();
+        this.solicitudForm.reset({prioridad: '2'});
         this.items.clear();
     }
 }
-

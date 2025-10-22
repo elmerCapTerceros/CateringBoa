@@ -55,5 +55,22 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 link : '/solicitud'
             }
         ]
+    },
+
+    {
+        id   : 'abastecimiento',
+        title: 'Abastecimiento',
+        type : 'collapsable',
+        icon : 'heroicons_outline:shopping-cart',
+        children:[
+            {
+                id: 'listado_abastecimiento',
+                title: 'Listado de abastecimiento',
+                type: 'basic',
+                link : '/abastecimiento/listado'
+            }
+        ]
     }
 ];
+
+

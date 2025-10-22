@@ -64,5 +64,12 @@ export const appRoutes: Route[] = [
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
             {path: 'solicitud', loadChildren: () => import('app/modules/admin/solicitud/solicitud.routes')},
         ]
+    },
+
+    {
+        path: 'abastecimiento',
+        component: LayoutComponent,
+        loadChildren: () => import('./modules/admin/abastecimiento/abastecimiento.module')
+            .then(m => m.AbastecimientoModule)
     }
 ];

@@ -52,7 +52,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 id: 'listar-solictud',
                 title: 'Mis Solicitudes',
                 type: 'basic',
-                link : '/solicitud'
+                link : '/listar-solicitud'
             }
         ]
     }

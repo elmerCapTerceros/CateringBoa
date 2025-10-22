@@ -63,6 +63,7 @@ export const appRoutes: Route[] = [
         children: [
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
             {path: 'solicitud', loadChildren: () => import('app/modules/admin/Solicitud/crear-solicitud/crear-solicitud.routes')},
+            {path: 'listar-solicitud', loadChildren: () => import('app/modules/admin/Solicitud/listar-solicitud/listar-solicitud.routes')},
         ]
     },
     //Solicitudes

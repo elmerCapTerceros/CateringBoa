@@ -79,5 +79,45 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                     ]
             }
         ]
+    },
+
+    {
+        id   : 'abastecimiento',
+        title: 'Abastecimiento',
+        type : 'collapsable',
+        icon : 'heroicons_outline:shopping-cart',
+        children:[
+            {
+                id: 'listado_abastecimiento',
+                title: 'Listado de abastecimiento',
+                type: 'basic',
+                link : '/catering/listado'
+            }
+        ]
+    },
+
+    {
+        id   : 'compra-exterior',
+        title: 'Compra Exterior',
+        type : 'collapsable',
+        icon : 'heroicons_outline:globe-americas',
+        children:[
+            {
+                id: 'crear-compra-exterior',
+                title: 'Crear Compra', // <-- Opción 1
+                type: 'basic',
+                link : '/catering/compra-exterior/crear',
+                icon : 'heroicons_outline:pencil-square'
+            },
+            {
+                id: 'listar-compras-exterior',
+                title: 'Listado de Compras', // <-- Opción 2
+                type: 'basic',
+                link : '/catering/compra-exterior/listar',
+                icon: 'heroicons_outline:archive-box'
+            }
+        ]
     }
 ];
+
+

@@ -29,13 +29,13 @@ export const futuristicNavigation: ErpNavigationItem[] = [
     }
 ];
 export const horizontalNavigation: ErpNavigationItem[] = [
-    {
+    /*{
         id   : 'example',
         title: 'Ejemplo',
         type : 'basic',
         icon : 'heroicons_outline:chart-pie',
         link : '/example'
-    },
+    },*/
     {
         id   : 'solicitud',
         title: 'Solicitud',
@@ -45,14 +45,38 @@ export const horizontalNavigation: ErpNavigationItem[] = [
             {
                 id: 'crear_solicitud',
                 title: 'Crear Solicitud',
+                icon : 'mat_outline:settings',
                 type: 'basic',
-                link : '/solicitud'
+                link : '/catering/new'
             },
             {
                 id: 'listar-solictud',
                 title: 'Mis Solicitudes',
+                icon : 'heroicons_outline:list-bullet',
                 type: 'basic',
-                link : '/listar-solicitud'
+                link : '/catering/list'
+            },
+            {
+                id: 'listar-solictud',
+                title: 'Mis Solicitudes',
+                icon : 'heroicons_outline:list-bullet',
+                type: 'collapsable',
+                children:[
+                    {
+                        id: 'crear_solicitud',
+                        title: 'Crear Solicitud',
+                        icon : 'mat_outline:settings',
+                        type: 'basic',
+                        link : '/solicitud'
+                    },
+                    {
+                        id: 'listar-solictud',
+                        title: 'Mis Solicitudes',
+                        icon : 'heroicons_outline:list-bullet',
+                        type: 'basic',
+                        link : '/listar-solicitud'
+                    }
+                    ]
             }
         ]
     }

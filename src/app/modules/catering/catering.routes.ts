@@ -14,7 +14,7 @@ export default [
             },
             {
                 path: 'new',
-                component: CrearSolicitudComponent // <- Nombre actualizado
+                component: CrearSolicitudComponent
             }
         ]
     }

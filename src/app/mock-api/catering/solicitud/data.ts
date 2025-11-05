@@ -30,5 +30,13 @@ export const dataList: any = [
         descripcion: 'Falta de items Business class',
         prioridad: 'Baja',
         estado: 'Rechazada'
+    },
+    {
+        id: 5,
+        almacen: 'Miami',
+        fecha: '03/07/2025',
+        descripcion: 'Falta de items Economic Class',
+        prioridad: 'Alta',
+        estado: 'Aprobada'
     }
 ];

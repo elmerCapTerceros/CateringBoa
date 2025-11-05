@@ -10,14 +10,14 @@ import { LayoutComponent } from 'app/layout/layout.component';
 export const appRoutes: Route[] = [
 
     // Redirect empty path to '/example'
-    {path: '', pathMatch : 'full', redirectTo: 'catering'},
+    {path: '', pathMatch : 'full', redirectTo: 'example'},
 
     // Redirect signed-in user to the '/example'
     //
     // After the user signs in, the sign-in page will redirect the user to the 'signed-in-redirect'
     // path. Below is another redirection for that path to redirect the user to the desired
     // location. This is a small convenience to keep all main routes together here on this file.
-    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: 'catering'},
+    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: 'example'},
 
     // Auth routes for guests
     {
@@ -62,21 +62,7 @@ export const appRoutes: Route[] = [
         },
         children: [
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
-            {path: 'catering', loadChildren: () => import('app/modules/catering/catering.routes')},
-            /*{path: 'solicitud', loadChildren: () => import('app/modules/admin/Solicitud/crear-solicitud/crear-solicitud.routes')},
-            {path: 'listar-solicitud', loadChildren: () => import('app/modules/admin/Solicitud/listar-solicitud/listar-solicitud.routes')},*/        ]
-    },
-    //Solicitudes
-    /*{
-        path: '',
-        canActivate: [AuthGuard],
-        canActivateChild: [AuthGuard],
-        component: LayoutComponent,
-        resolve: {
-            initialData: initialDataResolver
-        },
-        children: [
-            {path: 'solicitud', loadChildren: () => import('app/modules/admin/Solicitud/crear-solicitud/crear-solicitud.routes')},
+            {path: 'catering', loadChildren: () => import('app/modules/catering/catering.routes')}
         ]
-    }*/
+    }
 ];

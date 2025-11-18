@@ -1,16 +1,23 @@
 
 <div class="flex flex-col flex-auto min-w-0">
     <div class="flex-auto p-6 sm:p-10">
-        <h2 class="text-3xl font-bold mb-8">Mis Solicitudes</h2>
-
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold">Mis Solicitudes</h2>
+            <button
+                type="button"
+                routerLink="/catering/new"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                + Nueva Solicitud
+            </button>
+        </div>
         <!-- Formulario de Filtros -->
         <form [formGroup]="filtroForm">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="flex flex-wrap gap-3 mb-6">
 
                 <!-- Filtro por Almacén -->
                 <div>
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Filtrar por almacén:</mat-label>
+                    <mat-form-field appearance="outline" class="w-64">
+                        <mat-label>Filtrar por almaacén:</mat-label>
                         <mat-select formControlName="almacen">
                             @for (almacen of almacenes; track almacen.value) {
                                 <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>
@@ -21,14 +28,17 @@
 
                 <!-- Filtro por Prioridad -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Prioridad:</label>
-                    <mat-radio-group formControlName="prioridad" class="flex gap-6">
-                        <mat-radio-button value="">Todas</mat-radio-button>
-                        <mat-radio-button value="1">Alta</mat-radio-button>
-                        <mat-radio-button value="2">Media</mat-radio-button>
-                        <mat-radio-button value="3">Baja</mat-radio-button>
-                    </mat-radio-group>
+                    <mat-form-field appearance="outline" class="w-64">
+                        <mat-label>Filtrar por prioridad:</mat-label>
+                        <mat-select formControlName="prioridad">
+                            <mat-option value="">Todas</mat-option>
+                            <mat-option value="1">Alta</mat-option>
+                            <mat-option value="2">Media</mat-option>
+                            <mat-option value="3">Baja</mat-option>
+                        </mat-select>
+                    </mat-form-field>
                 </div>
+
             </div>
 
             <!-- Botón para limpiar filtros -->
@@ -40,6 +50,7 @@
                     Limpiar filtros
                 </button>
             </div>
+
         </form>
 
         <!-- Tabla de Solicitudes -->
@@ -62,10 +73,13 @@
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Estado
                     </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                        Acciones
+                    </th>
                 </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @for (solicitud of solicitudesFiltradas; track solicitud.id) {
+                    @for (solicitud of solicitudesPaginadas; track solicitud.id) {
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ solicitud.almacen }}
@@ -86,6 +100,27 @@
                                     {{ solicitud.estado }}
                                 </span>
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex gap-2">
+                                    <!-- Botón Ver -->
+                                    <button
+                                        type="button"
+                                        (click)="verDetalle(solicitud)"
+                                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Ver detalle">
+                                        <mat-icon class="icon-size-5">visibility</mat-icon>
+                                    </button>
+
+                                    <!-- Botón Eliminar -->
+                                    <button
+                                        type="button"
+                                        (click)="eliminarSolicitud(solicitud)"
+                                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Eliminar">
+                                        <mat-icon class="icon-size-5">delete</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     } @empty {
                         <tr>
@@ -97,11 +132,12 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Contador de resultados -->
-        <div class="mt-4 text-sm text-gray-600">
-            Mostrando {{ solicitudesFiltradas.length }} de {{ solicitudes.length }} solicitudes
-        </div>
+        <!-- Paginador -->
+        <mat-paginator [length]="solicitudesFiltradas.length"
+                       [pageSize]="5"
+                       [pageSizeOptions]="[5, 10, 25, 100]"
+                       aria-label="Select page">
+        </mat-paginator>
     </div>
 </div>
 

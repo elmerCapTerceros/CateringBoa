@@ -1,5 +1,5 @@
 // listar-solicitud.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,  ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -9,7 +9,9 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { SolicitudService } from '../solicitud.service';
-
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 interface Almacen {
     value: string;
     viewValue: string;
@@ -35,16 +37,22 @@ interface Solicitud {
         MatInputModule,
         MatRadioModule,
         MatTableModule,
-        MatChipsModule
+        MatChipsModule,
+        MatPaginatorModule,
+        RouterModule,
+        MatIconModule
     ],
     templateUrl: './listar-solicitud.component.html',
     styleUrls: ['./listar-solicitud.component.scss']
 })
 export class ListarSolicitudComponent implements OnInit {
 
+    @ViewChild(MatPaginator) paginator!: MatPaginator;
+
     filtroForm: FormGroup;
     solicitudes: Solicitud[] = [];
     solicitudesFiltradas: Solicitud[] = [];
+    solicitudesPaginadas: Solicitud[] = [];
 
     almacenes: Almacen[] = [
         { value: '', viewValue: 'Todos' },
@@ -67,6 +75,7 @@ export class ListarSolicitudComponent implements OnInit {
                 console.log('response', response);
                 this.solicitudes = response;
                 this.solicitudesFiltradas = [...this.solicitudes];
+                this.actualizarDatosPaginados();
             }
         )
 
@@ -74,6 +83,19 @@ export class ListarSolicitudComponent implements OnInit {
         // Escuchar cambios en el formulario para filtrar
         this.filtroForm.valueChanges.subscribe(() => {
             this.filtrarSolicitudes();
+        });
+    }
+
+    ngAfterViewInit(): void {
+        // Configurar el paginador después de que la vista se inicialice
+        setTimeout(() => {
+            if (this.paginator) {
+                this.paginator.page.subscribe(() => {
+                    this.actualizarDatosPaginados();
+                });
+                // Actualizar datos paginados inicialmente
+                this.actualizarDatosPaginados();
+            }
         });
     }
 
@@ -86,6 +108,24 @@ export class ListarSolicitudComponent implements OnInit {
 
             return cumpleAlmacen && cumplePrioridad;
         });
+        // Resetear paginador cuando se filtran datos
+        if (this.paginator) {
+            this.paginator.firstPage();
+        }
+
+        this.actualizarDatosPaginados();
+    }
+
+    actualizarDatosPaginados(): void {
+        if (!this.paginator) {
+            // Si el paginador no está disponible, mostrar todos los datos
+            this.solicitudesPaginadas = this.solicitudesFiltradas;
+            return;
+        }
+
+        const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
+        const endIndex = startIndex + this.paginator.pageSize;
+        this.solicitudesPaginadas = this.solicitudesFiltradas.slice(startIndex, endIndex);
     }
 
     getPrioridadValue(prioridad: string): string {
@@ -116,5 +156,17 @@ export class ListarSolicitudComponent implements OnInit {
             almacen: '',
             prioridad: ''
         });
+    }
+
+    verDetalle(solicitud: Solicitud): void {
+        console.log('Ver detalle de:', solicitud);
+        // this.router.navigate(['/catering/detalle', solicitud.id]);
+    }
+
+    eliminarSolicitud(solicitud: Solicitud): void {
+        if (confirm(`¿Está seguro de eliminar la solicitud de ${solicitud.almacen}?`)) {
+            console.log('Eliminar solicitud:', solicitud);
+            // this._solService.delete(solicitud.id).subscribe(...);
+        }
     }
 }

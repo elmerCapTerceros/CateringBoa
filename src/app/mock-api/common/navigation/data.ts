@@ -88,10 +88,11 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         icon : 'heroicons_outline:shopping-cart',
         children:[
             {
-                id: 'listado_abastecimiento',
-                title: 'Listado de abastecimiento',
+                id: 'abastecer-vuelo',
+                title: 'Abastecer Vuelo',
                 type: 'basic',
-                link : '/catering/listado'
+                link : '/catering/abastecer',
+                icon: 'heroicons_outline:truck'
             }
         ]
     },
@@ -117,6 +118,67 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 icon: 'heroicons_outline:archive-box'
             }
         ]
+    },
+
+    {
+        id   : 'inventario',
+        title: 'Inventario',
+        type : 'collapsable',
+        icon : 'heroicons_outline:archive-box',
+        children:[
+            {
+                id: 'ver-stock',
+                title: 'Stock Actual',
+                type: 'basic',
+                link : '/catering/stock',
+                icon: 'heroicons_outline:clipboard-document-list'
+            }
+        ]
+    },
+    {
+        id   : 'operaciones',
+        title: 'Operaciones Vuelo',
+        type : 'collapsable',
+        icon : 'heroicons_outline:paper-airplane',
+        children:[
+            {
+                id: 'config-carga',
+                title: 'Configurar Carga',
+                type: 'basic',
+                link : '/catering/configuracion',
+                icon: 'heroicons_outline:cube'
+            },
+            {
+                id: 'grupo-abastecimiento',
+                title: 'Abastecimiento',
+                type: 'collapsable', // Ahora es desplegable
+                icon: 'heroicons_outline:truck', // Icono de camión
+                children: [
+                    {
+                        id: 'abastecer-nuevo',
+                        title: 'Registrar Nuevo',
+                        type: 'basic',
+                        link: '/catering/abastecer',
+                        icon: 'heroicons_outline:plus-circle'
+                    },
+                    {
+                        id: 'abastecer-historial',
+                        title: 'Historial / Control',
+                        type: 'basic',
+                        link: '/catering/abastecer/historial',
+                        icon: 'heroicons_outline:clock'
+                    }
+                ]
+            },
+
+        ]
+    },
+    {
+        id: 'cierre-vuelo',
+        title: 'Cierre / Remanente',
+        type: 'basic',
+        link : '/catering/cierre',
+        icon : 'heroicons_outline:clipboard-document-check'
     }
 ];
 

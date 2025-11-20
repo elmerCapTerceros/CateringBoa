@@ -30,5 +30,6 @@ export const dataList: any = [
         descripcion: 'Falta de items Business class',
         prioridad: 'Baja',
         estado: 'Rechazada'
-    }
+    },
+
 ];

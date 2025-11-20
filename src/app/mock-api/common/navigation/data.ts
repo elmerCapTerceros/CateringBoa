@@ -36,13 +36,6 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         icon : 'mat_outline:text_snippet',
         children:[
             {
-                id: 'crear_solicitud',
-                title: 'Crear Solicitud',
-                icon : 'mat_outline:post_add',
-                type: 'basic',
-                link : '/catering/new'
-            },
-            {
                 id: 'listar-solictud',
                 title: 'Mis Solicitudes',
                 icon : 'mat_outline:view_list',
@@ -86,6 +79,21 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 type: 'basic',
                 link : '/catering/compra-exterior/listar',
                 icon: 'heroicons_outline:archive-box'
+            }
+        ]
+    },
+    {
+        id   : 'carga',
+        title: 'Carga',
+        type : 'collapsable',
+        icon : 'heroicons_outline:cube',
+        children:[
+            {
+                id: 'listar-cargas',
+                title: 'Mis Cargas',
+                icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/carga'
             }
         ]
     }

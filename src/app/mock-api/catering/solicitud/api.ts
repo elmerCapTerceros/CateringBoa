@@ -128,7 +128,70 @@ export class CateringMockApi {
             }
         });
 
+        this._erpMockApiService.onDelete('api/catering/list/:id').reply(({ request }) => {
+            try {
+                console.log('DELETE endpoint llamado');
+                console.log('URL completa:', request.url);
 
+                // Extraer ID de forma segura
+                const urlParts = request.url.split('/');
+                const idString = urlParts[urlParts.length - 1];
+                const id = parseInt(idString, 10);
+
+                console.log('ID extraído:', id);
+
+                if (isNaN(id)) {
+                    console.error('ID inválido:', idString);
+                    return [
+                        400,
+                        {
+                            success: false,
+                            message: 'ID inválido',
+                            id: idString
+                        }
+                    ];
+                }
+
+                const index = this.data.findIndex((item: any) => item.id === id);
+                console.log('Index encontrado:', index);
+
+                if (index !== -1) {
+                    const solicitudEliminada = this.data[index];
+                    this.data.splice(index, 1);
+                    this.saveToLocalStorage();
+
+                    console.log('Solicitud eliminada exitosamente');
+
+                    return [
+                        200,
+                        {
+                            success: true,
+                            message: 'Solicitud eliminada correctamente',
+                            solicitudEliminada: solicitudEliminada
+                        }
+                    ];
+                } else {
+                    console.error('Solicitud no encontrada para ID:', id);
+                    return [
+                        404,
+                        {
+                            success: false,
+                            message: 'Solicitud no encontrada',
+                            id: id
+                        }
+                    ];
+                }
+            } catch (error) {
+                console.error('Error en mock API:', error);
+                return [
+                    500,
+                    {
+                        success: false,
+                        message: 'Error interno del servidor'
+                    }
+                ];
+            }
+        });
 
 
 
@@ -145,4 +208,5 @@ export class CateringMockApi {
             }];
         });
     }
+
 }

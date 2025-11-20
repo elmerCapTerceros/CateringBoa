@@ -3,12 +3,13 @@ import { NavigationMockApi } from 'app/mock-api/common/navigation/api';
 import { NotificationsMockApi } from 'app/mock-api/common/notifications/api';
 import { UserMockApi } from 'app/mock-api/common/user/api';
 import { CateringMockApi } from './catering/solicitud/api';
-
+import { CargaMockApi} from './catering/carga/api';
 
 export const mockApiServices = [
     AuthMockApi,
     NavigationMockApi,
     NotificationsMockApi,
     UserMockApi,
-    CateringMockApi
+    CateringMockApi,
+    CargaMockApi
 ];

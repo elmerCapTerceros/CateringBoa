@@ -5,7 +5,8 @@ export const dataList: any = [
         fecha: '06/07/2025',
         descripcion: 'Falta de items Business class',
         prioridad: 'Alta',
-        estado: 'Pendiente'
+        estado: 'Pendiente',
+        items: []  // ← AGREGAR
     },
     {
         id: 2,
@@ -13,7 +14,8 @@ export const dataList: any = [
         fecha: '05/07/2025',
         descripcion: 'Falta de items Business class',
         prioridad: 'Media',
-        estado: 'Parcial'
+        estado: 'Parcial',
+        items: []  // ← AGREGAR
     },
     {
         id: 3,
@@ -21,7 +23,8 @@ export const dataList: any = [
         fecha: '04/07/2025',
         descripcion: 'Falta de items Business class',
         prioridad: 'Alta',
-        estado: 'Aprobada'
+        estado: 'Aprobada',
+        items: []  // ← AGREGAR
     },
     {
         id: 4,
@@ -29,7 +32,8 @@ export const dataList: any = [
         fecha: '03/06/2025',
         descripcion: 'Falta de items Business class',
         prioridad: 'Baja',
-        estado: 'Rechazada'
+        estado: 'Rechazada',
+        items: []  // ← AGREGAR
     },
     {
         id: 5,
@@ -37,6 +41,7 @@ export const dataList: any = [
         fecha: '03/07/2025',
         descripcion: 'Falta de items Economic Class',
         prioridad: 'Alta',
-        estado: 'Aprobada'
+        estado: 'Aprobada',
+        items: []  // ← AGREGAR
     }
 ];

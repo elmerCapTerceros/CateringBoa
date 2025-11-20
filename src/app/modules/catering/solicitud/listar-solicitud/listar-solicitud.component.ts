@@ -10,11 +10,20 @@ import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { SolicitudService } from '../solicitud.service';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
 interface Almacen {
     value: string;
     viewValue: string;
+}
+
+interface Item {
+    id?: number;
+    categoria: string;
+    nombre: string;
+    cantidad: number;
 }
 
 interface Solicitud {
@@ -24,6 +33,7 @@ interface Solicitud {
     descripcion: string;
     prioridad: 'Alta' | 'Media' | 'Baja';
     estado: 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada';
+    items: Item[];
 }
 
 @Component({
@@ -40,7 +50,8 @@ interface Solicitud {
         MatChipsModule,
         MatPaginatorModule,
         RouterModule,
-        MatIconModule
+        MatIconModule,
+        MatSnackBarModule
     ],
     templateUrl: './listar-solicitud.component.html',
     styleUrls: ['./listar-solicitud.component.scss']
@@ -61,10 +72,15 @@ export class ListarSolicitudComponent implements OnInit {
         { value: 'Viru viru', viewValue: 'Viru viru' },
     ];
 
-    constructor(private fb: FormBuilder, private _solService: SolicitudService) {
+    constructor(private fb: FormBuilder,
+                private _solService: SolicitudService,
+                private router: Router,
+                private snackBar: MatSnackBar
+    ) {
         this.filtroForm = this.fb.group({
             almacen: [''],
-            prioridad: ['']
+            prioridad: [''],
+
         });
     }
 
@@ -161,12 +177,36 @@ export class ListarSolicitudComponent implements OnInit {
     verDetalle(solicitud: Solicitud): void {
         console.log('Ver detalle de:', solicitud);
         // this.router.navigate(['/catering/detalle', solicitud.id]);
+        this.router.navigate(['/catering/detalle', solicitud.id]);
     }
 
     eliminarSolicitud(solicitud: Solicitud): void {
+        console.log('Iniciando eliminación de solicitud:', solicitud);
+        console.log('ID a eliminar:', solicitud.id);
+        console.log('Tipo de ID:', typeof solicitud.id);
+
         if (confirm(`¿Está seguro de eliminar la solicitud de ${solicitud.almacen}?`)) {
-            console.log('Eliminar solicitud:', solicitud);
-            // this._solService.delete(solicitud.id).subscribe(...);
+            this._solService.delete(solicitud.id).subscribe({
+                next: (response) => {
+                    console.log('Solicitud eliminada:', response);
+
+                    // Recargar lista
+                    this._solService.getList().subscribe(
+                        (data: any) => {
+                            this.solicitudes = data;
+                            this.solicitudesFiltradas = [...this.solicitudes];
+                            this.actualizarDatosPaginados();
+                        }
+                    );
+                },
+                error: (error) => {
+                    console.error('Error completo:', error);
+                    console.error('URL del error:', error.url);
+                    console.error('Status:', error.status);
+                    console.error('Message:', error.message);
+                    alert('Error al eliminar la solicitud');
+                }
+            });
         }
     }
 }

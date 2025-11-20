@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 export interface Solicitud {
     id: number;
@@ -88,11 +89,20 @@ export class SolicitudService {
      * Eliminar solicitud (opcional - para futuro)
      */
     delete(id: number): Observable<any> {
+        console.log('Intentando eliminar solicitud con ID:', id);
+        console.log('URL completa:', `api/catering/list/${id}`);
+
         return this._http.delete(`api/catering/list/${id}`).pipe(
-            tap(() => {
+            tap((response) => {
+                console.log('Respuesta del servidor:', response);
+
                 const solicitudesActuales = this.solicitudesSubject.value;
                 const solicitudesActualizadas = solicitudesActuales.filter(s => s.id !== id);
                 this.solicitudesSubject.next(solicitudesActualizadas);
+            }),
+            catchError((error) => {
+                console.error('Error en delete:', error);
+                throw error;
             })
         );
     }

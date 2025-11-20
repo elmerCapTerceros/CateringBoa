@@ -96,6 +96,29 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 link : '/catering/carga'
             }
         ]
+    },
+
+    {
+        id   : 'almacen',
+        title: 'Almacen',
+        type : 'collapsable',
+        icon : 'heroicons_outline:home-modern',
+        children:[
+            {
+                id: 'movimiento',
+                title: 'Listado de Movimientos',
+                //icon : 'mat_outline:Aq Indoor',
+                type: 'basic',
+                link : '/catering/almacen/movimientos',
+            },
+            {
+                id: 'Stockss',
+                title: 'Stock',
+                //icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/almacen/stock',
+            }
+        ]
     }
 ];
 

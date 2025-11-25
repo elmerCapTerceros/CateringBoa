@@ -29,13 +29,6 @@ export const futuristicNavigation: ErpNavigationItem[] = [
     }
 ];
 export const horizontalNavigation: ErpNavigationItem[] = [
-    /*{
-        id   : 'example',
-        title: 'Ejemplo',
-        type : 'basic',
-        icon : 'heroicons_outline:chart-pie',
-        link : '/example'
-    },*/
     {
         id   : 'solicitud',
         title: 'Solicitud',
@@ -43,40 +36,11 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         icon : 'heroicons_outline:chart-pie',
         children:[
             {
-                id: 'crear_solicitud',
-                title: 'Crear Solicitud',
-                icon : 'mat_outline:settings',
-                type: 'basic',
-                link : '/catering/new'
-            },
-            {
                 id: 'listar-solictud',
                 title: 'Mis Solicitudes',
-                icon : 'heroicons_outline:list-bullet',
+                icon : 'mat_outline:view_list',
                 type: 'basic',
                 link : '/catering/list'
-            },
-            {
-                id: 'listar-solictud',
-                title: 'Mis Solicitudes',
-                icon : 'heroicons_outline:list-bullet',
-                type: 'collapsable',
-                children:[
-                    {
-                        id: 'crear_solicitud',
-                        title: 'Crear Solicitud',
-                        icon : 'mat_outline:settings',
-                        type: 'basic',
-                        link : '/solicitud'
-                    },
-                    {
-                        id: 'listar-solictud',
-                        title: 'Mis Solicitudes',
-                        icon : 'heroicons_outline:list-bullet',
-                        type: 'basic',
-                        link : '/listar-solicitud'
-                    }
-                    ]
             }
         ]
     },
@@ -179,6 +143,44 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         type: 'basic',
         link : '/catering/cierre',
         icon : 'heroicons_outline:clipboard-document-check'
+    },
+    {
+        id   : 'carga',
+        title: 'Carga',
+        type : 'collapsable',
+        icon : 'heroicons_outline:cube',
+        children:[
+            {
+                id: 'listar-cargas',
+                title: 'Mis Cargas',
+                icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/carga'
+            }
+        ]
+    },
+
+    {
+        id   : 'almacen',
+        title: 'Almacen',
+        type : 'collapsable',
+        icon : 'heroicons_outline:home-modern',
+        children:[
+            {
+                id: 'movimiento',
+                title: 'Listado de Movimientos',
+                //icon : 'mat_outline:Aq Indoor',
+                type: 'basic',
+                link : '/catering/almacen/movimientos',
+            },
+            {
+                id: 'Stockss',
+                title: 'Stock',
+                //icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/almacen/stock',
+            }
+        ]
     }
 ];
 

@@ -2,8 +2,11 @@ import { Routes } from '@angular/router';
 import { CateringComponent } from './catering.component';
 import { CrearSolicitudComponent } from './solicitud/crear-solicitud/crear-solicitud.component';
 import { ListarSolicitudComponent } from './solicitud/listar-solicitud/listar-solicitud.component';
+import {DetalleSolicitudComponent} from './solicitud/detalle-solicitud/detalle-solicitud.component';
 import { CompraComponent } from './compra-exterior/compra/compra.component';
 import { ListaComprasComponent } from './compra-exterior/lista-compras/lista-compras.component';
+import { ListarCargaComponent } from './carga/listar-carga/listar-carga.component';
+import { CrearCargaComponent } from './carga/crear-carga/crear-carga.component';
 import {StockComponent} from './stock/stock.component';
 import {ConfiguracionCargaComponent } from './configuracion-carga/configuracion-carga.component';
 import {AbastecerVueloComponent} from './abastecer-vuelo/abastecer-vuelo.component';
@@ -27,6 +30,21 @@ export default [
             {
                 path: 'abastecer',
                 component: AbastecerVueloComponent
+            },
+
+            {
+                path: 'detalle/:id',
+                component: DetalleSolicitudComponent
+            },
+            //Rutas para carga
+            {
+                path: 'carga',
+                component: ListarCargaComponent
+            },
+
+            {
+                path: 'newCarga',
+                component: CrearCargaComponent
             },
 
             // --- Rutas de Compra Exterior ---

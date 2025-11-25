@@ -1,5 +1,5 @@
 // listar-solicitud.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,  ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -9,10 +9,21 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { SolicitudService } from '../solicitud.service';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { RouterModule, Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface Almacen {
     value: string;
     viewValue: string;
+}
+
+interface Item {
+    id?: number;
+    categoria: string;
+    nombre: string;
+    cantidad: number;
 }
 
 interface Solicitud {
@@ -22,6 +33,7 @@ interface Solicitud {
     descripcion: string;
     prioridad: 'Alta' | 'Media' | 'Baja';
     estado: 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada';
+    items: Item[];
 }
 
 @Component({
@@ -35,16 +47,23 @@ interface Solicitud {
         MatInputModule,
         MatRadioModule,
         MatTableModule,
-        MatChipsModule
+        MatChipsModule,
+        MatPaginatorModule,
+        RouterModule,
+        MatIconModule,
+        MatSnackBarModule
     ],
     templateUrl: './listar-solicitud.component.html',
     styleUrls: ['./listar-solicitud.component.scss']
 })
 export class ListarSolicitudComponent implements OnInit {
 
+    @ViewChild(MatPaginator) paginator!: MatPaginator;
+
     filtroForm: FormGroup;
     solicitudes: Solicitud[] = [];
     solicitudesFiltradas: Solicitud[] = [];
+    solicitudesPaginadas: Solicitud[] = [];
 
     almacenes: Almacen[] = [
         { value: '', viewValue: 'Todos' },
@@ -53,54 +72,26 @@ export class ListarSolicitudComponent implements OnInit {
         { value: 'Viru viru', viewValue: 'Viru viru' },
     ];
 
-    constructor(private fb: FormBuilder, private _solService: SolicitudService) {
+    constructor(private fb: FormBuilder,
+                private _solService: SolicitudService,
+                private router: Router,
+                private snackBar: MatSnackBar
+    ) {
         this.filtroForm = this.fb.group({
             almacen: [''],
-            prioridad: ['']
+            prioridad: [''],
+
         });
     }
 
     ngOnInit(): void {
-        // Datos de ejemplo (simulando datos de backend)
-        /*this.solicitudes = [
-            {
-                id: 1,
-                almacen: 'Miami',
-                fecha: '06/07/2025',
-                descripcion: 'Falta de items Business class',
-                prioridad: 'Alta',
-                estado: 'Pendiente'
-            },
-            {
-                id: 2,
-                almacen: 'Viru viru',
-                fecha: '05/07/2025',
-                descripcion: 'Falta de items Business class',
-                prioridad: 'Media',
-                estado: 'Parcial'
-            },
-            {
-                id: 3,
-                almacen: 'Madrid',
-                fecha: '04/07/2025',
-                descripcion: 'Falta de items Business class',
-                prioridad: 'Alta',
-                estado: 'Aprobada'
-            },
-            {
-                id: 4,
-                almacen: 'Miami',
-                fecha: '03/06/2025',
-                descripcion: 'Falta de items Business class',
-                prioridad: 'Baja',
-                estado: 'Rechazada'
-            }
-        ];*/
+
         this._solService.getList().subscribe(
             (response: any ) => {
                 console.log('response', response);
                 this.solicitudes = response;
                 this.solicitudesFiltradas = [...this.solicitudes];
+                this.actualizarDatosPaginados();
             }
         )
 
@@ -108,6 +99,19 @@ export class ListarSolicitudComponent implements OnInit {
         // Escuchar cambios en el formulario para filtrar
         this.filtroForm.valueChanges.subscribe(() => {
             this.filtrarSolicitudes();
+        });
+    }
+
+    ngAfterViewInit(): void {
+        // Configurar el paginador después de que la vista se inicialice
+        setTimeout(() => {
+            if (this.paginator) {
+                this.paginator.page.subscribe(() => {
+                    this.actualizarDatosPaginados();
+                });
+                // Actualizar datos paginados inicialmente
+                this.actualizarDatosPaginados();
+            }
         });
     }
 
@@ -120,6 +124,24 @@ export class ListarSolicitudComponent implements OnInit {
 
             return cumpleAlmacen && cumplePrioridad;
         });
+        // Resetear paginador cuando se filtran datos
+        if (this.paginator) {
+            this.paginator.firstPage();
+        }
+
+        this.actualizarDatosPaginados();
+    }
+
+    actualizarDatosPaginados(): void {
+        if (!this.paginator) {
+            // Si el paginador no está disponible, mostrar todos los datos
+            this.solicitudesPaginadas = this.solicitudesFiltradas;
+            return;
+        }
+
+        const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
+        const endIndex = startIndex + this.paginator.pageSize;
+        this.solicitudesPaginadas = this.solicitudesFiltradas.slice(startIndex, endIndex);
     }
 
     getPrioridadValue(prioridad: string): string {
@@ -150,5 +172,41 @@ export class ListarSolicitudComponent implements OnInit {
             almacen: '',
             prioridad: ''
         });
+    }
+
+    verDetalle(solicitud: Solicitud): void {
+        console.log('Ver detalle de:', solicitud);
+        // this.router.navigate(['/catering/detalle', solicitud.id]);
+        this.router.navigate(['/catering/detalle', solicitud.id]);
+    }
+
+    eliminarSolicitud(solicitud: Solicitud): void {
+        console.log('Iniciando eliminación de solicitud:', solicitud);
+        console.log('ID a eliminar:', solicitud.id);
+        console.log('Tipo de ID:', typeof solicitud.id);
+
+        if (confirm(`¿Está seguro de eliminar la solicitud de ${solicitud.almacen}?`)) {
+            this._solService.delete(solicitud.id).subscribe({
+                next: (response) => {
+                    console.log('Solicitud eliminada:', response);
+
+                    // Recargar lista
+                    this._solService.getList().subscribe(
+                        (data: any) => {
+                            this.solicitudes = data;
+                            this.solicitudesFiltradas = [...this.solicitudes];
+                            this.actualizarDatosPaginados();
+                        }
+                    );
+                },
+                error: (error) => {
+                    console.error('Error completo:', error);
+                    console.error('URL del error:', error.url);
+                    console.error('Status:', error.status);
+                    console.error('Message:', error.message);
+                    alert('Error al eliminar la solicitud');
+                }
+            });
+        }
     }
 }

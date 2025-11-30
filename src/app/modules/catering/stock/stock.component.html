@@ -1,0 +1,74 @@
+<div class="w-full flex-auto p-6 sm:p-10">
+
+    <h2 class="text-3xl font-bold tracking-tight mb-8">Inventario / Stock</h2>
+
+    <div class="flex flex-col sm:flex-row gap-6 mb-8 items-end">
+
+        <mat-form-field appearance="outline" class="w-full sm:w-1/3">
+            <mat-label>Seleccionar Almacén</mat-label>
+            <mat-select [(value)]="almacenSeleccionado" (selectionChange)="cambiarAlmacen()">
+                @for (almacen of almacenes; track almacen.id) {
+                    <mat-option [value]="almacen.id">
+                        {{ almacen.nombre }} ({{almacen.codigo}})
+                    </mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-1/3">
+            <mat-label>Buscar ítem...</mat-label>
+            <input matInput placeholder="Ej. Coca Cola">
+            <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <div class="pb-1">
+            <button mat-stroked-button color="primary" class="h-12">
+                <mat-icon class="mr-2">refresh</mat-icon>
+                Actualizar
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-gray-100 rounded-lg overflow-hidden shadow">
+        <table class="w-full">
+            <thead>
+            <tr class="text-left text-white" style="background-color: #0B1E47;">
+                <th class="p-4 font-medium">Ítem</th>
+                <th class="p-4 font-medium">Categoría</th>
+                <th class="p-4 font-medium">Ubicación</th>
+                <th class="p-4 font-medium text-center">Cantidad</th>
+                <th class="p-4 font-medium text-center">Unidad</th>
+                <th class="p-4 font-medium">Estado</th>
+            </tr>
+            </thead>
+            <tbody>
+                @for (item of itemsFiltrados; track item.id) {
+                    <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                        <td class="p-4 font-medium text-gray-900">{{ item.nombre }}</td>
+                        <td class="p-4 text-gray-600">{{ item.categoria }}</td>
+                        <td class="p-4 text-gray-600 text-sm">
+                            <div class="flex items-center">
+                                <mat-icon class="text-gray-400 icon-size-4 mr-1">location_on</mat-icon>
+                                {{ item.ubicacion }}
+                            </div>
+                        </td>
+                        <td class="p-4 text-gray-900 font-bold text-center text-lg">{{ item.cantidad }}</td>
+                        <td class="p-4 text-gray-500 text-sm text-center">{{ item.unidad }}</td>
+                        <td class="p-4">
+                            <span [class]="getEstadoClass(item.estado)">
+                                {{ item.estado }}
+                            </span>
+                        </td>
+                    </tr>
+                }
+                @if (itemsFiltrados.length === 0) {
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-gray-500">
+                            No hay ítems en este almacén.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -33,7 +33,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         id   : 'solicitud',
         title: 'Solicitud',
         type : 'collapsable',
-        icon : 'mat_outline:text_snippet',
+        icon : 'heroicons_outline:chart-pie',
         children:[
             {
                 id: 'listar-solictud',
@@ -45,21 +45,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         ]
     },
 
-    {
-        id   : 'abastecimiento',
-        title: 'Abastecimiento',
-        type : 'collapsable',
-        icon : 'heroicons_outline:shopping-cart',
-        children:[
-            {
-                id: 'listado_abastecimiento',
-                title: 'Listado de abastecimiento',
-                type: 'basic',
-                link : '/catering/listado'
-            }
-        ]
-    },
-
+    
     {
         id   : 'compra-exterior',
         title: 'Compra Exterior',
@@ -81,6 +67,67 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 icon: 'heroicons_outline:archive-box'
             }
         ]
+    },
+
+    {
+        id   : 'inventario',
+        title: 'Inventario',
+        type : 'collapsable',
+        icon : 'heroicons_outline:archive-box',
+        children:[
+            {
+                id: 'ver-stock',
+                title: 'Stock Actual',
+                type: 'basic',
+                link : '/catering/stock',
+                icon: 'heroicons_outline:clipboard-document-list'
+            }
+        ]
+    },
+    {
+        id   : 'operaciones',
+        title: 'Operaciones Vuelo',
+        type : 'collapsable',
+        icon : 'heroicons_outline:paper-airplane',
+        children:[
+            {
+                id: 'config-carga',
+                title: 'Configurar Carga',
+                type: 'basic',
+                link : '/catering/configuracion',
+                icon: 'heroicons_outline:cube'
+            },
+            {
+                id: 'grupo-abastecimiento',
+                title: 'Abastecimiento',
+                type: 'collapsable', // Ahora es desplegable
+                icon: 'heroicons_outline:truck', // Icono de camión
+                children: [
+                    {
+                        id: 'abastecer-nuevo',
+                        title: 'Registrar Nuevo',
+                        type: 'basic',
+                        link: '/catering/abastecer',
+                        icon: 'heroicons_outline:plus-circle'
+                    },
+                    {
+                        id: 'abastecer-historial',
+                        title: 'Historial / Control',
+                        type: 'basic',
+                        link: '/catering/abastecer/historial',
+                        icon: 'heroicons_outline:clock'
+                    }
+                ]
+            },
+
+        ]
+    },
+    {
+        id: 'cierre-vuelo',
+        title: 'Cierre / Remanente',
+        type: 'basic',
+        link : '/catering/cierre',
+        icon : 'heroicons_outline:clipboard-document-check'
     },
     {
         id   : 'carga',

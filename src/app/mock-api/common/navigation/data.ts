@@ -45,22 +45,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         ]
     },
 
-    {
-        id   : 'abastecimiento',
-        title: 'Abastecimiento',
-        type : 'collapsable',
-        icon : 'heroicons_outline:shopping-cart',
-        children:[
-            {
-                id: 'abastecer-vuelo',
-                title: 'Abastecer Vuelo',
-                type: 'basic',
-                link : '/catering/abastecer',
-                icon: 'heroicons_outline:truck'
-            }
-        ]
-    },
-
+    
     {
         id   : 'compra-exterior',
         title: 'Compra Exterior',

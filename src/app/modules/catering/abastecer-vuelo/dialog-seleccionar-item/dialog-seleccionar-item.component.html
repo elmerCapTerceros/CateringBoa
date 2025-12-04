@@ -1,0 +1,59 @@
+<div class="flex flex-col h-[600px] w-full"> <div class="p-6 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
+    <div>
+        <h2 mat-dialog-title class="text-2xl font-bold mb-1 p-0 text-blue-900">Selección de Carga</h2>
+        <p class="text-sm text-gray-500 m-0">Marca los productos e ingresa la cantidad requerida.</p>
+    </div>
+    <button mat-icon-button (click)="cancelar()"><mat-icon>close</mat-icon></button>
+</div>
+
+    <div mat-dialog-content class="flex-1 overflow-y-auto bg-gray-50 p-4">
+        <div class="space-y-3">
+            @for (item of itemsUI; track item.data.id) {
+
+                <div class="flex items-center p-4 rounded-xl border transition-all duration-200 cursor-pointer hover:shadow-md bg-white"
+                     [class.ring-2]="item.selected"
+                     [class.ring-blue-500]="item.selected"
+                     [class.bg-blue-50]="item.selected"
+                     (click)="toggleSelection(item)">
+
+                    <mat-checkbox
+                        [(ngModel)]="item.selected"
+                        color="primary"
+                        class="mr-4 transform scale-125"
+                        (click)="$event.stopPropagation()">
+                    </mat-checkbox>
+
+                    <div class="flex-1">
+                        <div class="text-lg font-bold text-gray-800">{{ item.data.nombre }}</div>
+                        <div class="text-sm text-gray-500 bg-gray-100 inline-block px-2 py-0.5 rounded mt-1">
+                            {{ item.data.unidad }}
+                        </div>
+                    </div>
+
+                    <div class="w-32" (click)="$event.stopPropagation()">
+                        <mat-form-field appearance="outline" class="w-full bg-white rounded-lg no-bottom-space" subscriptSizing="dynamic">
+                            <mat-label>Cant.</mat-label>
+                            <input matInput
+                                   type="number"
+                                   min="1"
+                                   [(ngModel)]="item.cantidad"
+                                   [disabled]="!item.selected"
+                                   (focus)="$event.stopPropagation()"> </mat-form-field>
+                    </div>
+
+                </div>
+            }
+        </div>
+    </div>
+
+    <div mat-dialog-actions align="end" class="p-4 border-t border-gray-200 bg-white gap-3 shrink-0">
+        <button mat-stroked-button (click)="cancelar()" class="px-6 py-2">Cancelar</button>
+        <button mat-raised-button color="primary"
+                style="background-color: #0B1E47;"
+                class="px-8 py-2 text-lg"
+                (click)="guardar()"
+                [disabled]="!haySeleccionados">
+            Agregar ({{ itemsSeleccionadosCount() }})
+        </button>
+    </div>
+</div>

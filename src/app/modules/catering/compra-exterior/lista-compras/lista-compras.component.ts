@@ -1,66 +1,64 @@
-import { Component , OnInit} from '@angular/core';
-import { CommonModule, NgClass } from '@angular/common';
-
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar'; // IMPORTANTE
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-export interface Compra {
+interface DetalleSeguimiento {
     id: number;
-    nombre: string;
-    fecha: string;
-    almacenDestino: string;
-    cantidad: number;
-    estado: 'Aprobado' | 'Pendiente' | 'Rechazado';
+    nombreItem: string;
+    proveedor: string;
+    fechaSolicitud: string;
+    cantidadTotal: number;     // Lo que pediste
+    cantidadEntregada: number; // Lo que ya llegó
+    estado: 'Pendiente' | 'Parcial' | 'Completado';
 }
 
 @Component({
-  selector: 'app-lista-compras',
-  imports: [
-      CommonModule,
-      NgClass,
-      MatFormFieldModule,
-      MatSelectModule,
-      MatDatepickerModule,
-      MatNativeDateModule,
-      MatButtonModule,
-      MatInputModule,
-      MatIconModule
-  ],
-  templateUrl: './lista-compras.component.html',
-  styleUrl: './lista-compras.component.scss'
+    selector: 'app-listado-compras',
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule],
+    templateUrl: './lista-compras.component.html',
+    styleUrl: './lista-compras.component.scss'
 })
-export class ListaComprasComponent implements OnInit{
-    compras: Compra[] = [];
+export class ListaComprasComponent implements OnInit {
 
-    constructor() { }
+    // Datos Mock
+    seguimientoCompras: DetalleSeguimiento[] = [
+        { id: 1, nombreItem: 'Hielo Bolsa 5kg', proveedor: 'Hielos Andes', fechaSolicitud: '2025-05-20', cantidadTotal: 100, cantidadEntregada: 0, estado: 'Pendiente' },
+        { id: 2, nombreItem: 'Limón Granel', proveedor: 'Frutas Santa Cruz', fechaSolicitud: '2025-05-18', cantidadTotal: 50, cantidadEntregada: 25, estado: 'Parcial' },
+        { id: 3, nombreItem: 'Vaso Plástico', proveedor: 'Plásticos BoA', fechaSolicitud: '2025-05-15', cantidadTotal: 1000, cantidadEntregada: 1000, estado: 'Completado' }
+    ];
 
-    ngOnInit(): void {
+    constructor() {}
 
-        this.compras = [
-            { id: 1, nombre: 'Almohada', fecha: '12/12/12', almacenDestino: 'Miami - cod 123', cantidad: 23, estado: 'Rechazado' },
-            { id: 2, nombre: 'Almohada', fecha: '12/12/12', almacenDestino: 'Miami - cod 123', cantidad: 23, estado: 'Pendiente' },
-            { id: 3, nombre: 'Almohada', fecha: '12/12/12', almacenDestino: 'Miami - cod 123', cantidad: 23, estado: 'Aprobado' },
-            { id: 4, nombre: 'Almohada', fecha: '12/12/12', almacenDestino: 'Miami - cod 123', cantidad: 23, estado: 'Rechazado' },
-        ];
+    ngOnInit(): void {}
+
+    // Lógica para recibir mercancía parcial
+    registrarEntrega(item: DetalleSeguimiento): void {
+        const faltante = item.cantidadTotal - item.cantidadEntregada;
+        const input = prompt(`Faltan ${faltante} unidades de ${item.nombreItem}.\n¿Cuántas llegaron hoy?`, `${faltante}`);
+
+        if (input) {
+            const cantidadRecibida = parseInt(input);
+
+            if (cantidadRecibida > 0 && cantidadRecibida <= faltante) {
+                item.cantidadEntregada += cantidadRecibida;
+
+                // Actualizar estado automáticamente
+                if (item.cantidadEntregada === item.cantidadTotal) {
+                    item.estado = 'Completado';
+                } else {
+                    item.estado = 'Parcial';
+                }
+            } else {
+                alert('Cantidad inválida. No puedes recibir más de lo pendiente.');
+            }
+        }
     }
 
-    getEstadoClass(estado: 'Aprobado' | 'Pendiente' | 'Rechazado'): any {
-        return {
-            'bg-red-100 text-red-800': estado === 'Rechazado',
-            'bg-yellow-100 text-yellow-800': estado === 'Pendiente',
-            'bg-green-100 text-green-800': estado === 'Aprobado'
-        };
-    }
-
-
-    imprimirListado(): void {
-        console.log('Imprimiendo listado...');
-        // lógica para generar un PDF o imprimir la ventana
-        window.print();
+    // Calculo para la barra de progreso
+    getPorcentaje(item: DetalleSeguimiento): number {
+        return (item.cantidadEntregada / item.cantidadTotal) * 100;
     }
 }

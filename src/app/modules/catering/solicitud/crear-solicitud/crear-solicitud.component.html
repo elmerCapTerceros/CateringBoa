@@ -8,10 +8,21 @@
             <!-- Almacén -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">
-                    <mat-label>Almacén solicitante:</mat-label>
+                    <mat-label>Almacén solicitado:</mat-label>
                     <mat-select formControlName="almacen" placeholder="Seleccionar almacén">
                         @for (almacen of almacenes; track almacen.value) {
                             <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div>
+                <mat-form-field appearance="outline" class="w-64">
+                    <mat-label>Aeronave:</mat-label>
+                    <mat-select formControlName="aeronave" placeholder="Seleccionar aeronave">
+                        @for (aeronave of aeronaves; track aeronave.value) {
+                            <mat-option [value]="aeronave.value">{{aeronave.viewValue}}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>

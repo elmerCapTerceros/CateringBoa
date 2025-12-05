@@ -17,6 +17,7 @@ import { Router, RouterLink } from '@angular/router';
 interface Almacen {
     value: string;
     viewValue: string;
+
 }
 
 interface Movimiento {
@@ -26,6 +27,8 @@ interface Movimiento {
     item: string;
     cantidad: string;
     movimiento: 'Entrada' | 'Salida';
+
+
 }
 
 @Component({
@@ -43,11 +46,11 @@ interface Movimiento {
         MatNativeDateModule,
         MatIconModule,
         MatPaginatorModule,
-        RouterLink,
     ],
     templateUrl: './movimiento.component.html',
     styleUrls: ['./movimiento.component.scss'],
 })
+
 export class MovimientoComponent implements OnInit {
     filtroForm: FormGroup;
     movimientos: Movimiento[] = [];
@@ -59,6 +62,14 @@ export class MovimientoComponent implements OnInit {
         { value: 'Miami', viewValue: 'Miami' },
         { value: 'Viru viru', viewValue: 'Viru viru' },
     ];
+
+    // FORM MODAL EDITAR MOVIMIENTO 1
+    esModoEdicion: boolean = false;
+    movimientoEditandoId: number | null = null;
+    esModoVer: boolean = false;
+    movimientoSeleccionado: Movimiento | null = null;
+
+
 
     constructor(private fb: FormBuilder,
                 private router: Router) {
@@ -77,7 +88,9 @@ export class MovimientoComponent implements OnInit {
             this.filtrarMovimientos();
             this.actualizarPaginacion();
         });
+
         // Datos simulados
+
         this.movimientos = [
             {
                 id: 1,
@@ -198,15 +211,14 @@ export class MovimientoComponent implements OnInit {
         this.movimientosFiltrados = [...this.movimientos];
     }
 
-    editarMovimiento(mov: Movimiento): void {
-        console.log('Editar movimiento:', mov);
-    }
+
 
     eliminarMovimiento(mov: Movimiento): void {
         console.log('Eliminar movimiento:', mov);
     }
 
     // NUEVAS VARIABLES PARA PAGINACIÓN
+
     pageSize = 5;
     pageIndex = 0;
     movimientosPaginados: Movimiento[] = [];
@@ -220,10 +232,7 @@ export class MovimientoComponent implements OnInit {
             endIndex
         );
     }
-    verMovimiento(movimiento: Movimiento): void {
-        console.log('Ver movimiento:', movimiento);
-        this.router.navigate(['/almacen/movimientos-edit', movimiento.id]);
-    }
+
 
 
     //  NUEVO MÉTODO PARA DETECTAR CAMBIO DE PÁGINA
@@ -232,4 +241,144 @@ export class MovimientoComponent implements OnInit {
         this.pageIndex = event.pageIndex;
         this.actualizarPaginacion();
     }
+
+
+    //FORMULARIO MODAL CREAR MOVIMIENTO
+
+
+    modalAbierto: boolean = false;
+
+    formMovimiento: FormGroup = this.fb.group({
+        almacen: [''],
+        fecha: [''],
+        item: [''],
+        cantidad: [''],
+        movimiento: ['Entrada'],
+    });
+
+// ABRIR EL MODAL
+// FORM MODAL EDITAR MOVIMIENTO 2
+    abrirModal(): void {
+        this.esModoEdicion = false;
+        this.movimientoEditandoId = null;
+        this.formMovimiento.reset({
+            movimiento: 'Entrada',
+        });
+        this.modalAbierto = true;
+    }
+
+// CERRAR EL MODAL ANTIGUO
+  /*  cerrarModal(): void {
+        this.modalAbierto = false;
+        this.formMovimiento.reset({
+            movimiento: 'Entrada',
+        });
+    }*/
+
+// CERRAR EL MODAL
+    cerrarModal(): void {
+        this.modalAbierto = false;
+        this.formMovimiento.reset({
+            movimiento: 'Entrada',
+        });
+        this.formMovimiento.enable();  // 🔓 habilitar
+        this.esModoVer = false;
+    }
+
+
+
+// GUARDAR EL MOVIMIENTO NUEVO ANTIGUO
+ /*   guardarMovimiento(): void {
+        const nuevo: Movimiento = {
+            id: this.movimientos.length + 1,
+            almacen: this.formMovimiento.value.almacen,
+            fecha: this.formatFecha(this.formMovimiento.value.fecha),
+            item: this.formMovimiento.value.item,
+            cantidad: this.formMovimiento.value.cantidad,
+            movimiento: this.formMovimiento.value.movimiento,
+        };
+
+        this.movimientos.push(nuevo);
+        this.filtrarMovimientos();
+        this.actualizarPaginacion();
+        this.cerrarModal();
+    }*/
+
+
+    // GUARDAR EL MOVIMIENTO NUEVO EDICION MAS
+    guardarMovimiento(): void {
+
+        if (this.esModoEdicion && this.movimientoEditandoId !== null) {
+            // EDITANDO
+            const index = this.movimientos.findIndex(m => m.id === this.movimientoEditandoId);
+
+            if (index !== -1) {
+                this.movimientos[index] = {
+                    id: this.movimientoEditandoId,
+                    almacen: this.formMovimiento.value.almacen,
+                    fecha: this.formatFecha(this.formMovimiento.value.fecha),
+                    item: this.formMovimiento.value.item,
+                    cantidad: this.formMovimiento.value.cantidad,
+                    movimiento: this.formMovimiento.value.movimiento,
+                };
+            }
+        } else {
+            // CREAR NUEVO
+            const nuevo: Movimiento = {
+                id: this.movimientos.length + 1,
+                almacen: this.formMovimiento.value.almacen,
+                fecha: this.formatFecha(this.formMovimiento.value.fecha),
+                item: this.formMovimiento.value.item,
+                cantidad: this.formMovimiento.value.cantidad,
+                movimiento: this.formMovimiento.value.movimiento,
+            };
+
+            this.movimientos.push(nuevo);
+        }
+
+        this.filtrarMovimientos();
+        this.actualizarPaginacion();
+        this.cerrarModal();
+    }
+
+
+    //FORMULARIO MODAL EDITAR MOVIMIENTO
+
+    editarMovimiento(mov: Movimiento): void {
+        this.esModoEdicion = true;
+        this.movimientoEditandoId = mov.id;
+        this.modalAbierto = true;
+
+        this.formMovimiento.patchValue({
+            almacen: mov.almacen,
+            fecha: mov.fecha,
+            item: mov.item,
+            cantidad: mov.cantidad,
+            movimiento: mov.movimiento
+        });
+    }
+
+
+    //FORMULARIO MODAL VER MOVIMIENTO
+    verMovimiento(mov: Movimiento): void {
+        this.esModoEdicion = false;   // NO editar
+        this.esModoVer = true;        // SOLO ver
+        this.modalAbierto = true;
+
+        this.formMovimiento.patchValue({
+            almacen: mov.almacen,
+            fecha: mov.fecha,
+            item: mov.item,
+            cantidad: mov.cantidad,
+            movimiento: mov.movimiento,
+        });
+
+        this.formMovimiento.disable(); // 🔒 bloquear campos
+    }
+
+
+
+
+
+
 }

@@ -40,7 +40,7 @@ interface Stock {
         MatPaginatorModule,
         MatIconModule,
     ],
-    // ✅ Aquí va la configuración del idioma del paginador
+    //  Aquí va la configuración del idioma del paginador
     providers: [
         {
             provide: MatPaginatorIntl,
@@ -92,7 +92,9 @@ export class StockComponent implements OnInit {
         { value: 'Audífonos', viewValue: 'Audífonos' },
     ];
 
-    // ✅ Paginador
+
+    // Paginador
+
     pageSize = 5;
     currentPage = 0;
     pageSizeOptions = [5, 10, 20];

@@ -1,50 +1,36 @@
-<div
-    class="flex flex-col flex-auto min-w-0 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen animate-fade-in"
->
+<div class="flex flex-col flex-auto min-w-0 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen animate-fade-in">
     <div class="flex-auto p-6 sm:p-10">
-        <!-- Título animado -->
+
+        <!-- TITULO -->
         <div class="flex items-center justify-between mb-8">
-            <h2
-                class="text-4xl font-extrabold text-gray-800 tracking-tight hover:scale-[1.02] transition-transform duration-300"
-            >
-                Movimientos
+            <h2 class="text-4xl font-extrabold text-gray-800 tracking-tight hover:scale-[1.02] transition-transform duration-300">
+                MOVIMIENTOS
             </h2>
 
-            <!-- Contador con efecto vidrio -->
-            <div
-                class="relative overflow-hidden backdrop-blur-md bg-white/60 border border-white/40
-         shadow-lg px-6 py-3 rounded-2xl text-sm text-gray-700
-         transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:bg-white/80"
-            >
+            <!-- CONTADOR -->
+            <div class="relative overflow-hidden backdrop-blur-md bg-gray-800  shadow-lg px-6 py-3 rounded-2xl text-sm text-white transition-all duration-500 hover:scale-[1.03] hover:shadow-xl hover:bg-blue-700">
                 <span
                     class="absolute inset-0 bg-gradient-to-r from-blue-100/30 to-blue-200/30 opacity-70"
                 ></span>
                 <div class="relative z-10 flex items-center gap-2 font-medium">
                     Mostrando
-                    <span
-                        class="font-bold text-blue-600 text-base animate-count"
-                    >{{ movimientosFiltrados.length }}</span
-                    >
+                    <span class="font-bold text-white text-base animate-count">{{ movimientosFiltrados.length }}</span>
                     de
-                    <span class="font-bold text-gray-800 text-base"
-                    >{{ movimientos.length }}</span
-                    >
+                    <span class="font-bold text-white text-base">{{ movimientos.length }}</span>
                     registros
                 </div>
-
             </div>
 
         </div>
 
 
 
-        <!-- Formulario de Filtros -->
-        <form
-            [formGroup]="filtroForm"
-            class="mb-6 bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-2xl transition-shadow duration-300"
-        >
+        <!-- FORM FILTRO -->
+
+        <form [formGroup]="filtroForm" class="mb-6 bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-2xl transition-shadow duration-300">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- Filtro por Almacén -->
+
+                <!-- FILTRO POR ALMACEN -->
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Filtrar por almacén</mat-label>
                     <mat-select formControlName="almacen">
@@ -56,102 +42,86 @@
                     </mat-select>
                 </mat-form-field>
 
-                <!-- Filtro por Fecha -->
+                <!-- FILTRO POR FECHA -->
+
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Filtrar por fecha</mat-label>
-                    <input
-                        matInput
-                        [matDatepicker]="picker"
-                        formControlName="fecha"
-                        class="focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <mat-datepicker-toggle
-                        matIconSuffix
-                        [for]="picker"
-                    ></mat-datepicker-toggle>
+                    <input matInput [matDatepicker]="picker" formControlName="fecha" class="focus:ring-blue-500 focus:border-blue-500" />
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-datepicker #picker></mat-datepicker>
                 </mat-form-field>
-
-
             </div>
 
-            <!-- Botón para limpiar filtros -->
+            <!-- BOTON PARA LIMPIAR FILTROS -->
+
             <div class="flex justify-end">
-                <button
-                    type="button"
-                    (click)="limpiarFiltros()"
-                    class="px-5 py-2 text-sm rounded-md font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all duration-300 hover:shadow-md"
-                >
-                    🔄 Limpiar filtros
+                <button type="button" (click)="limpiarFiltros()" class="px-5 py-2 text-sm rounded-md font-semibold bg-gray-800 text-white hover:bg-blue-700 transition-all duration-300 hover:shadow-md">
+                    ↺ Limpiar filtros
                 </button>
             </div>
-            <button type="submit" class="w-full py-2 mt-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300">
-                Crear Movimiento
-            </button>
+
         </form>
 
-        <!-- Tabla de Movimientos -->
-        <div
-            class="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200 animate-fade-in-up"
-        >
+        <!-- BOTON PARA CREAR FORM MODAL -->
+        <div class="flex justify-between items-center mb-8">
+            <button class="btn btn-primary" (click)="abrirModal()" class="bg-gray-800 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                + Nuevo Movimiento
+            </button>
+        </div>
+
+        <!-- TABLA MOVIMIENTOS -->
+
+        <div class="overflow-x-auto bg-white rounded-lg shadow">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-blue-600 text-white">
-                <tr>
-                    <th
-                        class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                    >
-                        Almacén
-                    </th>
-                    <th
-                        class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                    >
-                        Fecha
-                    </th>
-                    <th
-                        class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                    >
-                        Item
-                    </th>
-                    <th
-                        class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                    >
-                        Cantidad
-                    </th>
-                    <th
-                        class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                    >
-                        Movimiento
-                    </th>
-                    <th
-                        class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider"
-                    >
-                        Acciones
-                    </th>
-                </tr>
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                            Almacén
+                        </th>
+
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                            Fecha
+                        </th>
+
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                            Item
+                        </th>
+
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                            Cantidad
+                        </th>
+
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                            Movimiento
+                        </th>
+
+                        <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
                 </thead>
 
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-gray-200">
                     @for (mov of movimientosPaginados; track mov.id) {
-                        <tr
-                            class="hover:bg-blue-50 transition-all duration-300 hover:scale-[1.01]"
-                        >
-                            <td
-                                class="px-6 py-4 text-sm text-gray-800 font-medium"
-                            >
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-800 font-medium">
                                 {{ mov.almacen }}
                             </td>
+
                             <td class="px-6 py-4 text-sm text-gray-700">
                                 {{ mov.fecha }}
                             </td>
+
                             <td class="px-6 py-4 text-sm text-gray-700">
                                 {{ mov.item }}
                             </td>
+
                             <td class="px-6 py-4 text-sm text-gray-700">
                                 {{ mov.cantidad }}
                             </td>
+
                             <td class="px-6 py-4 text-sm text-gray-700">
-                            <span
-                                class="px-3 py-1 rounded-full text-xs font-semibold"
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold"
                                 [ngClass]="{
                                     'bg-green-100 text-green-700':
                                         mov.movimiento === 'Entrada',
@@ -161,33 +131,44 @@
                             >
                                 {{ mov.movimiento }}
                             </span>
+
                             </td>
 
-                            <!-- Acciones -->
+                            <!-- ACCIONES BOTONES -->
+
                             <td class="px-6 py-4 flex justify-center gap-4">
-                                <button mat-icon-button [routerLink]="['/movimiento-edit', mov.id]" title="Editar" class="p-2 rounded-full bg-blue-50 hover:bg-blue-100 transition-all duration-300 hover:scale-110">
-                                    <mat-icon
-                                        [svgIcon]="'heroicons_outline:pencil-square'"
-                                    ></mat-icon>
+
+                                <!-- ACCIONES BOTONES EDIT ANTIGUO -->
+                                <!--<button mat-icon-button [routerLink]="['/movimiento-edit', mov.id]" title="Editar" class="p-2 rounded-full bg-blue-50 hover:bg-blue-100 transition-all duration-300 hover:scale-110">
+                                    <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                </button>-->
+
+                                <!--<button type="button" title="Ver" (click)="verMovimiento(mov)" class="p-2 rounded-full bg-blue-50 hover:bg-blue-100 transition-all duration-300 hover:scale-110">
+                                    <mat-icon [svgIcon]="'mat_solid:visibility'" class="icon-size-5"></mat-icon>
+                                </button>-->
+
+                                <button mat-icon-button (click)="editarMovimiento(mov)" title="Editar"
+                                        class="p-2 rounded-full bg-blue-50 hover:bg-blue-100 transition-all duration-300 hover:scale-110">
+                                    <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
                                 </button>
 
-                                <button
-                                    type="button"
-                                    title="Ver"
-                                    (click)="verMovimiento(mov)"
-                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                >
-                                    <mat-icon class="icon-size-5">visibility</mat-icon>
+                                <button type="button" title="Ver" (click)="verMovimiento(mov)"
+                                        class="p-2 rounded-full bg-blue-50 hover:bg-blue-100 transition-all duration-300 hover:scale-110">
+                                    <mat-icon [svgIcon]="'mat_solid:visibility'" class="icon-size-5"></mat-icon>
                                 </button>
+
+
+
+
 
 
                                 <button (click)="eliminarMovimiento(mov)" title="Eliminar" class="p-2 rounded-full bg-red-50 hover:bg-red-100 transition-all duration-300 hover:scale-110">
-                                    <mat-icon
-                                        [svgIcon]="'mat_solid:delete'"
-                                    ></mat-icon>
+                                    <mat-icon [svgIcon]="'mat_solid:delete'"></mat-icon>
                                 </button>
                             </td>
                         </tr>
+
+                        <!-- MENSAJE REGISTRO NO ENCONTRADOS POR EL FILTRO -->
                     } @empty {
                         <tr>
                             <td
@@ -203,7 +184,8 @@
             </table>
         </div>
 
-        <!-- 🔹 PAGINADOR -->
+        <!-- PAGINADOR -->
+
         <div class="flex justify-end mt-4">
             <mat-paginator
                 [length]="movimientosFiltrados.length"
@@ -216,4 +198,90 @@
             </mat-paginator>
         </div>
     </div>
+
+    <!-- FORMULARIO MODAL CREAR MOVIMIENTO -->
+
+    <div class="modal-fondo" *ngIf="modalAbierto">
+        <div class="modal-container">
+
+            <div class="modal-header">
+                <h2>
+                    {{ esModoVer ? 'Detalle del Movimiento' : (esModoEdicion ? 'Editar Movimiento' : 'Nuevo Movimiento') }}
+                </h2>
+
+                <button mat-icon-button (click)="cerrarModal()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <form [formGroup]="formMovimiento" class="modal-form">
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Almacén</mat-label>
+                    <mat-select formControlName="almacen">
+                        <mat-option *ngFor="let almacen of almacenes" [value]="almacen.value">
+                            {{ almacen.viewValue }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Fecha</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="fecha">
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Item</mat-label>
+                    <input matInput formControlName="item">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Cantidad</mat-label>
+                    <input matInput type="number" formControlName="cantidad">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Movimiento</mat-label>
+                    <mat-select formControlName="movimiento">
+                        <mat-option value="Entrada">Entrada</mat-option>
+                        <mat-option value="Salida">Salida</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <div class="modal-buttons">
+
+                    <!-- SOLO VER MOSTRAR ESTE -->
+                    <button *ngIf="esModoVer"
+                            (click)="cerrarModal()"
+                            class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                        CERRAR
+                    </button>
+
+                    <!-- SOLO EDITAR/CREAR MOSTRAR ESTOS -->
+                    <button *ngIf="!esModoVer"
+                            (click)="guardarMovimiento()"
+                            class="bg-gray-800 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                        GUARDAR
+                    </button>
+
+                    <button *ngIf="!esModoVer"
+                            (click)="cerrarModal()"
+                            class="bg-red-500 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                        CANCELAR
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </div>
+    </div>
+
+
+
+
+
 </div>

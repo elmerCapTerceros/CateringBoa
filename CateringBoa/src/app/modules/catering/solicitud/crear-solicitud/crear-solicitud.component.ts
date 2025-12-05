@@ -20,6 +20,11 @@ interface Almacen {
     viewValue: string;
 }
 
+interface Aeronave{
+    value:string;
+    viewValue:string;
+}
+
 interface Item {
     id?: number;
     categoria: string;
@@ -59,6 +64,14 @@ export class CrearSolicitudComponent implements OnInit {
         {value: 'Viru viru', viewValue: 'Viru viru'},
     ];
 
+    aeronaves: Aeronave[] = [
+        { value: 'Boeing 737-800', viewValue: 'Boeing 737-800' },
+        { value: 'Airbus A320', viewValue: 'Airbus A320' },
+        { value: 'Boeing 767-300', viewValue: 'Boeing 767-300' },
+        { value: 'Airbus A330', viewValue: 'Airbus A330' },
+        { value: 'Boeing 787-9', viewValue: 'Boeing 787-9' },
+    ];
+
     categorias: string[] = [
         'Bebidas',
         'Bebidas Calientes',
@@ -84,6 +97,7 @@ export class CrearSolicitudComponent implements OnInit {
     ) {
         this.solicitudForm = this.fb.group({
             almacen: ['', Validators.required],
+            aeronave: ['', Validators.required],
             fecha: ['', Validators.required],
             prioridad: ['2', Validators.required],
             descripcion: ['', Validators.required],
@@ -153,6 +167,7 @@ export class CrearSolicitudComponent implements OnInit {
             // Preparar datos para enviar
             const solicitudData = {
                 almacen: formValue.almacen,
+                aeronave: formValue.aeronave,
                 fecha: fechaFormateada,
                 descripcion: formValue.descripcion,
                 prioridad: prioridadMap[formValue.prioridad] || 'Media',

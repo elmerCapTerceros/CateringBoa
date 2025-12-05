@@ -71,7 +71,7 @@ export class CateringMockApi {
             const newSolicitud = cloneDeep(request.body);
 
             // Validación básica
-            if (!newSolicitud.almacen || !newSolicitud.fecha || !newSolicitud.descripcion) {
+            if (!newSolicitud.almacen ||!newSolicitud.aeronave|| !newSolicitud.fecha || !newSolicitud.descripcion) {
                 return [
                     400,
                     {
@@ -90,6 +90,7 @@ export class CateringMockApi {
             const solicitudCreada = {
                 id: newId,
                 almacen: newSolicitud.almacen,
+                aeronave: newSolicitud.aeronave,
                 fecha: newSolicitud.fecha,
                 descripcion: newSolicitud.descripcion,
                 prioridad: newSolicitud.prioridad || 'Media',

@@ -1,0 +1,57 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <div class="flex-auto p-6 sm:p-10">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold">Solicitudes de Almacénes</h2>
+            <button
+                type="button"
+                routerLink="/catering/new"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                + Nueva Solicitud
+            </button>
+        </div>
+
+        <form [formGroup]="filtroForm">
+            <div class="flex flex-wrap gap-3 mb-6">
+
+                <!-- Filtro por Almacén -->
+                <div>
+                    <mat-form-field appearance="outline" class="w-64">
+                        <mat-label>Filtrar por almaacén:</mat-label>
+                        <mat-select formControlName="almacen">
+                            @for (almacen of almacenes; track almacen.value) {
+                                <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- Filtro por Prioridad -->
+                <div>
+                    <mat-form-field appearance="outline" class="w-64">
+                        <mat-label>Filtrar por prioridad:</mat-label>
+                        <mat-select formControlName="prioridad">
+                            <mat-option value="">Todas</mat-option>
+                            <mat-option value="1">Alta</mat-option>
+                            <mat-option value="2">Media</mat-option>
+                            <mat-option value="3">Baja</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+            </div>
+
+            <!-- Botón para limpiar filtros -->
+            <div class="flex justify-end mb-4">
+                <button
+                    type="button"
+                    (click)="limpiarFiltros()"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    Limpiar filtros
+                </button>
+            </div>
+
+        </form>
+
+
+    </div>
+</div>

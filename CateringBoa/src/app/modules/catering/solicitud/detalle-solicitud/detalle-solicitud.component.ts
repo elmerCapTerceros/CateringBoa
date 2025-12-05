@@ -108,8 +108,8 @@ export class DetalleSolicitudComponent implements OnInit {
 
     editar(): void {
         /**if (this.solicitud) {
-            this.router.navigate(['/catering/new', this.solicitud.id]);
-        }*/
+         this.router.navigate(['/catering/new', this.solicitud.id]);
+         }*/
         this.router.navigate(['/catering/new']);
     }
 

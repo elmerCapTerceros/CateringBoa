@@ -147,7 +147,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         icon : 'heroicons_outline:clipboard-document-check'
     },
 
-
+        // MENU ALMACEN
     {
         id   : 'almacen',
         title: 'Almacen',
@@ -159,14 +159,14 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 title: 'Listado de Movimientos',
                 //icon : 'mat_outline:Aq Indoor',
                 type: 'basic',
-                link : '/catering/almacen/movimientos',
+                link : '/catering/movimientos',
             },
             {
                 id: 'Stockss',
-                title: 'Stock',
+                title: 'Stocks',
                 //icon : 'mat_outline:briefcase',
                 type: 'basic',
-                link : '/catering/almacen/stock',
+                link : '/catering/stock',
             },
             {
                 id: 'solicitudes-almacen',

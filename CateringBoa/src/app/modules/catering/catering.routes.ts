@@ -13,6 +13,7 @@ import {AbastecerVueloComponent} from './abastecer-vuelo/abastecer-vuelo.compone
 import {CierreVueloComponent} from './cierre-vuelo/cierre-vuelo.component';
 import {HistorialAbastecimientoComponent} from './historial-abastecimiento/historial-abastecimiento.component';
 import {ListarSolicitudesAlmacenComponent} from './almacen/listar-solicitudes-almacen/listar-solicitudes-almacen.component';
+import { MovimientoComponent } from './almacen/movimientos/movimiento.component';
 export default [
     {
         path: '',
@@ -76,6 +77,16 @@ export default [
             {
                 path: 'listar-solicitudes-almacen',
                 component: ListarSolicitudesAlmacenComponent
+            },
+
+            // --- Rutas de ALMACEN ---
+            {
+                path: 'movimiento',
+                component: MovimientoComponent
+            },
+            {
+                path: 'stock',
+                component: StockComponent
             },
 
         ]

@@ -92,6 +92,10 @@ export class StockComponent implements OnInit {
         { value: 'Audífonos', viewValue: 'Audífonos' },
     ];
 
+    // FORM MODAL STOCK VER
+    modalAbierto: boolean = false;
+    stockSeleccionado: Stock | null = null;
+
 
     // Paginador
 
@@ -268,5 +272,15 @@ export class StockComponent implements OnInit {
     onPageChange(event: any): void {
         this.pageSize = event.pageSize;
         this.currentPage = event.pageIndex;
+    }
+    // FORM MODAL STOCK
+    verStock(stock: Stock): void {
+        this.stockSeleccionado = stock;
+        this.modalAbierto = true;
+    }
+
+    cerrarModal(): void {
+        this.modalAbierto = false;
+        this.stockSeleccionado = null;
     }
 }

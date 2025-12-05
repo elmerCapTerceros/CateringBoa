@@ -57,7 +57,7 @@ export class CrearSolicitudComponent implements OnInit {
 
     solicitudForm: FormGroup;
     isLoading = false;
-
+    minDate = new Date();
     almacenes: Almacen[] = [
         {value: 'Miami', viewValue: 'Miami'},
         {value: 'Madrid', viewValue: 'Madrid'},

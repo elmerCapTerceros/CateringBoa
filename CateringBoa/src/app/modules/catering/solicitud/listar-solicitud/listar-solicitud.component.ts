@@ -18,6 +18,10 @@ interface Almacen {
     value: string;
     viewValue: string;
 }
+interface Aeronave {
+    value: string;
+    viewValue: string;
+}
 
 interface Item {
     id?: number;
@@ -29,6 +33,7 @@ interface Item {
 interface Solicitud {
     id: number;
     almacen: string;
+    aeronave: string;
     fecha: string;
     descripcion: string;
     prioridad: 'Alta' | 'Media' | 'Baja';

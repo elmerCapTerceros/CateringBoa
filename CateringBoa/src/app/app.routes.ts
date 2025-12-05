@@ -63,13 +63,6 @@ export const appRoutes: Route[] = [
         children: [
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
             {path: 'catering', loadChildren: () => import('app/modules/catering/catering.routes')},
-
-            //aumente esto en app.routes
-            {path: 'movimientos', loadChildren: () => import('app/modules/catering/almacen/movimientos/movimiento.routes')},
-            {path: 'Stockss', loadChildren: () => import('app/modules/catering/almacen/Stockss/stock.routes')},
-            {path: 'crear-movimiento', loadChildren: () => import('app/modules/catering/almacen/crear-movimiento/crear-movimiento.routes')},
-            { path: 'editar-movimiento/:id', loadChildren: () => import('app/modules/catering/almacen/movimientos-edit/movimientos-edit.routes').then(m => m.MOVIMIENTOS_EDIT_ROUTES) },
-
         ]
     }
 ];

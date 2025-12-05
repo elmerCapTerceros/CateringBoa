@@ -45,7 +45,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         ]
     },
 
-    
+
     {
         id   : 'compra-exterior',
         title: 'Compra Exterior',
@@ -164,6 +164,13 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 //icon : 'mat_outline:briefcase',
                 type: 'basic',
                 link : '/catering/almacen/stock',
+            },
+            {
+                id: 'solicitudes-almacen',
+                title: 'Solicitudes',
+                //icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/listar-solicitudes-almacen',
             }
         ]
     }

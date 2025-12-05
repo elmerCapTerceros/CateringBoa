@@ -8,6 +8,8 @@ import { CompraComponent } from './compra-exterior/compra/compra.component';
 import { ListaComprasComponent } from './compra-exterior/lista-compras/lista-compras.component';
 import { ListarCargaComponent } from './carga/listar-carga/listar-carga.component';
 import { CrearCargaComponent } from './carga/crear-carga/crear-carga.component';
+import { MovimientoComponent } from './almacen/movimientos/movimiento.component';
+import { StockComponent } from './almacen/Stockss/stock.component';
 
 export default [
     {
@@ -51,6 +53,16 @@ export default [
             {
                 path: 'compra-exterior/listar',
                 component: ListaComprasComponent
+            },
+
+            // --- Rutas de ALMACEN ---
+            {
+                path: 'movimiento',
+                component: MovimientoComponent
+            },
+            {
+                path: 'stock',
+                component: StockComponent
             },
 
         ]

@@ -1,0 +1,106 @@
+//FORMULARIO MODAL STYLES
+.modal-fondo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-container {
+    position: relative;   // ← esto es clave
+    background: #ffffff;
+    width: 420px;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.25);
+    animation: fadeIn 0.25s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-buttons {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cdk-overlay-container, .cdk-overlay-pane {
+    z-index: 3000 !important;
+}
+.cdk-overlay-container {
+    position: fixed !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
+.mat-select-panel {
+    z-index: 99999 !important;
+}
+
+
+// FIN FORMULARIO MODAL STYLES
+
+// STYLES SOLO VER FORM
+/* Estilo campos disabled para modo VER */
+.mat-form-field-disabled {
+    opacity: 1 !important;
+}
+
+/* Evitar color gris apagado */
+.modal-form input[disabled],
+.modal-form textarea[disabled],
+.modal-form .mat-select-disabled .mat-select-value {
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+}
+
+.modal-form .mat-input-element:disabled {
+    color: #111827 !important;
+}
+
+.modal-form .mat-form-field-disabled .mat-form-field-outline {
+    opacity: 0.9;
+}
+
+.modal-form .mat-form-field-disabled .mat-form-field-outline-thick {
+    opacity: 1;
+}
+
+.modal-form .mat-form-field-disabled .mat-form-field-label {
+    color: #4b5563 !important;
+}
+

@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // <--- Importamos SnackBar
 
+// Material Imports
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -11,117 +14,105 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
+import { DialogSeleccionarItemComponent } from './dialog-seleccionar-item/dialog-seleccionar-item.component';
+
 interface DetalleCarga {
-    itemId: number;
+    id: number;
     nombre: string;
-    cantidadBase: number;
-    cantidadExtra: number;
-    total: number;
+    cantidad: number;
+    codigo: string;
+    tipo: string;
 }
 
 @Component({
-  selector: 'app-abastecer-vuelo',
-  imports: [
-      CommonModule,
-      ReactiveFormsModule,
-      FormsModule,
-      MatFormFieldModule,
-      MatInputModule,
-      MatSelectModule,
-      MatButtonModule,
-      MatIconModule,
-      MatDatepickerModule,
-      MatNativeDateModule,
-      MatAutocompleteModule
-  ],
-  templateUrl: './abastecer-vuelo.component.html',
-  styleUrl: './abastecer-vuelo.component.scss'
+    selector: 'app-abastecer-vuelo',
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        FormsModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatButtonModule,
+        MatIconModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatAutocompleteModule,
+        MatSnackBarModule // <--- Agregamos el módulo aquí
+    ],
+    templateUrl: './abastecer-vuelo.component.html',
+    styleUrl: './abastecer-vuelo.component.scss'
 })
 export class AbastecerVueloComponent implements OnInit {
-    vueloForm: FormGroup;
+    abastecimientoForm: FormGroup;
     listaCarga: DetalleCarga[] = [];
 
-
-    vuelosProgramados = [
-        { id: 101, codigo: 'OB-760', ruta: 'CBB - MIA', fecha: '2025-05-20', avion: 'Boeing 737-300' },
-        { id: 102, codigo: 'OB-680', ruta: 'VVI - MAD', fecha: '2025-05-20', avion: 'Airbus A330' },
-        { id: 103, codigo: 'OB-550', ruta: 'LPB - VVI', fecha: '2025-05-21', avion: 'Boeing 737-700' }
+    // DATOS MOCK
+    aeronaves = [
+        { id: 1, matricula: 'CP-2550', modelo: 'Boeing 737-300' },
+        { id: 2, matricula: 'CP-2551', modelo: 'Boeing 737-700' },
+        { id: 3, matricula: 'CP-3030', modelo: 'Airbus A330' }
     ];
 
-
-    configuracionesDisponibles = [
-        {
-            id: 1,
-            nombre: 'Estándar Nacional (B737)',
-            items: [
-                { itemId: 1, nombre: 'Sandwich de Pollo', cantidad: 50 },
-                { itemId: 2, nombre: 'Coca Cola 350ml', cantidad: 50 }
-            ]
-        },
-        {
-            id: 2,
-            nombre: 'Internacional Full (A330)',
-            items: [
-                { itemId: 1, nombre: 'Sandwich de Pollo', cantidad: 200 },
-                { itemId: 2, nombre: 'Coca Cola 350ml', cantidad: 200 },
-                { itemId: 3, nombre: 'Whisky Etiqueta Negra', cantidad: 20 }
-            ]
-        }
+    destinos = [
+        { codigo: 'MIA', nombre: 'Miami' },
+        { codigo: 'MAD', nombre: 'Madrid' },
+        { codigo: 'SAO', nombre: 'Sao Paulo' },
+        { codigo: 'BUE', nombre: 'Buenos Aires' },
+        { codigo: 'VVI', nombre: 'Viru Viru' }
     ];
 
-    itemsExtras = [
-        { id: 8, nombre: 'Hielo Bolsa 5kg' },
-        { id: 9, nombre: 'Limón Granel' },
-        { id: 10, nombre: 'Vaso Plástico' }
+    historialAbastecimientos = [
+        { aeronave: 'CP-2550', destino: 'MIA', fecha: '20/05/2025', usuario: 'Juan Perez' },
+        { aeronave: 'CP-3030', destino: 'MAD', fecha: '19/05/2025', usuario: 'Maria Delgado' }
     ];
 
-
-    constructor(private fb: FormBuilder) {}
+    constructor(
+        private fb: FormBuilder,
+        private dialog: MatDialog,
+        private snackBar: MatSnackBar // <--- Inyectamos SnackBar
+    ) {}
 
     ngOnInit(): void {
-        this.vueloForm = this.fb.group({
-            vueloId: ['', Validators.required],
-            fecha: [new Date(), Validators.required],
-            configuracionId: ['', Validators.required]
-        });
-
-
-        this.vueloForm.get('configuracionId')?.valueChanges.subscribe(configId => {
-            this.aplicarPlantilla(configId);
+        this.abastecimientoForm = this.fb.group({
+            aeronaveId: ['', Validators.required],
+            destino: ['', Validators.required],
+            fecha: [new Date(), Validators.required]
         });
     }
 
+    // Abre el modal de selección múltiple
+    abrirNuevoItem(): void {
+        const dialogRef = this.dialog.open(DialogSeleccionarItemComponent, {
+            width: '900px',   // <--- Hacemos el modal grande
+            maxWidth: '95vw',
+            height: '85vh',
+            panelClass: 'custom-dialog-container'
+        });
 
-    aplicarPlantilla(configId: number): void {
-        const config = this.configuracionesDisponibles.find(c => c.id === configId);
+        dialogRef.afterClosed().subscribe((itemsSeleccionados: any[]) => {
+            if (itemsSeleccionados && itemsSeleccionados.length > 0) {
 
-        if (config) {
-            this.listaCarga = config.items.map(item => ({
-                itemId: item.itemId,
-                nombre: item.nombre,
-                cantidadBase: item.cantidad,
-                cantidadExtra: 0,
-                total: item.cantidad
-            }));
-        }
-    }
+                itemsSeleccionados.forEach(item => {
+                    // Verificamos si ya existe
+                    const existe = this.listaCarga.find(i => i.id === item.id);
 
-
-    actualizarTotal(index: number): void {
-        const item = this.listaCarga[index];
-
-        if (item.cantidadExtra < 0) item.cantidadExtra = 0;
-        item.total = item.cantidadBase + item.cantidadExtra;
-    }
-
-
-    agregarItemExtra(): void {
-        this.listaCarga.push({
-            itemId: 99,
-            nombre: 'Hielo Bolsa 5kg (Extra)',
-            cantidadBase: 0,
-            cantidadExtra: 1,
-            total: 1
+                    if (!existe) {
+                        this.listaCarga.push({
+                            id: item.id,
+                            nombre: item.nombre,
+                            cantidad: item.cantidad, // <--- Usamos la cantidad que viene del modal
+                            codigo: 'ITM-' + item.id,
+                            tipo: item.unidad
+                        });
+                    } else {
+                        // Opcional: Si ya existe, sumamos lo nuevo a lo viejo
+                        existe.cantidad += item.cantidad;
+                    }
+                });
+            }
         });
     }
 
@@ -129,16 +120,44 @@ export class AbastecerVueloComponent implements OnInit {
         this.listaCarga.splice(index, 1);
     }
 
-    confirmarAbastecimiento(): void {
-        if (this.vueloForm.valid && this.listaCarga.length > 0) {
-            const datos = {
-                vuelo: this.vueloForm.value,
-                detalle: this.listaCarga
+    guardarAbastecimiento(): void {
+        if (this.abastecimientoForm.valid && this.listaCarga.length > 0) {
+
+            const formValue = this.abastecimientoForm.value;
+
+            // Buscamos la matrícula visualmente para el historial
+            const avionObj = this.aeronaves.find(a => a.id === formValue.aeronaveId);
+            const matricula = avionObj ? avionObj.matricula : 'Desconocido';
+
+            // Creamos el nuevo registro
+            const nuevoRegistro = {
+                aeronave: matricula,
+                destino: formValue.destino,
+                fecha: new Date(formValue.fecha).toLocaleDateString(),
+                usuario: 'Usuario Actual'
             };
-            console.log('Enviando a BD (Tabla Abastecimiento):', datos);
-            alert('Vuelo abastecido correctamente. Stock descontado.');
+
+            // <--- ACTUALIZAMOS EL HISTORIAL VISUALMENTE (Spread Operator)
+            this.historialAbastecimientos = [nuevoRegistro, ...this.historialAbastecimientos];
+
+            // <--- NOTIFICACIÓN ELEGANTE (SnackBar)
+            this.snackBar.open('✅ Abastecimiento registrado correctamente', 'Cerrar', {
+                duration: 3000,
+                horizontalPosition: 'center',
+                verticalPosition: 'bottom',
+                panelClass: ['bg-gray-800', 'text-white'] // Estilos opcionales si usas Tailwind
+            });
+
+            // Limpiamos la tabla y reseteamos (opcional)
+            this.listaCarga = [];
+            // this.abastecimientoForm.reset();
+
         } else {
-            alert('Seleccione vuelo, configuración y verifique la carga.');
+            // Notificación de Error
+            this.snackBar.open('⚠️ Faltan datos: Seleccione avión y agregue items.', 'Cerrar', {
+                duration: 3000,
+                panelClass: ['bg-red-600', 'text-white']
+            });
         }
     }
 }

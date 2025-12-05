@@ -1,73 +1,83 @@
-<div class="w-full flex-auto p-6 sm:p-10">
+<div class="w-full flex-auto p-6 sm:p-10 bg-gray-50 min-h-screen">
 
-    <h2 class="text-3xl font-bold tracking-tight mb-8">Compras exterior</h2>
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold tracking-tight text-blue-900">Nueva Compra Exterior</h2>
+        <p class="text-gray-500">Generar orden de compra y envío a Viru Viru.</p>
+    </div>
 
-    <form [formGroup]="compraForm" (ngSubmit)="guardarCompra()">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
+        <form [formGroup]="compraForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Proveedor</mat-label>
+                <input matInput formControlName="proveedor" placeholder="Ej. Amazon Inc.">
+                <mat-icon matSuffix>store</mat-icon>
+            </mat-form-field>
 
-            <div class="lg:col-span-2">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Fecha Requerida</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fechaRequerida">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
 
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Nombre</mat-label>
-                        <mat-select formControlName="nombre">
-                            @for (nombre of nombres; track nombre) {
-                                <mat-option [value]="nombre">{{ nombre }}</mat-option>
-                            }
-                        </mat-select>
-                    </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full bg-gray-50 rounded text-gray-500">
+                <mat-label>Almacén Destino</mat-label>
+                <mat-select formControlName="almacenDestino">
+                    @for (almacen of almacenes; track almacen) {
+                        <mat-option [value]="almacen">{{ almacen }}</mat-option>
+                    }
+                </mat-select>
+                <mat-icon matSuffix>flight_land</mat-icon>
+            </mat-form-field>
+        </form>
 
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Fecha requerida</mat-label>
-                        <input matInput [matDatepicker]="picker" formControlName="fecha" placeholder="dd/mm/aaaa">
-                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-datepicker #picker></mat-datepicker>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Carga</mat-label>
-                        <mat-select formControlName="carga">
-                            @for (carga of cargas; track carga) {
-                                <mat-option [value]="carga">{{ carga }}</mat-option>
-                            }
-                        </mat-select>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Almacen destino</mat-label>
-                        <mat-select formControlName="almacenDestino">
-                            @for (almacen of almacenes; track almacen) {
-                                <mat-option [value]="almacen">{{ almacen }}</mat-option>
-                            }
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="mt-8">
-                    <button
-                        mat-raised-button
-                        color="primary"
-                        type="submit"
-                        class="w-full md:w-auto"
-                        style="background-color: #301934; padding: 20px 40px; font-size: 16px;">
-                        Solicitar
-                    </button>
-                </div>
-            </div>
-
-            <div class="lg:col-span-1">
-                <h3 class="text-lg font-medium mb-2">Reporte de compra</h3>
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Reporte</mat-label>
-                    <textarea
-                        matInput
-                        formControlName="reporte"
-                        rows="15"
-                        placeholder="El reporte se generará aquí..."></textarea>
-                </mat-form-field>
-            </div>
-
+        <div class="flex justify-between items-center mt-6 border-t pt-6">
+            <h3 class="font-bold text-gray-700">Detalle de Productos</h3>
+            <button mat-raised-button color="primary" style="background-color: #0B1E47;" (click)="abrirSeleccionLote()">
+                <mat-icon>playlist_add</mat-icon>
+                Seleccionar en Lote
+            </button>
         </div>
-    </form>
+
+        <div class="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left font-bold text-gray-600">Ítem</th>
+                    <th class="p-3 text-left font-bold text-gray-600">Unidad</th>
+                    <th class="p-3 text-center font-bold text-gray-600">Cantidad Solicitada</th>
+                    <th class="p-3 text-right font-bold text-gray-600">Acción</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @for (item of listaItemsCompra; track $index) {
+                        <tr class="hover:bg-blue-50">
+                            <td class="p-3 text-gray-800 font-medium">{{ item.nombre }}</td>
+                            <td class="p-3 text-gray-500 text-sm">{{ item.unidad }}</td>
+                            <td class="p-3 text-center font-bold">{{ item.cantidadSolicitada }}</td>
+                            <td class="p-3 text-right">
+                                <button mat-icon-button color="warn" (click)="eliminarItem($index)">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    @if (listaItemsCompra.length === 0) {
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-gray-400">
+                                No hay ítems en la orden. Presiona el botón para agregar.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <button mat-raised-button color="primary" class="px-8 py-2 text-lg" (click)="guardarCompra()">
+                Generar Orden
+            </button>
+        </div>
+    </div>
 </div>

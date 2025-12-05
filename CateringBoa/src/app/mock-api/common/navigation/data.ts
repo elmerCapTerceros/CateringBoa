@@ -91,17 +91,33 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         icon : 'heroicons_outline:paper-airplane',
         children:[
             {
-                id: 'config-carga',
+                id: 'grupo-carga',
                 title: 'Configurar Carga',
-                type: 'basic',
+                type: 'collapsable',
                 link : '/catering/configuracion',
-                icon: 'heroicons_outline:cube'
+                icon: 'heroicons_outline:cube',
+                children:[
+                    {
+                        id   : 'carga',
+                        title: 'Carga',
+                        type : 'basic',
+                        icon : 'heroicons_outline:clipboard-document-list',
+                        link : '/catering/carga',
+                    },
+                    {
+                        id: 'config-carga',
+                        title: 'Configurar Carga',
+                        type: 'basic',
+                        link : '/catering/configuracion',
+                        icon: 'heroicons_outline:cog-6-tooth',
+                    }
+                ]
             },
             {
                 id: 'grupo-abastecimiento',
                 title: 'Abastecimiento',
-                type: 'collapsable', // Ahora es desplegable
-                icon: 'heroicons_outline:truck', // Icono de camión
+                type: 'collapsable',
+                icon: 'heroicons_outline:truck',
                 children: [
                     {
                         id: 'abastecer-nuevo',
@@ -120,6 +136,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 ]
             },
 
+
         ]
     },
     {
@@ -129,21 +146,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         link : '/catering/cierre',
         icon : 'heroicons_outline:clipboard-document-check'
     },
-    {
-        id   : 'carga',
-        title: 'Carga',
-        type : 'collapsable',
-        icon : 'heroicons_outline:cube',
-        children:[
-            {
-                id: 'listar-cargas',
-                title: 'Mis Cargas',
-                icon : 'mat_outline:briefcase',
-                type: 'basic',
-                link : '/catering/carga'
-            }
-        ]
-    },
+
 
     {
         id   : 'almacen',

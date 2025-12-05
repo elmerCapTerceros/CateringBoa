@@ -1,20 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { MatIconModule } from '@angular/material/icon';
+// Material Imports
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+
+// REUTILIZAMOS TU MODAL DE SELECCIÓN MÚLTIPLE
+import { DialogSeleccionarItemComponent } from '../../abastecer-vuelo/dialog-seleccionar-item/dialog-seleccionar-item.component';
 
 @Component({
   selector: 'app-compra',
   imports: [
       CommonModule,
       ReactiveFormsModule,
+      FormsModule,
+      MatDialogModule,
+      MatSnackBarModule,
       MatFormFieldModule,
       MatInputModule,
       MatSelectModule,
@@ -28,43 +37,81 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class CompraComponent implements  OnInit{
     compraForm: FormGroup;
+    listaItemsCompra: any[] = [];
 
+    // Destino fijo según requerimiento
+    almacenes: string[] = ['Viru Viru - Principal', 'Miami', 'Madrid'];
 
-    nombres: string[] = ['Almohada', 'Manta', 'Audifonos'];
-    cargas: string[] = ['Carga 1', 'Carga 2', 'Carga 3'];
-    almacenes: string[] = ['Miami - cod 123', 'Madrid - cod 456', 'Viru Viru - cod 789'];
-
-    constructor(private fb: FormBuilder) { }
+    constructor(
+        private fb: FormBuilder,
+        private dialog: MatDialog,
+        private snackBar: MatSnackBar
+    ) { }
 
     ngOnInit(): void {
-
         this.compraForm = this.fb.group({
-            nombre: ['', Validators.required],
-            fecha: ['', Validators.required],
-            carga: ['', Validators.required],
-            almacenDestino: ['', Validators.required],
-            reporte: [{ value: '', disabled: true }] // El campo de "Reporte"
+            proveedor: ['', Validators.required],
+            fechaRequerida: [new Date(), Validators.required],
+            // REQUERIMIENTO: Viru Viru por defecto y deshabilitado para edición
+            almacenDestino: [{ value: 'Viru Viru - Principal', disabled: true }, Validators.required],
+            observaciones: ['']
         });
     }
 
+    // ABRIR EL MODAL DE SELECCIÓN MÚLTIPLE (IGUAL QUE EN ABASTECIMIENTO)
+    abrirSeleccionLote(): void {
+        const dialogRef = this.dialog.open(DialogSeleccionarItemComponent, {
+            width: '900px',
+            maxWidth: '95vw',
+            height: '85vh',
+        });
+
+        dialogRef.afterClosed().subscribe((items: any[]) => {
+            if (items && items.length > 0) {
+                items.forEach(newItem => {
+                    const existe = this.listaItemsCompra.find(i => i.id === newItem.id);
+                    if (existe) {
+                        existe.cantidadSolicitada += newItem.cantidad;
+                    } else {
+                        // Agregamos al lote
+                        this.listaItemsCompra.push({
+                            id: newItem.id,
+                            nombre: newItem.nombre,
+                            unidad: newItem.unidad,
+                            cantidadSolicitada: newItem.cantidad, // Cantidad que viene del modal
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    eliminarItem(index: number): void {
+        this.listaItemsCompra.splice(index, 1);
+    }
 
     guardarCompra(): void {
-        if (this.compraForm.valid) {
-            console.log('Formulario Válido:', this.compraForm.value);
-            alert('Compra Solicitada!');
+        if (this.listaItemsCompra.length > 0 && this.compraForm.valid) {
 
-            const reporteTexto = `
-        Compra Solicitada:
-        - Nombre: ${this.compraForm.value.nombre}
-        - Fecha: ${this.compraForm.value.fecha.toLocaleDateString()}
-        - Carga: ${this.compraForm.value.carga}
-        - Destino: ${this.compraForm.value.almacenDestino}
-      `;
-            this.compraForm.get('reporte').setValue(reporteTexto);
+            // Lógica de guardado simulada
+            console.log('Orden Generada:', {
+                cabecera: this.compraForm.getRawValue(),
+                detalle: this.listaItemsCompra
+            });
 
+            this.snackBar.open('✅ Orden de Compra Generada y enviada a Viru Viru', 'Cerrar', {
+                duration: 4000,
+                panelClass: ['bg-green-700', 'text-white']
+            });
+
+            // Limpiar
+            this.listaItemsCompra = [];
+            this.compraForm.patchValue({
+                proveedor: '',
+                observaciones: ''
+            });
         } else {
-            console.log('Formulario Inválido');
-            alert('Por favor complete todos los campos.');
+            this.snackBar.open('⚠️ Complete el proveedor y agregue productos.', 'Cerrar', { duration: 3000 });
         }
     }
 }

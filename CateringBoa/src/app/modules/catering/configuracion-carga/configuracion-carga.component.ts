@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // <--- IMPORTANTE
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Router } from '@angular/router'; // <--- IMPORTANTE: Importar Router
 
 // Material Imports
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,14 +13,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 
-// Importamos el Modal que ya creaste
 import { DialogSeleccionarItemComponent } from '../abastecer-vuelo/dialog-seleccionar-item/dialog-seleccionar-item.component';
 
 interface ItemConfigurado {
     itemId: number;
     nombre: string;
     cantidad: number;
-    unidad: string; // Agregamos unidad para mostrarla
+    unidad: string;
 }
 
 @Component({
@@ -47,8 +47,9 @@ export class ConfiguracionCargaComponent implements OnInit {
 
     constructor(
         private fb: FormBuilder,
-        private dialog: MatDialog, // Inyectamos Dialog
-        private snackBar: MatSnackBar
+        private dialog: MatDialog,
+        private snackBar: MatSnackBar,
+        private router: Router // <--- INYECCIÓN DEL ROUTER
     ) {}
 
     ngOnInit(): void {
@@ -59,7 +60,12 @@ export class ConfiguracionCargaComponent implements OnInit {
         });
     }
 
-    // --- LÓGICA NUEVA: ABRIR MODAL GLOBAL ---
+    // --- FUNCIÓN PARA VOLVER ---
+    volverAAbastecimiento(): void {
+        this.router.navigate(['/catering/abastecer']);
+    }
+
+    // ... (El resto de funciones: abrirSeleccionGlobal, eliminarItem, guardarConfiguracion se mantienen igual)
     abrirSeleccionGlobal(): void {
         const dialogRef = this.dialog.open(DialogSeleccionarItemComponent, {
             width: '900px',
@@ -69,24 +75,19 @@ export class ConfiguracionCargaComponent implements OnInit {
 
         dialogRef.afterClosed().subscribe((itemsSeleccionados: any[]) => {
             if (itemsSeleccionados && itemsSeleccionados.length > 0) {
-
                 itemsSeleccionados.forEach(newItem => {
-                    // Verificamos si ya existe en la configuración para sumar cantidad
                     const existente = this.itemsAgregados.find(i => i.itemId === newItem.id);
-
                     if (existente) {
                         existente.cantidad += newItem.cantidad;
                     } else {
-                        // Agregamos nuevo item configurado
                         this.itemsAgregados.push({
                             itemId: newItem.id,
                             nombre: newItem.nombre,
                             unidad: newItem.unidad,
-                            cantidad: newItem.cantidad // Cantidad que viene del modal
+                            cantidad: newItem.cantidad
                         });
                     }
                 });
-
                 this.mostrarNotificacion('Ítems agregados a la plantilla');
             }
         });
@@ -98,14 +99,8 @@ export class ConfiguracionCargaComponent implements OnInit {
 
     guardarConfiguracion(): void {
         if (this.configForm.valid && this.itemsAgregados.length > 0) {
-            console.log('Guardando Config:', {
-                cabecera: this.configForm.value,
-                items: this.itemsAgregados
-            });
-
-            this.mostrarNotificacion('✅ Plantilla de Carga Guardada Exitosamente');
-
-            // Limpiar (Opcional)
+            console.log('Guardando Config:', { cabecera: this.configForm.value, items: this.itemsAgregados });
+            this.mostrarNotificacion('✅ Plantilla Guardada');
             this.itemsAgregados = [];
             this.configForm.reset({ clase: 'Económica' });
         } else {

@@ -2,23 +2,19 @@
 
     <div class="mb-8">
         <h2 class="text-3xl font-bold tracking-tight text-blue-900">Abastecimiento</h2>
-        <p class="text-gray-500">Registro de carga por aeronave</p>
+        <p class="text-gray-500">Registro de carga por aeronave.</p>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
-
-        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Formulario</h3>
+        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Datos del Vuelo</h3>
 
         <form [formGroup]="abastecimientoForm">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Aeronave</mat-label>
-                    <mat-select formControlName="aeronaveId" placeholder="Seleccionar Matrícula">
+                    <mat-select formControlName="aeronaveId">
                         @for (avion of aeronaves; track avion.id) {
-                            <mat-option [value]="avion.id">
-                                <span class="font-bold">{{ avion.matricula }}</span> - {{ avion.modelo }}
-                            </mat-option>
+                            <mat-option [value]="avion.id"><span class="font-bold">{{ avion.matricula }}</span></mat-option>
                         }
                     </mat-select>
                     <mat-icon matSuffix>flight</mat-icon>
@@ -26,11 +22,9 @@
 
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Destino</mat-label>
-                    <mat-select formControlName="destino" placeholder="Seleccionar Destino">
+                    <mat-select formControlName="destino">
                         @for (dest of destinos; track dest.codigo) {
-                            <mat-option [value]="dest.codigo">
-                                <span class="font-bold">{{ dest.codigo }}</span> - {{ dest.nombre }}
-                            </mat-option>
+                            <mat-option [value]="dest.codigo">{{ dest.nombre }}</mat-option>
                         }
                     </mat-select>
                     <mat-icon matSuffix>location_on</mat-icon>
@@ -38,21 +32,36 @@
 
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Fecha</mat-label>
-                    <input matInput [matDatepicker]="picker" formControlName="fecha">
+                    <input matInput [matDatepicker]="picker" formControlName="fecha" [min]="minDate">
                     <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full bg-blue-50 rounded">
+                    <mat-label>Cargar Plantilla</mat-label>
+                    <mat-select formControlName="plantillaId" placeholder="Seleccionar Carga...">
+                        <mat-option [value]="''">-- Ninguna (Manual) --</mat-option>
+                        @for (plantilla of plantillasCarga; track plantilla.id) {
+                            <mat-option [value]="plantilla.id">{{ plantilla.nombre }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-icon matSuffix class="text-blue-600">fact_check</mat-icon>
                 </mat-form-field>
             </div>
         </form>
 
-        <div class="mb-4">
-            <button mat-raised-button
-                    color="primary"
-                    style="background-color: #0B1E47;"
-                    (click)="abrirNuevoItem()">
-                <mat-icon>add</mat-icon>
-                Nuevo Item
-            </button>
+        <div class="mb-4 flex justify-between items-end">
+            <div>
+                <h4 class="font-bold text-gray-700">Manifiesto de Carga</h4>
+            </div>
+            <div class="flex gap-2">
+                <button mat-stroked-button color="primary" (click)="irAGestionarCargas()">
+                    <mat-icon class="mr-1">settings</mat-icon> Plantillas
+                </button>
+                <button mat-raised-button color="primary" style="background-color: #0B1E47;" (click)="abrirNuevoItem()">
+                    <mat-icon>add</mat-icon> Extra
+                </button>
+            </div>
         </div>
 
         <div class="border border-gray-200 rounded-lg overflow-hidden">
@@ -61,33 +70,29 @@
                 <tr>
                     <th class="p-3 text-left font-bold text-gray-700">Item</th>
                     <th class="p-3 text-center font-bold text-gray-700 w-32">Cantidad</th>
-                    <th class="p-3 text-left font-bold text-gray-700">Código</th>
-                    <th class="p-3 text-left font-bold text-gray-700">Tipo</th>
+                    <th class="p-3 text-center font-bold text-gray-700">Origen</th>
                     <th class="p-3 text-center font-bold text-gray-700 w-20">Acciones</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @for (item of listaCarga; track item.id) {
                         <tr class="hover:bg-blue-50">
-                            <td class="p-3 text-gray-800">{{ item.nombre }}</td>
+                            <td class="p-3 text-gray-800 font-medium">{{ item.nombre }}</td>
                             <td class="p-3 text-center">
-                                <input type="number" [(ngModel)]="item.cantidad"
-                                       class="w-20 border-gray-300 rounded text-center p-1 border shadow-sm">
+                                <input type="number" [(ngModel)]="item.cantidad" class="w-20 border-gray-300 rounded text-center p-1 border font-bold">
                             </td>
-                            <td class="p-3 text-gray-600 font-mono text-sm">{{ item.codigo }}</td>
-                            <td class="p-3 text-gray-600 text-sm">{{ item.tipo }}</td>
                             <td class="p-3 text-center">
-                                <button mat-icon-button color="warn" (click)="eliminarFila($index)">
-                                    <mat-icon>delete</mat-icon>
-                                </button>
+                                <span *ngIf="!item.esExtra" class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">Base</span>
+                                <span *ngIf="item.esExtra" class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded font-bold">Extra</span>
+                            </td>
+                            <td class="p-3 text-center">
+                                <button mat-icon-button color="warn" (click)="eliminarFila($index)"><mat-icon>delete</mat-icon></button>
                             </td>
                         </tr>
                     }
                     @if (listaCarga.length === 0) {
                         <tr>
-                            <td colspan="5" class="p-8 text-center text-gray-400 border-2 border-dashed border-gray-100 m-4">
-                                No hay ítems cargados. Presiona "Nuevo Item" para comenzar.
-                            </td>
+                            <td colspan="4" class="p-8 text-center text-gray-400">Sin ítems cargados.</td>
                         </tr>
                     }
                 </tbody>
@@ -95,15 +100,12 @@
         </div>
 
         <div class="mt-6 flex justify-end">
-            <button mat-raised-button color="primary" class="px-8 py-2 text-lg" (click)="guardarAbastecimiento()">
-                Guardar Abastecimiento
-            </button>
+            <button mat-raised-button color="primary" class="px-8 py-2 text-lg" (click)="guardarAbastecimiento()">Guardar</button>
         </div>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Listado Histórico</h3>
-
         <table class="w-full">
             <thead>
             <tr class="text-left text-gray-500 text-sm border-b">
@@ -111,18 +113,18 @@
                 <th class="pb-2 font-medium">Destino</th>
                 <th class="pb-2 font-medium">Fecha</th>
                 <th class="pb-2 font-medium">Usuario</th>
-                <th class="pb-2 text-right">Acción</th>
+                <th class="pb-2 text-right">Detalle</th>
             </tr>
             </thead>
             <tbody>
-                @for (hist of historialAbastecimientos; track hist.aeronave) {
+                @for (hist of historialAbastecimientos; track hist) {
                     <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50">
                         <td class="py-3 font-bold text-blue-900">{{ hist.aeronave }}</td>
                         <td class="py-3">{{ hist.destino }}</td>
                         <td class="py-3 text-gray-500">{{ hist.fecha }}</td>
                         <td class="py-3 text-gray-500 text-sm">{{ hist.usuario }}</td>
                         <td class="py-3 text-right">
-                            <button mat-icon-button color="primary">
+                            <button mat-icon-button color="primary" (click)="verDetalle(hist)" matTooltip="Ver items cargados">
                                 <mat-icon>visibility</mat-icon>
                             </button>
                         </td>
@@ -133,3 +135,51 @@
     </div>
 
 </div>
+
+<ng-template #detalleModal>
+    <div class="flex flex-col h-full">
+        <div class="p-6 border-b border-gray-200 bg-blue-50 flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-blue-900 m-0">Detalle de Carga</h2>
+                <div class="text-sm text-gray-600 mt-1 flex gap-4">
+                    <span>Avión: <b>{{ registroSeleccionado?.aeronave }}</b></span>
+                    <span>Destino: <b>{{ registroSeleccionado?.destino }}</b></span>
+                </div>
+            </div>
+            <button mat-icon-button [mat-dialog-close]="true"><mat-icon>close</mat-icon></button>
+        </div>
+
+        <div class="p-0 overflow-auto max-h-[400px]">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100 text-gray-500">
+                <tr>
+                    <th class="p-3 text-left">Ítem</th>
+                    <th class="p-3 text-center">Tipo</th>
+                    <th class="p-3 text-center">Cantidad</th>
+                    <th class="p-3 text-center">Origen</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @for (item of registroSeleccionado?.items; track item.id) {
+                        <tr>
+                            <td class="p-3 font-medium">{{ item.nombre }}</td>
+                            <td class="p-3 text-center text-gray-500">{{ item.tipo }}</td>
+                            <td class="p-3 text-center font-bold text-blue-800">{{ item.cantidad }}</td>
+                            <td class="p-3 text-center">
+                                <span class="text-xs px-2 py-0.5 rounded"
+                                      [class.bg-blue-100]="!item.esExtra" [class.text-blue-800]="!item.esExtra"
+                                      [class.bg-orange-100]="item.esExtra" [class.text-orange-800]="item.esExtra">
+                                    {{ item.esExtra ? 'Extra' : 'Base' }}
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-4 border-t border-gray-200 text-right">
+            <button mat-stroked-button [mat-dialog-close]="true">Cerrar</button>
+        </div>
+    </div>
+</ng-template>

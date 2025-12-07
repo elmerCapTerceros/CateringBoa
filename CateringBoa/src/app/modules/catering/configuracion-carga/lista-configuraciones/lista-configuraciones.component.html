@@ -1,0 +1,70 @@
+<div class="w-full flex-auto p-6 sm:p-10 bg-gray-50 min-h-screen">
+
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold tracking-tight text-blue-900">Plantillas de Carga</h2>
+            <p class="text-gray-500">Gestión de configuraciones estándar por tipo de avión.</p>
+        </div>
+
+        <button mat-raised-button
+                color="primary"
+                style="background-color: #0B1E47;"
+                (click)="irACrearNueva()">
+            <mat-icon class="mr-2">add</mat-icon>
+            Nueva Plantilla
+        </button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-gray-100 text-xs uppercase text-gray-500 font-semibold">
+            <tr>
+                <th class="p-4">Nombre Configuración</th>
+                <th class="p-4">Aeronave Compatible</th>
+                <th class="p-4 text-center">Clase</th>
+                <th class="p-4 text-center">Cant. Ítems</th>
+                <th class="p-4 text-right">Última Mod.</th>
+                <th class="p-4 text-right">Acciones</th>
+            </tr>
+            </thead>
+            <tbody class="text-sm text-gray-700 divide-y divide-gray-100">
+                @for (config of configuraciones; track config.id) {
+                    <tr class="hover:bg-blue-50 transition-colors">
+                        <td class="p-4 font-bold text-gray-800">{{ config.nombre }}</td>
+                        <td class="p-4">
+                            <div class="flex items-center">
+                                <mat-icon class="text-gray-400 icon-size-4 mr-2">flight</mat-icon>
+                                {{ config.aeronave }}
+                            </div>
+                        </td>
+                        <td class="p-4 text-center">
+                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs border border-gray-200">
+                                {{ config.clase }}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center font-medium">{{ config.totalItems }}</td>
+                        <td class="p-4 text-right text-gray-500 text-xs">{{ config.ultimaModificacion }}</td>
+
+                        <td class="p-4 text-right">
+                            <div class="flex justify-end gap-1">
+                                <button mat-icon-button color="primary" (click)="editar(config)" matTooltip="Editar">
+                                    <mat-icon>edit</mat-icon>
+                                </button>
+                                <button mat-icon-button color="warn" (click)="eliminar(config.id)" matTooltip="Eliminar">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (configuraciones.length === 0) {
+                    <tr>
+                        <td colspan="6" class="p-12 text-center text-gray-400">
+                            No hay plantillas creadas.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

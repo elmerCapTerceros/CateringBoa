@@ -231,6 +231,7 @@ export class CrearSolicitudComponent implements OnInit {
             this.solicitudForm.reset({prioridad: '2'});
             this.items.clear();
             this.agregarItem();
+            this.redirigir();
 
             this.snackBar.open('Formulario cancelado', 'Cerrar', {
                 duration: 2000

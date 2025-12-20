@@ -57,7 +57,7 @@ export class CrearSolicitudComponent implements OnInit {
 
     solicitudForm: FormGroup;
     isLoading = false;
-
+    minDate = new Date();
     almacenes: Almacen[] = [
         {value: 'Miami', viewValue: 'Miami'},
         {value: 'Madrid', viewValue: 'Madrid'},
@@ -231,6 +231,7 @@ export class CrearSolicitudComponent implements OnInit {
             this.solicitudForm.reset({prioridad: '2'});
             this.items.clear();
             this.agregarItem();
+            this.redirigir();
 
             this.snackBar.open('Formulario cancelado', 'Cerrar', {
                 duration: 2000

@@ -4,8 +4,8 @@
             <h2 class="text-3xl font-bold">Solicitudes de Almacénes</h2>
             <button
                 type="button"
-                routerLink="/catering/new"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+                routerLink="/catering/crear-solicitud-almacen"
+                class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
                 + Nueva Solicitud
             </button>
         </div>
@@ -16,7 +16,7 @@
                 <!-- Filtro por Almacén -->
                 <div>
                     <mat-form-field appearance="outline" class="w-64">
-                        <mat-label>Filtrar por almaacén:</mat-label>
+                        <mat-label>Filtrar por almacén:</mat-label>
                         <mat-select formControlName="almacen">
                             @for (almacen of almacenes; track almacen.value) {
                                 <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>
@@ -45,13 +45,110 @@
                 <button
                     type="button"
                     (click)="limpiarFiltros()"
-                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium shadow-lg transition-colors text-sm">
                     Limpiar filtros
                 </button>
             </div>
 
         </form>
 
+        <div class="overflow-x-auto bg-white rounded-lg shadow">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-800 text-white text-sm">
+                <tr>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Almacén Solicitante
+                    </th>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Almacén Solicitado
+                    </th>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Fecha
+                    </th>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Descripción
+                    </th>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Prioridad
+                    </th>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Estado
+                    </th>
+                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                        Acciones
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @for (solicitud of solicitudesPaginadas; track solicitud.id) {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{solicitud.almacenSolicitante}}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {{solicitud.almacenSolicitado}}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {{solicitud.fecha}}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900 max-w-xs truncate">
+                                    {{solicitud.descripcion}}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900 max-w-xs truncate">
+                                    {{solicitud.prioridad}}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    [class]="getEstadoClass(solicitud.estado)"
+                                    class="px-3 py-1 rounded-full text-xs font-semibold">
+                                    {{ solicitud.estado }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex gap-2">
+                                    <button
+                                        type="button"
+                                        (click)="verDetalle(solicitud.id)"
+                                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Ver detalle">
+                                        <mat-icon class="icon-size-5">visibility</mat-icon>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        (click)="eliminarSolicitud(solicitud.id)"
+                                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Eliminar">
+                                        <mat-icon class="icon-size-5">delete</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @empty {
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                No se encontraron solicitudes
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
 
+            <mat-paginator [length]="solicitudesFiltradas.length"
+                           [pageSize]="5"
+                           [pageSizeOptions]="[5, 10, 25, 100]"
+                           aria-label="Select page">
+            </mat-paginator>
+            </div>
+        </div>
     </div>
-</div>

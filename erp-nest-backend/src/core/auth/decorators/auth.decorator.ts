@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { RolProtected } from './rol-protected.decorator';
 import { UserRoleGuard } from '../guards/user-role/user-role.guard';
+// @ts-ignore
 import { Role } from '@prisma/client';
 
 export function Auth(...roles: Role[]) {

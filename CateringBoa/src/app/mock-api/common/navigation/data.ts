@@ -122,6 +122,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                         id: 'config-carga',
                         title: 'Gestionar Plantillas',
                         type: 'basic',
+                        icon: 'heroicons_outline:document-duplicate',
                         link : '/catering/configuracion/listado'
                     },
                 ]

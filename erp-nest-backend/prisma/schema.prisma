@@ -19,19 +19,305 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  emailVerified DateTime?
-  password      String
-  role          Role      @default(user)
-  avatar        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String              @id @default(uuid())
+  name              String
+  email             String              @unique
+  emailVerified     DateTime?
+  password          String
+  role              Role                @default(user)
+  avatar            String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
   // Relations and Indexes
+  Abastecimiento    Abastecimiento[]
+  Solicitud         Solicitud[]
+  SolicitudDotacion SolicitudDotacion[]
 }
 
 model Customer {
   id   String @id @default(uuid())
   name String
+}
+
+// --------------------------------------------------------
+// 2. INTEGRACIÓN DEL SCRIPT SQL (CATERING & FLOTA)
+// --------------------------------------------------------
+
+model Flota {
+  idFlota     Int        @id @default(autoincrement())
+  nombreFlota String     @map("Nombre_flota") @db.VarChar(45)
+  descripcion String     @db.VarChar(45)
+  aeronaves   Aeronave[]
+}
+
+model Aeronave {
+  idAeronave   Int    @id @default(autoincrement())
+  matricula    String @db.VarChar(45)
+  tipoAeronave String @map("tipo_aeronave") @db.VarChar(45)
+  flotaId      Int    @map("Flota_idFlota")
+
+  flota Flota @relation(fields: [flotaId], references: [idFlota])
+
+  cargas         Carga[]
+  rutas          AeronaveHasRuta[]
+  solicitudesDot SolicitudDotacion[]
+  detallesCarga  DetalleCarga[]
+}
+
+model Almacen {
+  idAlmacen     Int    @id @default(autoincrement())
+  nombreAlmacen String @map("nombre_almacer") @db.VarChar(45)
+  tipoAlmacen   String @map("tipo_almacen") @db.VarChar(45)
+  ubicacion     String @db.VarChar(45)
+  codigo        String @db.VarChar(45)
+
+  stocks             Stock[]
+  solicitudesOrigen  Solicitud[]         @relation("AlmacenSolicitante")
+  solicitudesDestino Solicitud[]         @relation("AlmacenSolicitado")
+  solicitudesDot     SolicitudDotacion[]
+}
+
+model Stock {
+  idStock   Int @id @default(autoincrement())
+  almacenId Int @map("Almacen_idAlmacen")
+
+  almacen Almacen @relation(fields: [almacenId], references: [idAlmacen])
+
+  abastecimientos Abastecimiento[]
+  detallesStock   DetalleStock[]
+  entregas        Entrega[]
+}
+
+model Item {
+  idItem        Int    @id @default(autoincrement())
+  nombreItem    String @map("nombre_item") @db.VarChar(45)
+  tipoItem      String @map("tipo_item") @db.VarChar(45)
+  categoriaItem String @map("categoria_item") @db.VarChar(45)
+
+  // Relaciones
+  abastecimientos   Abastecimiento[]
+  comprasExteriores ComprasExteriores[]
+  detallesSolicitud DetalleSolicitud[]
+  detallesCarga     DetalleCarga[]
+  detallesStock     DetalleStock[]
+
+  // Para la funcionalidad de Plantillas (Frontend)
+  detallesPlantilla DetallePlantilla[]
+}
+
+// 3. OPERACIONES (ABASTECIMIENTO, CARGA, SOLICITUDES)
+
+model Abastecimiento {
+  idAbastecimiento Int      @default(autoincrement())
+  stockId          Int      @map("Stock_idStock")
+  itemId           Int      @map("Item_idItem")
+  fecha            DateTime @db.Date
+  usuarioId        String   @map("Usuario_idUsuario")
+  clase            String   @db.VarChar(45)
+
+  stock   Stock @relation(fields: [stockId], references: [idStock])
+  item    Item  @relation(fields: [itemId], references: [idItem])
+  usuario User  @relation(fields: [usuarioId], references: [id])
+
+  cargas Carga[]
+
+  @@id([idAbastecimiento, itemId])
+}
+
+model Carga {
+  idCarga              Int @default(autoincrement())
+  aeronaveId           Int @map("Aeronave_idAeronave")
+  abastecimientoId     Int @map("Abastecimiento_idAbastecimiento")
+  abastecimientoItemId Int @map("Abastecimiento_Item_idItem")
+
+  aeronave       Aeronave       @relation(fields: [aeronaveId], references: [idAeronave])
+  abastecimiento Abastecimiento @relation(fields: [abastecimientoId, abastecimientoItemId], references: [idAbastecimiento, itemId])
+
+  configuraciones Configuracion[]
+  detallesCarga   DetalleCarga[]
+
+  @@id([idCarga, aeronaveId])
+}
+
+model Solicitud {
+  idSolicitud          Int      @id @default(autoincrement())
+  usuarioId            String   @map("Usuario_idUsuario")
+  descripcion          String   @db.VarChar(45)
+  fecha                DateTime @db.Date
+  prioridad            String   @db.VarChar(45)
+  estado               String   @map("Estado") @db.VarChar(45)
+  almacenSolicitanteId Int      @map("AlmacenSolicitante_id")
+  almacenSolicitadoId  Int      @map("AlmacenSolicitado_id")
+
+  usuario            User    @relation(fields: [usuarioId], references: [id])
+  almacenSolicitante Almacen @relation("AlmacenSolicitante", fields: [almacenSolicitanteId], references: [idAlmacen])
+  almacenSolicitado  Almacen @relation("AlmacenSolicitado", fields: [almacenSolicitadoId], references: [idAlmacen])
+
+  detalles DetalleSolicitud[]
+}
+
+model Ruta {
+  idRuta    Int               @id @default(autoincrement())
+  origen    String            @db.VarChar(45)
+  destino   String            @db.VarChar(45)
+  aeronaves AeronaveHasRuta[]
+}
+
+model AeronaveHasRuta {
+  aeronaveId Int @map("Aeronave_idAeronave")
+  rutaId     Int @map("Ruta_idRuta")
+
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+  ruta     Ruta     @relation(fields: [rutaId], references: [idRuta])
+
+  @@id([aeronaveId, rutaId])
+}
+
+// 4. COMPRAS Y DETALLES
+
+model ComprasExteriores {
+  idComprasExteriores Int      @id @default(autoincrement()) @map("idCompras_exteriores")
+  itemId              Int      @map("Item_idItem")
+  cantidad            Int      @map("Cantidad")
+  fecha               DateTime @map("date") @db.Date
+
+  item     Item      @relation(fields: [itemId], references: [idItem])
+  entregas Entrega[]
+}
+
+model Entrega {
+  idParcial           Int      @default(autoincrement()) @map("id_parcial")
+  tipoEntrega         String   @map("tipo_entrega") @db.VarChar(45)
+  fecha               DateTime @db.Date
+  cantidad            Int
+  comprasExterioresId Int      @map("Compras_exteriores_idCompras_exteriores")
+  stockId             Int      @map("Stock_idStock")
+
+  comprasExteriores ComprasExteriores @relation(fields: [comprasExterioresId], references: [idComprasExteriores])
+  stock             Stock             @relation(fields: [stockId], references: [idStock])
+
+  @@id([idParcial, comprasExterioresId, stockId])
+}
+
+model DetalleSolicitud {
+  idDetalleSolicitud Int @default(autoincrement()) @map("idDetalle_solicitud")
+  itemId             Int @map("Item_idItem1")
+  solicitudId        Int @map("Solicitud_idSolicitud")
+  cantidad           Int
+
+  item      Item      @relation(fields: [itemId], references: [idItem])
+  solicitud Solicitud @relation(fields: [solicitudId], references: [idSolicitud])
+
+  @@id([idDetalleSolicitud, itemId, solicitudId])
+}
+
+model DetalleCarga {
+  idDetalleCarga  Int @default(autoincrement()) @map("iddetalle_carga")
+  itemId          Int @map("Item_idItem")
+  cargaId         Int @map("Carga_idCarga")
+  cargaAeronaveId Int @map("Carga_Aeronave_idAeronave")
+  cantidad        Int
+
+  item     Item     @relation(fields: [itemId], references: [idItem])
+  carga    Carga    @relation(fields: [cargaId, cargaAeronaveId], references: [idCarga, aeronaveId])
+  aeronave Aeronave @relation(fields: [cargaAeronaveId], references: [idAeronave])
+
+  controlesConsumo ControlConsumo[]
+  remanentes       Remanente[]
+
+  @@id([idDetalleCarga, itemId, cargaId, cargaAeronaveId])
+}
+
+model ControlConsumo {
+  idControlConsumo       Int    @id @default(autoincrement()) @map("idControl_consumo")
+  estado                 String @db.VarChar(45)
+  detalleCargaId         Int    @map("detalle_carga_iddetalle_carga")
+  detalleCargaItemId     Int    @map("detalle_carga_Item_idItem")
+  detalleCargaCargaId    Int    @map("detalle_carga_Carga_idCarga")
+  detalleCargaAeronaveId Int    @map("detalle_carga_Carga_Aeronave_idAeronave")
+  cantidad               Int
+
+  detalleCarga DetalleCarga @relation(fields: [detalleCargaId, detalleCargaItemId, detalleCargaCargaId, detalleCargaAeronaveId], references: [idDetalleCarga, itemId, cargaId, cargaAeronaveId])
+}
+
+model DetalleStock {
+  idDetalleStock Int @default(autoincrement()) @map("idDetalle_Stock")
+  cantidad       Int
+  stockId        Int @map("Stock_idStock")
+  itemId         Int @map("Item_idItem")
+
+  stock Stock @relation(fields: [stockId], references: [idStock])
+  item  Item  @relation(fields: [itemId], references: [idItem])
+
+  @@id([idDetalleStock, itemId])
+}
+
+model Remanente {
+  idRemanente            Int  @id @default(autoincrement())
+  cantidad               Int?
+  detalleCargaId         Int  @map("detalle_carga_iddetalle_carga")
+  detalleCargaItemId     Int  @map("detalle_carga_Item_idItem")
+  detalleCargaCargaId    Int  @map("detalle_carga_Carga_idCarga")
+  detalleCargaAeronaveId Int  @map("detalle_carga_Carga_Aeronave_idAeronave")
+
+  detalleCarga DetalleCarga @relation(fields: [detalleCargaId, detalleCargaItemId, detalleCargaCargaId, detalleCargaAeronaveId], references: [idDetalleCarga, itemId, cargaId, cargaAeronaveId])
+}
+
+model Configuracion {
+  confiId         Int @id @default(autoincrement()) @map("confi_id")
+  cargaId         Int @map("Carga_idCarga")
+  cargaAeronaveId Int @map("Carga_Aeronave_idAeronave")
+
+  carga Carga @relation(fields: [cargaId, cargaAeronaveId], references: [idCarga, aeronaveId])
+}
+
+// 5. SOLUCIÓN AL ERROR DE DOTACIÓN (Simplificación)
+
+model SolicitudDotacion {
+  idSolicitudDotacion Int @id @default(autoincrement()) @map("idSolicitud_Dotacion")
+
+  fecha       DateTime @db.Date
+  estado      String   @map("Estado") @db.VarChar(45)
+  descripcion String   @map("Descripcion") @db.VarChar(45)
+  almacenId   Int      @map("Almacen_idAlmacen")
+  usuarioId   String   @map("Usuario_idUsuario")
+  aeronaveId  Int      @map("Aeronave_idAeronave")
+
+  almacen  Almacen  @relation(fields: [almacenId], references: [idAlmacen])
+  usuario  User     @relation(fields: [usuarioId], references: [id])
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+
+  detalles DetalleDotacion[]
+}
+
+model DetalleDotacion {
+  idDetalleDotacion   Int               @default(autoincrement()) @map("idDetalle_dotacion")
+  cantidad            Int
+  solicitudDotacionId Int               @map("Solicitud_Dotacion_idSolicitud_Dotacion")
+  solicitud           SolicitudDotacion @relation(fields: [solicitudDotacionId], references: [idSolicitudDotacion])
+
+  @@id([idDetalleDotacion, solicitudDotacionId])
+}
+
+// 6. NUEVOS MODELOS (NECESARIOS PARA EL FRONTEND QUE HICIMOS)
+
+model Plantilla {
+  id                 Int      @id @default(autoincrement())
+  nombre             String
+  modeloAeronave     String // Ej: "Boeing 737-300"
+  clase              String // Ej: "Económica"
+  fechaCreacion      DateTime @default(now())
+  ultimaModificacion DateTime @updatedAt
+
+  items DetallePlantilla[]
+}
+
+model DetallePlantilla {
+  id          Int @id @default(autoincrement())
+  plantillaId Int
+  itemId      Int
+  cantidad    Int
+
+  plantilla Plantilla @relation(fields: [plantillaId], references: [id], onDelete: Cascade)
+  item      Item      @relation(fields: [itemId], references: [idItem])
 }

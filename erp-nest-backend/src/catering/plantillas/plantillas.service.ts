@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePlantillaDto } from './dto/create-plantilla.dto';
 import { UpdatePlantillaDto } from './dto/update-plantilla.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-
+import { PrismaService } from '../../providers/prisma/prisma.service';
+import {}
 @Injectable()
 export class PlantillasService {
     constructor(private prisma: PrismaService) {}

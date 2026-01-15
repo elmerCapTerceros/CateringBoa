@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { ErpFullscreenComponent } from '@erp/components/fullscreen';
 import { ErpLoadingBarComponent } from '@erp/components/loading-bar';
 import {
@@ -19,6 +19,7 @@ import { UserComponent } from 'app/layout/common/user/user.component';
 import { Subject, takeUntil } from 'rxjs';
 import { SchemeComponent } from '../../../common/scheme/scheme.component';
 import { ThemeComponent } from '../../../common/theme/theme.component';
+
 
 @Component({
     selector: 'modern-layout',
@@ -38,6 +39,7 @@ import { ThemeComponent } from '../../../common/theme/theme.component';
         RouterOutlet,
         SchemeComponent,
         ThemeComponent,
+        RouterLink,
     ],
 })
 export class ModernLayoutComponent implements OnInit, OnDestroy {

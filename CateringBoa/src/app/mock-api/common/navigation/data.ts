@@ -101,7 +101,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 id: 'grupo-carga',
                 title: 'Configurar Carga',
                 type: 'collapsable',
-                link : '/catering/configuracion',
+                // link : '/catering/configuracion',
                 icon: 'heroicons_outline:cube',
                 children:[
                     {
@@ -173,7 +173,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 title: 'Listado de Movimientos',
                 //icon : 'mat_outline:Aq Indoor',
                 type: 'basic',
-                link : '/catering/almacen/movimientos',
+                link : '/catering/movimientos',
             },
             {
                 id: 'Stockss',

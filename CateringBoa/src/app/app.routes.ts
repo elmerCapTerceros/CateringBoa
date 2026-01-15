@@ -10,14 +10,14 @@ import { LayoutComponent } from 'app/layout/layout.component';
 export const appRoutes: Route[] = [
 
     // Redirect empty path to '/example'
-    {path: '', pathMatch : 'full', redirectTo: 'example'},
+    {path: '', pathMatch : 'full', redirectTo: 'catering/dashboard'},
 
     // Redirect signed-in user to the '/example'
     //
     // After the user signs in, the sign-in page will redirect the user to the 'signed-in-redirect'
     // path. Below is another redirection for that path to redirect the user to the desired
     // location. This is a small convenience to keep all main routes together here on this file.
-    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: 'example'},
+    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: 'catering/dashboard'},
 
     // Auth routes for guests
     {
@@ -63,13 +63,6 @@ export const appRoutes: Route[] = [
         children: [
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
             {path: 'catering', loadChildren: () => import('app/modules/catering/catering.routes')},
-
-            //aumente esto en app.routes
-            {path: 'movimientos', loadChildren: () => import('app/modules/catering/almacen/movimientos/movimiento.routes')},
-            {path: 'Stockss', loadChildren: () => import('app/modules/catering/almacen/Stockss/stock.routes')},
-            {path: 'crear-movimiento', loadChildren: () => import('app/modules/catering/almacen/crear-movimiento/crear-movimiento.routes')},
-            { path: 'editar-movimiento/:id', loadChildren: () => import('app/modules/catering/almacen/movimientos-edit/movimientos-edit.routes').then(m => m.MOVIMIENTOS_EDIT_ROUTES) },
-
         ]
     }
 ];

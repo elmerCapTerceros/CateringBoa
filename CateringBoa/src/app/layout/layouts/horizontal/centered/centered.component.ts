@@ -38,7 +38,7 @@ import { Subject, takeUntil } from 'rxjs';
         NotificationsComponent,
         UserComponent,
         RouterOutlet,
-    ]
+    ],
 })
 export class CenteredLayoutComponent implements OnInit, OnDestroy {
     navigation: Navigation;

@@ -1,0 +1,125 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50/50 min-h-screen">
+
+    <div class="flex-auto p-6 sm:p-10 w-full max-w-[1920px] mx-auto">
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
+                    Hola, {{ usuario }} 👋
+                </h1>
+                <div class="flex items-center gap-2 mt-1 text-gray-500 font-medium">
+                    <mat-icon class="icon-size-5">calendar_today</mat-icon>
+                    <span class="capitalize">{{ fechaHoy }}</span>
+                </div>
+            </div>
+
+            <button mat-flat-button color="primary"
+                    (click)="navegar('/catering/new')"
+                    class="px-8 py-6 rounded-full shadow-lg shadow-blue-900/20 hover:shadow-xl transition-all"
+                    style="background-color: #0B1E47;">
+                <mat-icon class="mr-2">add_circle</mat-icon>
+                Crear Solicitud
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+            @for (card of cards; track card.title) {
+                <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 cursor-pointer hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group"
+                     (click)="navegar(card.route)">
+
+                    <div class="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-[0.08] transition-transform group-hover:scale-110"
+                         [ngClass]="card.color.replace('text-', 'bg-')"></div>
+
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div class="p-3 rounded-xl flex items-center justify-center" [ngClass]="card.color">
+                            <mat-icon class="scale-110">{{ card.icon }}</mat-icon>
+                        </div>
+                        <mat-icon class="text-gray-300 group-hover:text-slate-600 transition-colors">arrow_forward</mat-icon>
+                    </div>
+
+                    <div class="relative z-10">
+                        <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{{ card.title }}</h3>
+                        <div class="text-4xl font-black text-slate-800 tracking-tight">{{ card.value }}</div>
+                        <p class="text-slate-400 text-sm mt-1">{{ card.subtitle }}</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+
+            <div class="xl:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Evolución de Compras</h2>
+                        <p class="text-sm text-slate-400">Gastos acumulados últimos 7 meses</p>
+                    </div>
+                    <button mat-icon-button><mat-icon>more_vert</mat-icon></button>
+                </div>
+
+                <apx-chart
+                    [series]="chartGastos.series"
+                    [chart]="chartGastos.chart"
+                    [xaxis]="chartGastos.xaxis"
+                    [stroke]="chartGastos.stroke"
+                    [colors]="chartGastos.colors"
+                    [dataLabels]="chartGastos.dataLabels"
+                    [grid]="chartGastos.grid"
+                    [tooltip]="chartGastos.tooltip">
+                </apx-chart>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold text-slate-800 mb-1">Distribución de Stock</h2>
+                <p class="text-sm text-slate-400 mb-6">Inventario valorado por tipo</p>
+
+                <div class="flex items-center justify-center h-[300px]">
+                    <apx-chart
+                        [series]="chartStock.series"
+                        [chart]="chartStock.chart"
+                        [labels]="chartStock.labels"
+                        [colors]="chartStock.colors"
+                        [legend]="chartStock.legend"
+                        [plotOptions]="chartStock.plotOptions"
+                        [dataLabels]="chartStock.dataLabels">
+                    </apx-chart>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="text-lg font-bold text-slate-800 mb-4 ml-1">Atajos Administrativos</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group">
+                <div class="bg-slate-100 p-3 rounded-full text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                    <mat-icon>assessment</mat-icon>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-700">Reportes Mensuales</h4>
+                    <p class="text-xs text-slate-500">Descargar cierre PDF</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group">
+                <div class="bg-slate-100 p-3 rounded-full text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                    <mat-icon>people</mat-icon>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-700">Usuarios del Sistema</h4>
+                    <p class="text-xs text-slate-500">Gestión de roles</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group">
+                <div class="bg-slate-100 p-3 rounded-full text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                    <mat-icon>airplanemode_active</mat-icon>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-700">Estado de Flota</h4>
+                    <p class="text-xs text-slate-500">Configurar aviones</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

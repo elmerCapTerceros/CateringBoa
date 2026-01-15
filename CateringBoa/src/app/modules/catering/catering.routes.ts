@@ -14,6 +14,7 @@ import {CierreVueloComponent} from './cierre-vuelo/cierre-vuelo.component';
 import {HistorialAbastecimientoComponent} from './historial-abastecimiento/historial-abastecimiento.component';
 import { HistorialComprasComponent } from './compra-exterior/historial-compras/historial-compras.component';
 import {ListaConfiguracionesComponent} from './configuracion-carga/lista-configuraciones/lista-configuraciones.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 
 export default [
     {
@@ -82,6 +83,11 @@ export default [
                 path: 'configuracion/listado',
                 component: ListaConfiguracionesComponent
             },
+            //Dashboard
+            {
+                path: 'dashboard',
+                component: DashboardComponent
+            }
 
 
 

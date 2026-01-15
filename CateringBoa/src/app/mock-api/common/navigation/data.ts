@@ -45,7 +45,6 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         ]
     },
 
-
     {
         id   : 'compra-exterior',
         title: 'Compra Exterior',
@@ -68,7 +67,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
             }
         ]
     },
-
+    /*
     {
         id   : 'inventario',
         title: 'Inventario',
@@ -83,7 +82,31 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-list'
             }
         ]
+    }*/
+
+    {
+        id   : 'flotas',
+        title: 'Flotas',
+        type : 'collapsable',
+        icon : 'heroicons_outline:squares-2x2',
+        children:[
+           /* {
+                id: 'aeronaves',
+                title: 'Crear Aeronave',
+                type: 'basic',
+                link : '/catering/crear-aeronave',
+                icon: 'heroicons_outline:clipboard-document-list'
+            }*/
+            {
+                id: 'Flotas-Inicio',
+                title: 'Flotas',
+                type: 'basic',
+                link : '/catering/flotas-inicio',
+                icon: 'heroicons_outline:clipboard-document-list'
+            }
+        ]
     },
+
     {
         id   : 'operaciones',
         title: 'Operaciones Vuelo',
@@ -166,7 +189,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 title: 'Stock',
                 //icon : 'mat_outline:briefcase',
                 type: 'basic',
-                link : '/catering/almacen/stock',
+                link : '/catering/stock',
             },
             {
                 id: 'solicitudes-almacen',

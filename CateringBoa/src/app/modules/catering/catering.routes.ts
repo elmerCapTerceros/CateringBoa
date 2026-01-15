@@ -15,6 +15,8 @@ import {HistorialAbastecimientoComponent} from './historial-abastecimiento/histo
 import {ListarSolicitudesAlmacenComponent} from './almacen/listar-solicitudes-almacen/listar-solicitudes-almacen.component';
 import {CrearSolicitudAlmacenComponent} from './almacen/crear-solicitud-almacen/crear-solicitud-almacen.component';
 import {DetalleSolicitudAlmacenComponent} from './almacen/detalle-solicitud-almacen/detalle-solicitud-almacen.component';
+import {CrearAeronaveComponent} from './flota/aeronave/crear-aeronave/crear-aeronave.component';
+import { FlotaPanelComponent } from './flota/flota-panel/flota-panel.component';
 
 export default [
     {
@@ -87,6 +89,15 @@ export default [
             {
                 path : 'detalle-soltitud-almacen/:id',
                 component: DetalleSolicitudAlmacenComponent
+            },
+            //rutas de flotas
+            {
+                path:'crear-aeronave',
+                component: CrearAeronaveComponent
+            },
+            {
+                path: 'flotas-inicio',
+                component: FlotaPanelComponent
             }
         ]
     }

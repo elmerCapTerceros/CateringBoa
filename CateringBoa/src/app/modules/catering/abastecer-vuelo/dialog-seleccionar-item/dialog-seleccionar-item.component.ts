@@ -49,6 +49,8 @@ export class DialogSeleccionarItemComponent implements OnInit {
         { id: 13, nombre: 'Café Grano', unidad: 'Kg' }
     ];
 
+    terminoBusqueda: string = '';
+
     constructor(
         public dialogRef: MatDialogRef<DialogSeleccionarItemComponent>
     ) {}
@@ -76,6 +78,16 @@ export class DialogSeleccionarItemComponent implements OnInit {
         item.selected = !item.selected;
         // Si se desmarca, opcionalmente reseteamos a 1
         if (!item.selected) item.cantidad = 1;
+    }
+
+    get itemsFiltrados() {
+        if (!this.terminoBusqueda) {
+            return this.itemsUI;
+        }
+        const termino = this.terminoBusqueda.toLowerCase();
+        return this.itemsUI.filter(item =>
+            item.data.nombre.toLowerCase().includes(termino)
+        );
     }
 
     guardar(): void {

@@ -17,6 +17,10 @@ import {CrearSolicitudAlmacenComponent} from './almacen/crear-solicitud-almacen/
 import {DetalleSolicitudAlmacenComponent} from './almacen/detalle-solicitud-almacen/detalle-solicitud-almacen.component';
 import {CrearAeronaveComponent} from './flota/aeronave/crear-aeronave/crear-aeronave.component';
 import { FlotaPanelComponent } from './flota/flota-panel/flota-panel.component';
+import { HistorialComprasComponent } from './compra-exterior/historial-compras/historial-compras.component';
+import {ListaConfiguracionesComponent} from './configuracion-carga/lista-configuraciones/lista-configuraciones.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+
 
 export default [
     {
@@ -98,7 +102,21 @@ export default [
             {
                 path: 'flotas-inicio',
                 component: FlotaPanelComponent
+            },
+            {
+                path: 'compra-exterior/historial',
+                component: HistorialComprasComponent
+            },
+            {
+                path: 'configuracion/listado',
+                component: ListaConfiguracionesComponent
+            },
+            //Dashboard
+            {
+                path: 'dashboard',
+                component: DashboardComponent
             }
+
         ]
     }
 ] as Routes;

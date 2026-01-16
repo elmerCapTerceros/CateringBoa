@@ -53,17 +53,24 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         children:[
             {
                 id: 'crear-compra-exterior',
-                title: 'Crear Compra', // <-- Opción 1
+                title: 'Crear Compra',
                 type: 'basic',
                 link : '/catering/compra-exterior/crear',
                 icon : 'heroicons_outline:pencil-square'
             },
             {
                 id: 'listar-compras-exterior',
-                title: 'Listado de Compras', // <-- Opción 2
+                title: 'Listado de Compras',
                 type: 'basic',
                 link : '/catering/compra-exterior/listar',
                 icon: 'heroicons_outline:archive-box'
+            },
+            {
+                id: 'historial-compra',
+                title: 'Historial General',
+                type: 'basic',
+                link: '/catering/compra-exterior/historial',
+                icon: 'heroicons_outline:clock'
             }
         ]
     },
@@ -117,7 +124,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 id: 'grupo-carga',
                 title: 'Configurar Carga',
                 type: 'collapsable',
-                link : '/catering/configuracion',
+                // link : '/catering/configuracion',
                 icon: 'heroicons_outline:cube',
                 children:[
                     {
@@ -127,13 +134,20 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                         icon : 'heroicons_outline:clipboard-document-list',
                         link : '/catering/carga',
                     },
-                    {
+                    /*{
                         id: 'config-carga',
                         title: 'Configurar Carga',
                         type: 'basic',
                         link : '/catering/configuracion',
                         icon: 'heroicons_outline:cog-6-tooth',
-                    }
+                    }*/
+                    {
+                        id: 'config-carga',
+                        title: 'Gestionar Plantillas',
+                        type: 'basic',
+                        icon: 'heroicons_outline:document-duplicate',
+                        link : '/catering/configuracion/listado'
+                    },
                 ]
             },
             {
@@ -182,7 +196,7 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 title: 'Listado de Movimientos',
                 //icon : 'mat_outline:Aq Indoor',
                 type: 'basic',
-                link : '/catering/almacen/movimientos',
+                link : '/catering/movimientos',
             },
             {
                 id: 'Stockss',

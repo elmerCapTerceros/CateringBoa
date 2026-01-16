@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core'; // <--- Importar TemplateRef y ViewChild
+import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -16,10 +16,9 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+// Asegúrate de que la ruta sea correcta
 import { DialogSeleccionarItemComponent } from './dialog-seleccionar-item/dialog-seleccionar-item.component';
 
-
-// Interfaces
 interface DetalleCarga {
     id: number;
     nombre: string;
@@ -29,13 +28,12 @@ interface DetalleCarga {
     esExtra: boolean;
 }
 
-// Nueva interfaz para el historial completo
 interface HistorialRegistro {
     aeronave: string;
     destino: string;
     fecha: string;
     usuario: string;
-    items: DetalleCarga[]; // <--- Guardamos los items aquí para poder verlos luego
+    items: DetalleCarga[];
 }
 
 @Component({
@@ -53,56 +51,96 @@ export class AbastecerVueloComponent implements OnInit {
 
     abastecimientoForm: FormGroup;
     listaCarga: DetalleCarga[] = [];
-
-    // VARIABLE PARA LIMITAR FECHA (Día actual)
     minDate: Date = new Date();
 
-    // Referencia al modal de detalle que pondremos en el HTML
     @ViewChild('detalleModal') detalleModal!: TemplateRef<any>;
-    registroSeleccionado: HistorialRegistro | null = null; // Para mostrar datos en el modal
+    registroSeleccionado: HistorialRegistro | null = null;
 
-    // --- DATOS MOCK ---
+    // --- DATOS: Flota Real BoA ---
     aeronaves = [
-        { id: 1, matricula: 'CP-2550', modelo: 'Boeing 737-300' },
-        { id: 2, matricula: 'CP-2551', modelo: 'Boeing 737-700' },
-        { id: 3, matricula: 'CP-3030', modelo: 'Airbus A330' }
+        { id: 1, matricula: 'CP-3030', modelo: 'Airbus A330-200 (Largo Alcance)' },
+        { id: 2, matricula: 'CP-3204', modelo: 'Airbus A330-200 (Largo Alcance)' },
+        { id: 3, matricula: 'CP-2923', modelo: 'Boeing 737-800 NG' },
+        { id: 4, matricula: 'CP-3151', modelo: 'Boeing 737-800 NG' },
+        { id: 5, matricula: 'CP-3138', modelo: 'Boeing 737-800 NG' },
+        { id: 6, matricula: 'CP-2550', modelo: 'Boeing 737-300' },
+        { id: 7, matricula: 'CP-2551', modelo: 'Boeing 737-300' },
+        { id: 8, matricula: 'CP-2850', modelo: 'CRJ-200 (Regional)' },
+        { id: 9, matricula: 'CP-2881', modelo: 'CRJ-200 (Regional)' }
     ];
 
+    // --- DATOS: Destinos BoA ---
     destinos = [
-        { codigo: 'MIA', nombre: 'Miami' },
-        { codigo: 'MAD', nombre: 'Madrid' },
-        { codigo: 'SAO', nombre: 'Sao Paulo' },
-        { codigo: 'VVI', nombre: 'Viru Viru' }
+        { codigo: 'VVI', nombre: 'Santa Cruz (Viru Viru)' },
+        { codigo: 'LPB', nombre: 'La Paz (El Alto)' },
+        { codigo: 'CBB', nombre: 'Cochabamba' },
+        { codigo: 'MIA', nombre: 'Miami (Intl)' },
+        { codigo: 'MAD', nombre: 'Madrid (Barajas)' },
+        { codigo: 'GRU', nombre: 'Sao Paulo (Guarulhos)' },
+        { codigo: 'EZE', nombre: 'Buenos Aires (Ezeiza)' },
+        { codigo: 'LIM', nombre: 'Lima (Jorge Chávez)' },
+        { codigo: 'ASU', nombre: 'Asunción' },
+        { codigo: 'CCS', nombre: 'Caracas' },
+        { codigo: 'HAV', nombre: 'La Habana' },
+        { codigo: 'SRE', nombre: 'Sucre' },
+        { codigo: 'TJA', nombre: 'Tarija' },
+        { codigo: 'CIJ', nombre: 'Cobija' }
     ];
 
+    // --- DATOS: Plantillas de Servicio ---
     plantillasCarga = [
         {
-            id: 10, nombre: 'Estándar Nacional (B737)',
+            id: 10, nombre: 'Nacional: Snack Estándar (737)',
             items: [
-                { id: 8, nombre: 'Hielo Bolsa 5kg', unidad: 'Bolsa', cantidad: 2 },
-                { id: 10, nombre: 'Vaso Plástico', unidad: 'Paquete', cantidad: 5 }
+                { id: 1, nombre: 'Sandwich Pollo', unidad: 'Unidad', cantidad: 150 },
+                { id: 2, nombre: 'Coca Cola 2L', unidad: 'Botella', cantidad: 10 },
+                { id: 3, nombre: 'Agua 2L', unidad: 'Botella', cantidad: 10 },
+                { id: 4, nombre: 'Servilletas', unidad: 'Paquete', cantidad: 5 },
+                { id: 5, nombre: 'Vasos Plásticos', unidad: 'Paquete', cantidad: 4 }
             ]
         },
         {
-            id: 11, nombre: 'Internacional Full (A330)',
+            id: 11, nombre: 'Internacional: Cena Full (A330)',
             items: [
-                { id: 8, nombre: 'Hielo Bolsa 5kg', unidad: 'Bolsa', cantidad: 10 },
-                { id: 12, nombre: 'Agua 2L', unidad: 'Botella', cantidad: 50 },
-                { id: 11, nombre: 'Servilletas Extra', unidad: 'Paquete', cantidad: 20 }
+                { id: 6, nombre: 'Cena Carne', unidad: 'Bandeja', cantidad: 250 },
+                { id: 7, nombre: 'Cena Pasta', unidad: 'Bandeja', cantidad: 50 },
+                { id: 8, nombre: 'Vino Tinto', unidad: 'Botella', cantidad: 30 },
+                { id: 9, nombre: 'Vino Blanco', unidad: 'Botella', cantidad: 20 },
+                { id: 10, nombre: 'Hielo 5kg', unidad: 'Bolsa', cantidad: 15 },
+                { id: 11, nombre: 'Kit Café', unidad: 'Caja', cantidad: 5 }
+            ]
+        },
+        {
+            id: 12, nombre: 'Regional: Bebidas (CRJ)',
+            items: [
+                { id: 3, nombre: 'Agua 500ml', unidad: 'Botella', cantidad: 50 },
+                { id: 12, nombre: 'Galletas Surtidas', unidad: 'Caja', cantidad: 2 }
+            ]
+        },
+        {
+            id: 13, nombre: 'Internacional: Desayuno (MIA/MAD)',
+            items: [
+                { id: 13, nombre: 'Omelette', unidad: 'Bandeja', cantidad: 200 },
+                { id: 14, nombre: 'Fruta Picada', unidad: 'Pote', cantidad: 200 },
+                { id: 15, nombre: 'Yogurt', unidad: 'Unidad', cantidad: 200 },
+                { id: 16, nombre: 'Café Destilado', unidad: 'Litro', cantidad: 20 }
             ]
         }
     ];
 
-    // Historial inicial con datos falsos de items
+    // --- DATOS: Últimos registros (Solo 3 para mostrar en esta vista) ---
     historialAbastecimientos: HistorialRegistro[] = [
         {
-            aeronave: 'CP-2550',
-            destino: 'MIA',
-            fecha: '20/05/2025',
-            usuario: 'Juan Perez',
-            items: [
-                { id: 8, nombre: 'Hielo Bolsa 5kg', cantidad: 5, codigo: 'ITM-8', tipo: 'Bolsa', esExtra: false }
-            ]
+            aeronave: 'CP-3030', destino: 'MAD', fecha: '28/05/2026', usuario: 'Maria Delgado',
+            items: [{ id: 6, nombre: 'Cena Carne', cantidad: 270, codigo: 'ITM-6', tipo: 'Bandeja', esExtra: true }]
+        },
+        {
+            aeronave: 'CP-2923', destino: 'MIA', fecha: '28/05/2026', usuario: 'Juan Perez',
+            items: [{ id: 1, nombre: 'Sandwich Pollo', cantidad: 160, codigo: 'ITM-1', tipo: 'Unidad', esExtra: false }]
+        },
+        {
+            aeronave: 'CP-2850', destino: 'SRE', fecha: '27/05/2026', usuario: 'Carlos Ruiz',
+            items: [{ id: 3, nombre: 'Agua 500ml', cantidad: 60, codigo: 'ITM-3', tipo: 'Botella', esExtra: false }]
         }
     ];
 
@@ -178,13 +216,9 @@ export class AbastecerVueloComponent implements OnInit {
         this.listaCarga.splice(index, 1);
     }
 
-    // --- NUEVO: Ver detalle del historial ---
     verDetalle(registro: HistorialRegistro): void {
         this.registroSeleccionado = registro;
-        // Abrimos el template local como un modal
-        this.dialog.open(this.detalleModal, {
-            width: '600px'
-        });
+        this.dialog.open(this.detalleModal, { width: '600px' });
     }
 
     guardarAbastecimiento(): void {
@@ -193,23 +227,20 @@ export class AbastecerVueloComponent implements OnInit {
             const avionObj = this.aeronaves.find(a => a.id === formValue.aeronaveId);
             const matricula = avionObj ? avionObj.matricula : 'Desconocido';
 
-            // Guardamos TAMBIÉN la lista de items actual (copia profunda)
             const nuevoRegistro: HistorialRegistro = {
                 aeronave: matricula,
                 destino: formValue.destino,
                 fecha: new Date(formValue.fecha).toLocaleDateString(),
                 usuario: 'Usuario Actual',
-                items: JSON.parse(JSON.stringify(this.listaCarga)) // Copia de seguridad
+                items: JSON.parse(JSON.stringify(this.listaCarga))
             };
 
             this.historialAbastecimientos = [nuevoRegistro, ...this.historialAbastecimientos];
             this.snackBar.open('✅ Abastecimiento registrado correctamente', 'Cerrar', { duration: 3000 });
 
-            // Reset
             this.listaCarga = [];
             this.abastecimientoForm.get('plantillaId')?.setValue('');
             this.abastecimientoForm.get('aeronaveId')?.reset();
-
         } else {
             this.snackBar.open('⚠️ Faltan datos.', 'Cerrar', { duration: 3000, panelClass: ['bg-red-600', 'text-white'] });
         }

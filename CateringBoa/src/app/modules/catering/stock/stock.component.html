@@ -17,13 +17,23 @@
 
         <mat-form-field appearance="outline" class="w-full sm:w-1/3">
             <mat-label>Buscar ítem...</mat-label>
-            <input matInput placeholder="Ej. Coca Cola">
-            <mat-icon matSuffix>search</mat-icon>
+            <input matInput
+                   [(ngModel)]="terminoBusqueda"
+                   (keyup)="aplicarFiltro()"
+                   placeholder="Ej. Coca Cola">
+
+            @if (terminoBusqueda) {
+                <button mat-icon-button matSuffix (click)="limpiarBusqueda()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            } @else {
+                <mat-icon matSuffix>search</mat-icon>
+            }
         </mat-form-field>
 
-        <div class="pb-1">
-            <button mat-stroked-button color="primary" class="h-12">
-                <mat-icon class="mr-2">refresh</mat-icon>
+        <div class="pb-5">
+            <button mat-stroked-button color="primary" class="h-12" (click)="cambiarAlmacen()">
+                <mat-icon class="mr-2" [class.animate-spin]="cargando">refresh</mat-icon>
                 Actualizar
             </button>
         </div>
@@ -42,6 +52,14 @@
             </tr>
             </thead>
             <tbody>
+                @if (cargando) {
+                    <tr>
+                        <td colspan="6" class="p-0">
+                            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                        </td>
+                    </tr>
+                }
+
                 @for (item of itemsFiltrados; track item.id) {
                     <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
                         <td class="p-4 font-medium text-gray-900">{{ item.nombre }}</td>
@@ -61,10 +79,10 @@
                         </td>
                     </tr>
                 }
-                @if (itemsFiltrados.length === 0) {
+                @if (itemsFiltrados.length === 0 && !cargando) {
                     <tr>
                         <td colspan="6" class="p-8 text-center text-gray-500">
-                            No hay ítems en este almacén.
+                            No se encontraron ítems.
                         </td>
                     </tr>
                 }

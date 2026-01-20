@@ -20,6 +20,7 @@ import { FlotaPanelComponent } from './flota/flota-panel/flota-panel.component';
 import { HistorialComprasComponent } from './compra-exterior/historial-compras/historial-compras.component';
 import {ListaConfiguracionesComponent} from './configuracion-carga/lista-configuraciones/lista-configuraciones.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import {CrearFlotaComponent} from './flota/crear-flota/crear-flota.component';
 
 
 export default [
@@ -110,6 +111,10 @@ export default [
             {
                 path: 'configuracion/listado',
                 component: ListaConfiguracionesComponent
+            },
+            {
+                path: 'crear-flota',
+                component: CrearFlotaComponent
             },
             //Dashboard
             {

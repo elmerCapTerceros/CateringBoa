@@ -191,13 +191,13 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         type : 'collapsable',
         icon : 'heroicons_outline:home-modern',
         children:[
-            {
+            /*{
                 id: 'movimiento',
                 title: 'Listado de Movimientos',
                 //icon : 'mat_outline:Aq Indoor',
                 type: 'basic',
                 link : '/catering/movimientos',
-            },
+            },*/
             {
                 id: 'Stockss',
                 title: 'Stock',

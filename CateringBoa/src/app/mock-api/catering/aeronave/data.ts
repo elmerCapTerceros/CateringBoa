@@ -1,3 +1,4 @@
+// data.ts
 export const dataList: any[] = [
     {
         id: 1,
@@ -70,6 +71,13 @@ export const dataList: any[] = [
         capacidad: 9
     },
     {
+        id: 11, // ¡Agregado el ID 11 que faltaba!
+        matricula: 'CP-1234',
+        modelo: 'Boeing 737-700',
+        tiposOp: ['Pasajeros'],
+        capacidad: 140
+    },
+    {
         id: 12,
         matricula: 'CP-6102',
         modelo: 'Boeing 787-8 Dreamliner',
@@ -98,4 +106,3 @@ export const dataList: any[] = [
         capacidad: 8
     }
 ];
-

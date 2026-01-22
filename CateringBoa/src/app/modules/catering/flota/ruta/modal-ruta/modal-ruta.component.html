@@ -1,0 +1,61 @@
+<div class="p-6 max-w-4xl">
+    <h2 class="text-2xl font-bold mb-4">
+        Agregar rutas a {{ data.nombreContexto }}
+    </h2>
+
+    <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Buscar rutas</mat-label>
+        <input
+            matInput
+            [(ngModel)]="filtro"
+            (ngModelChange)="filtrar()"
+            placeholder="Origen o destino">
+        <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <div class="border rounded-lg max-h-96 overflow-y-auto">
+        <mat-selection-list #listaRutas [multiple]="true">
+
+            @for (ruta of rutasFiltradas; track ruta.id) {
+                <mat-list-option [value]="ruta">
+                    <div class="flex justify-between items-center w-full py-2">
+                        <div>
+                            <p class="font-medium">
+                                {{ ruta.origen }} → {{ ruta.destino }}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                {{ ruta.distancia }} km • {{ ruta.duracion }}
+                            </p>
+                        </div>
+
+                        <span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                            {{ ruta.frecuenciaSemanal }} / semana
+                        </span>
+                    </div>
+                </mat-list-option>
+            }
+
+            @if (rutasFiltradas.length === 0) {
+                <div class="p-6 text-center text-gray-500">
+                    <mat-icon class="text-4xl opacity-50">route</mat-icon>
+                    <p>No se encontraron rutas</p>
+                </div>
+            }
+        </mat-selection-list>
+    </div>
+
+
+    <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <button mat-button (click)="cancelar()">Cancelar</button>
+
+        <button
+            mat-raised-button
+            class="bg-[#1E293B] text-white hover:bg-[#0f172a] flex items-center gap-2 mb-6"
+            [disabled]="!listaRutas?.selectedOptions.selected.length"
+            (click)="confirmar(listaRutas)">
+            <mat-icon>add</mat-icon>
+            Agregar
+            {{ listaRutas?.selectedOptions.selected.length }}
+        </button>
+    </div>
+</div>

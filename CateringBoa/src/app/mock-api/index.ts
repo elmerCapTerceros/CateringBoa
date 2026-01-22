@@ -6,6 +6,7 @@ import { CateringMockApi } from './catering/solicitud/api';
 import { CargaMockApi} from './catering/carga/api';
 import { AeronaveMockApi} from './catering/aeronave/api';
 import { FlotaMockApi } from './catering/flota/api';
+import { RutaMockApi } from './catering/ruta/api';
 
 export const mockApiServices = [
     AuthMockApi,
@@ -15,5 +16,6 @@ export const mockApiServices = [
     CateringMockApi,
     CargaMockApi,
     AeronaveMockApi,
-    FlotaMockApi
+    FlotaMockApi,
+    RutaMockApi
 ];

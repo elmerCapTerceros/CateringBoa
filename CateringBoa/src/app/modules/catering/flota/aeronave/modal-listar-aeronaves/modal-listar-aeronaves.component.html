@@ -1,0 +1,59 @@
+<div class="p-6 max-w-4xl">
+    <h2 class="text-2xl font-bold mb-4">
+        Agregar aeronaves a {{ data.flotaNombre }}
+    </h2>
+
+    <!-- Buscador -->
+    <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Buscar aeronaves</mat-label>
+        <input
+            matInput
+            [(ngModel)]="filtro"
+            (ngModelChange)="filtrar()"
+            placeholder="Modelo o matrícula">
+        <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <!-- Lista -->
+    <div class="border rounded-lg max-h-96 overflow-y-auto">
+        <mat-selection-list [multiple]="true">
+
+            @for (aeronave of aeronavesFiltradas; track aeronave.matricula) {
+                <mat-list-option [value]="aeronave">
+                    <div class="flex justify-between items-center w-full py-2">
+                        <div>
+                            <p class="font-medium">{{ aeronave.modelo }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ aeronave.matricula }} • {{ aeronave.capacidad }} pasajeros
+                            </p>
+                        </div>
+
+                    </div>
+                </mat-list-option>
+            }
+
+            @if (aeronavesFiltradas.length === 0) {
+                <div class="p-6 text-center text-gray-500">
+                    <mat-icon class="text-4xl opacity-50">airplanemode_inactive</mat-icon>
+                    <p>No se encontraron aeronaves</p>
+                </div>
+            }
+        </mat-selection-list>
+    </div>
+
+    <!-- Acciones -->
+    <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <button mat-button (click)="cancelar()">Cancelar</button>
+
+        <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!listaAeronaves?.selectedOptions.selected.length"
+            (click)="confirmar()">
+            <mat-icon>add</mat-icon>
+            Agregar
+            {{ listaAeronaves?.selectedOptions.selected.length }}
+        </button>
+    </div>
+</div>
+

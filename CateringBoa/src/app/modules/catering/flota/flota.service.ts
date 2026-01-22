@@ -47,10 +47,8 @@ export class FlotaService {
             tap((nuevaFlota: Flota) => {
                 console.warn('Flota creada:', nuevaFlota);
 
-                // Obtener flotas actuales
                 const flotasActuales = this.flotasSubject.value;
 
-                // Agregar la nueva flota al inicio (más reciente primero)
                 const flotasActualizadas = [nuevaFlota, ...flotasActuales];
 
                 // Actualizar el BehaviorSubject (esto notifica a todos los suscriptores)

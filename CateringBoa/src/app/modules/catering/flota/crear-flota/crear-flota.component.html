@@ -1,1 +1,76 @@
-<p>crear-flota works!</p>
+<div class="flex-auto p-6">
+
+    <h2 class="text-2xl font-bold mb-1">Registrar Nueva Flota</h2>
+    <p class="text-sm text-gray-500 mb-6">
+        Cree la flota. Las aeronaves se asignarán posteriormente.
+    </p>
+
+    <form [formGroup]="flotaForm" (ngSubmit)="guardarFlota()" autocomplete="off">
+
+        <mat-card class="mb-9">
+            <mat-card-content class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Nombre -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Nombre de la flota</mat-label>
+                        <input matInput formControlName="nombre" placeholder="Ej: Flota Nacional">
+                        <mat-icon matSuffix>groups</mat-icon>
+                        <mat-error *ngIf="flotaForm.get('nombre')?.touched">
+                            {{ getErrorMessage('nombre') }}
+                        </mat-error>
+                    </mat-form-field>
+
+                    <!-- Tipo -->
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Tipo de Flota</mat-label>
+                        <mat-select formControlName="tipoFlota">
+                            @for (tipo of tiposFlota; track tipo.value) {
+                                <mat-option [value]="tipo.value">
+                                    {{ tipo.viewValue }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-error *ngIf="flotaForm.get('tipoFlota')?.touched">
+                            {{ getErrorMessage('tipoFlota') }}
+                        </mat-error>
+                    </mat-form-field>
+
+                    <!-- Descripción -->
+                    <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                        <mat-label>Descripción</mat-label>
+                        <textarea
+                            matInput
+                            rows="3"
+                            formControlName="descripcion"
+                            placeholder="Descripción de la flota">
+                        </textarea>
+                        <mat-error *ngIf="flotaForm.get('descripcion')?.touched">
+                            {{ getErrorMessage('descripcion') }}
+                        </mat-error>
+                    </mat-form-field>
+
+                </div>
+            </mat-card-content>
+        </mat-card>
+
+        <div class="flex justify-end gap-4">
+            <button mat-stroked-button type="button" (click)="cancelar()">
+                Cancelar
+            </button>
+
+            <button
+                mat-raised-button
+                color="primary"
+                type="submit"
+                [disabled]="flotaForm.invalid || isLoading"
+                class="flex items-center gap-2">
+
+                <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+                <span *ngIf="!isLoading">Guardar Flota</span>
+            </button>
+        </div>
+
+    </form>
+</div>
+

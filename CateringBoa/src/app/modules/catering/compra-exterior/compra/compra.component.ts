@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import {
     FormBuilder,
     FormGroup,
@@ -7,10 +7,12 @@ import {
     ReactiveFormsModule,
     Validators,
 } from '@angular/forms';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+    MatDialog,
+    MatDialogModule,
+    MatDialogRef,
+} from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-
-// Material Imports
 import { MatButtonModule } from '@angular/material/button';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -18,9 +20,27 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox'; // <--- IMPORTANTE
 
-// REUTILIZAMOS TU MODAL DE SELECCIÓN MÚLTIPLE
-import { DialogSeleccionarItemComponent } from '../../abastecer-vuelo/dialog-seleccionar-item/dialog-seleccionar-item.component';
+// Interfaces
+interface ItemCompra {
+    id: string;
+    nombre: string;
+    unidad: string;
+    cantidadSolicitada: number;
+    costoUnitario: number;
+    subtotal: number;
+}
+
+// Interfaz para el Selector (Catálogo del Proveedor)
+interface ProductoProveedor {
+    id: string;
+    nombre: string;
+    unidad: string;
+    costoDefault: number;
+    selected: boolean; // Checkbox estado
+    cantidadPedir: number; // Input cantidad en modal
+}
 
 @Component({
     selector: 'app-compra',
@@ -38,33 +58,92 @@ import { DialogSeleccionarItemComponent } from '../../abastecer-vuelo/dialog-sel
         MatNativeDateModule,
         MatButtonModule,
         MatIconModule,
+        MatCheckboxModule, // <--- Asegúrate de tener esto
     ],
     templateUrl: './compra.component.html',
     styleUrl: './compra.component.scss',
 })
 export class CompraComponent implements OnInit {
-    compraForm: FormGroup;
-    listaItemsCompra: any[] = [];
+    @ViewChild('modalSelectorProductos')
+    modalSelectorProductos!: TemplateRef<any>;
 
-    // --- DATOS DUROS: Listado Completo de Destinos (16 Bases) ---
+    compraForm!: FormGroup;
+    listaItemsCompra: ItemCompra[] = [];
+
+    // Referencia para cerrar el modal
+    private selectorDialogRef: MatDialogRef<any> | null = null;
+
     almacenes: string[] = [
         'VVI - Viru Viru (Principal)',
-        'CBB - Jorge Wilstermann (Cochabamba)',
-        'LPB - El Alto (La Paz)',
+        'CBB - Jorge Wilstermann',
+        'LPB - El Alto',
         'MIA - Miami International',
         'MAD - Madrid Barajas',
-        'GRU - Sao Paulo Guarulhos',
-        'EZE - Buenos Aires Ezeiza',
-        'LIM - Lima Jorge Chavez',
-        'ASU - Asunción Silvio Pettirossi',
-        'VVC - Villavicencio',
-        'TJA - Tarija Capitán Oriel Lea Plaza',
-        'SRE - Sucre Alcantarí',
-        'ORU - Oruro Juan Mendoza',
-        'CIJ - Cobija Cap. Anibal Arab',
-        'TDD - Trinidad Tte. Jorge Henrich',
-        'POI - Potosí Cap. Nicolás Rojas',
     ];
+
+    // --- DATOS MOCK: CATÁLOGO PROVEEDOR ---
+    productosCatalogo: ProductoProveedor[] = [
+        {
+            id: 'STK-1',
+            nombre: 'Whisky Etiqueta Negra',
+            unidad: 'Botella',
+            costoDefault: 180,
+            selected: false,
+            cantidadPedir: 1,
+        },
+        {
+            id: 'STK-2',
+            nombre: 'Vino Tinto Tannat',
+            unidad: 'Botella',
+            costoDefault: 85,
+            selected: false,
+            cantidadPedir: 1,
+        },
+        {
+            id: 'STK-3',
+            nombre: 'Coca Cola 2L',
+            unidad: 'Botella',
+            costoDefault: 7.5,
+            selected: false,
+            cantidadPedir: 10,
+        },
+        {
+            id: 'STK-4',
+            nombre: 'Agua Mineral 500ml',
+            unidad: 'Botella',
+            costoDefault: 3,
+            selected: false,
+            cantidadPedir: 24,
+        },
+        {
+            id: 'STK-5',
+            nombre: 'Hielo 5kg',
+            unidad: 'Bolsa',
+            costoDefault: 12,
+            selected: false,
+            cantidadPedir: 5,
+        },
+        {
+            id: 'STK-7',
+            nombre: 'Sandwich Pollo',
+            unidad: 'Unidad',
+            costoDefault: 4.5,
+            selected: false,
+            cantidadPedir: 50,
+        },
+        {
+            id: 'STK-8',
+            nombre: 'Servilletas Premium',
+            unidad: 'Caja',
+            costoDefault: 25,
+            selected: false,
+            cantidadPedir: 2,
+        },
+    ];
+
+    // Variables del Selector
+    productosFiltrados: ProductoProveedor[] = [];
+    searchTermProductos: string = '';
 
     constructor(
         private fb: FormBuilder,
@@ -77,39 +156,97 @@ export class CompraComponent implements OnInit {
             proveedor: ['', Validators.required],
             fechaRequerida: [new Date(), Validators.required],
             almacenDestino: [
-                { value: 'VVI - Viru Viru (Principal)', disabled: false },
+                'VVI - Viru Viru (Principal)',
                 Validators.required,
             ],
             observaciones: [''],
         });
     }
 
-    abrirSeleccionLote(): void {
-        const dialogRef = this.dialog.open(DialogSeleccionarItemComponent, {
-            width: '900px',
-            maxWidth: '95vw',
-            height: '85vh',
-        });
+    // --- LÓGICA DEL SELECTOR MÚLTIPLE ---
 
-        dialogRef.afterClosed().subscribe((items: any[]) => {
-            if (items && items.length > 0) {
-                items.forEach((newItem) => {
-                    const existe = this.listaItemsCompra.find(
-                        (i) => i.id === newItem.id
-                    );
-                    if (existe) {
-                        existe.cantidadSolicitada += newItem.cantidad;
-                    } else {
-                        this.listaItemsCompra.push({
-                            id: newItem.id,
-                            nombre: newItem.nombre,
-                            unidad: newItem.unidad,
-                            cantidadSolicitada: newItem.cantidad,
-                        });
-                    }
+    abrirSelector(): void {
+        this.searchTermProductos = '';
+        // Reiniciamos la selección visual (limpiamos checkboxes anteriores)
+        this.productosFiltrados = this.productosCatalogo.map((p) => ({
+            ...p,
+            selected: false,
+            cantidadPedir: 1,
+        }));
+
+        this.selectorDialogRef = this.dialog.open(this.modalSelectorProductos, {
+            width: '800px',
+            maxHeight: '85vh',
+        });
+    }
+
+    cerrarSelector(): void {
+        this.selectorDialogRef?.close();
+    }
+
+    filtrarProductos(): void {
+        const term = this.searchTermProductos.toLowerCase();
+        // Filtramos sobre una copia base limpia para no perder items al borrar búsqueda
+        this.productosFiltrados = this.productosCatalogo
+            .map((p) => ({ ...p, selected: false, cantidadPedir: 1 }))
+            .filter((p) => p.nombre.toLowerCase().includes(term));
+    }
+
+    toggleSeleccion(prod: ProductoProveedor): void {
+        prod.selected = !prod.selected;
+        if (!prod.selected) prod.cantidadPedir = 1; // Reset cantidad si desmarca
+    }
+
+    agregarSeleccion(): void {
+        const seleccionados = this.productosFiltrados.filter((p) => p.selected);
+
+        if (seleccionados.length === 0) return;
+
+        seleccionados.forEach((sel) => {
+            const existente = this.listaItemsCompra.find(
+                (i) => i.id === sel.id
+            );
+
+            if (existente) {
+                // Si ya existe, sumamos cantidad
+                existente.cantidadSolicitada += sel.cantidadPedir;
+                this.actualizarSubtotal(existente);
+            } else {
+                // Si es nuevo, lo agregamos
+                this.listaItemsCompra.push({
+                    id: sel.id,
+                    nombre: sel.nombre,
+                    unidad: sel.unidad,
+                    cantidadSolicitada: sel.cantidadPedir,
+                    costoUnitario: sel.costoDefault,
+                    subtotal: sel.cantidadPedir * sel.costoDefault,
                 });
             }
         });
+
+        this.snackBar.open(
+            `${seleccionados.length} productos agregados`,
+            'OK',
+            { duration: 2000 }
+        );
+        this.cerrarSelector();
+    }
+
+    get countSeleccionados(): number {
+        return this.productosFiltrados.filter((p) => p.selected).length;
+    }
+
+    // --- LÓGICA DE LA TABLA PRINCIPAL ---
+
+    actualizarSubtotal(item: ItemCompra) {
+        item.subtotal = item.cantidadSolicitada * item.costoUnitario;
+    }
+
+    get totalOrden(): number {
+        return this.listaItemsCompra.reduce(
+            (acc, item) => acc + item.subtotal,
+            0
+        );
     }
 
     eliminarItem(index: number): void {
@@ -118,13 +255,13 @@ export class CompraComponent implements OnInit {
 
     guardarCompra(): void {
         if (this.listaItemsCompra.length > 0 && this.compraForm.valid) {
-            console.log('Orden Generada:', {
-                cabecera: this.compraForm.getRawValue(),
-                detalle: this.listaItemsCompra,
+            console.log('Orden:', {
+                ...this.compraForm.value,
+                items: this.listaItemsCompra,
             });
 
             this.snackBar.open(
-                '✅ Orden de Compra Generada exitosamente',
+                `✅ Orden generada por $${this.totalOrden}`,
                 'Cerrar',
                 {
                     duration: 4000,
@@ -138,11 +275,9 @@ export class CompraComponent implements OnInit {
                 almacenDestino: 'VVI - Viru Viru (Principal)',
             });
         } else {
-            this.snackBar.open(
-                '⚠️ Complete el proveedor y agregue productos.',
-                'Cerrar',
-                { duration: 3000 }
-            );
+            this.snackBar.open('⚠️ Complete el formulario', 'Cerrar', {
+                duration: 3000,
+            });
         }
     }
 }

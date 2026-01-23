@@ -95,7 +95,7 @@ export class ConfiguracionCargaComponent implements OnInit {
 
     ngOnInit(): void {
         this.configForm = this.fb.group({
-            nombreConfig: ['', Validators.required], // Ej: "Cena Madrid A330"
+            nombreConfig: ['', Validators.required],
             aeronaveId: ['', Validators.required],
             clase: ['Clase Económica', Validators.required],
             tipoServicio: ['Cena', Validators.required],

@@ -1,323 +1,114 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-// Material Imports
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar'; // Para efecto de carga
 import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
 
-interface StockItem {
-    id: number;
+interface ItemStock {
+    id: string;
     nombre: string;
     categoria: string;
-    cantidad: number;
+    stockActual: number;
+    stockMinimo: number;
     unidad: string;
-    ubicacion: string;
-    estado: 'Disponible' | 'Crítico' | 'Agotado' | 'Excedente';
-}
-
-interface Almacen {
-    id: number;
-    nombre: string;
-    codigo: string;
+    ubicacion: string; // Ej: Pasillo A-2
+    precioUnitario: number; // Para calcular valor total
+    estado: 'Normal' | 'Bajo' | 'Crítico';
 }
 
 @Component({
     selector: 'app-stock',
     standalone: true,
     imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        FormsModule,
-        MatFormFieldModule,
-        MatSelectModule,
-        MatInputModule,
-        MatButtonModule,
-        MatIconModule,
-        MatTooltipModule,
-        MatProgressBarModule,
+        CommonModule, FormsModule, MatIconModule, MatButtonModule,
+        MatInputModule, MatSelectModule, MatCardModule,
+        MatProgressBarModule, MatChipsModule, MatMenuModule,
+        MatTableModule, MatPaginatorModule
     ],
-    templateUrl: './stock.component.html',
-    styleUrl: './stock.component.scss',
+    templateUrl: './stock.component.html'
 })
 export class StockComponent implements OnInit {
-    // Lista de Almacenes (Bases BoA)
-    almacenes: Almacen[] = [
-        { id: 1, nombre: 'Viru Viru (Principal)', codigo: 'VVI-MAIN' },
-        { id: 2, nombre: 'Cochabamba (Jorge Wilstermann)', codigo: 'CBB-WILS' },
-        { id: 3, nombre: 'La Paz (El Alto)', codigo: 'LPB-ALTO' },
-        { id: 4, nombre: 'Miami International', codigo: 'MIA-INTL' },
-        { id: 5, nombre: 'Madrid Barajas', codigo: 'MAD-BARA' },
-        { id: 6, nombre: 'Sao Paulo Guarulhos', codigo: 'GRU-INTL' },
+
+    // Filtros
+    searchTerm: string = '';
+    filtroCategoria: string = 'Todos';
+    categorias: string[] = ['Todos', 'Alimentos', 'Bebidas', 'Licores', 'Insumos', 'Menaje'];
+
+    // Datos Mock (Base de Datos Centralizada simulada)
+    inventario: ItemStock[] = [
+        { id: 'STK-001', nombre: 'Coca Cola 2L', categoria: 'Bebidas', stockActual: 500, stockMinimo: 100, unidad: 'Botella', ubicacion: 'A-12', precioUnitario: 10, estado: 'Normal' },
+        { id: 'STK-002', nombre: 'Whisky Etiqueta Negra', categoria: 'Licores', stockActual: 12, stockMinimo: 20, unidad: 'Botella', ubicacion: 'SEG-01', precioUnitario: 250, estado: 'Bajo' },
+        { id: 'STK-003', nombre: 'Sandwich Pollo', categoria: 'Alimentos', stockActual: 5, stockMinimo: 50, unidad: 'Unidad', ubicacion: 'REF-02', precioUnitario: 15, estado: 'Crítico' },
+        { id: 'STK-004', nombre: 'Servilletas', categoria: 'Insumos', stockActual: 5000, stockMinimo: 1000, unidad: 'Pack', ubicacion: 'B-05', precioUnitario: 2, estado: 'Normal' },
+        { id: 'STK-005', nombre: 'Vino Tinto Tannat', categoria: 'Licores', stockActual: 120, stockMinimo: 30, unidad: 'Botella', ubicacion: 'A-10', precioUnitario: 80, estado: 'Normal' },
+        { id: 'STK-006', nombre: 'Hielo 5kg', categoria: 'Insumos', stockActual: 30, stockMinimo: 25, unidad: 'Bolsa', ubicacion: 'CONG-1', precioUnitario: 12, estado: 'Normal' },
     ];
 
-    almacenSeleccionado: number = 1;
-    terminoBusqueda: string = '';
-    cargando: boolean = false;
+    // Datos Visuales
+    inventarioFiltrado: ItemStock[] = [];
+    displayedColumns: string[] = ['producto', 'categoria', 'ubicacion', 'stock', 'estado', 'acciones'];
 
-    // --- DATOS DUROS: 20 ÍTEMS DE STOCK ---
-    todosLosItems: StockItem[] = [
-        {
-            id: 1,
-            nombre: 'Coca Cola 350ml',
-            categoria: 'Bebidas',
-            cantidad: 5000,
-            unidad: 'Latas',
-            ubicacion: 'Pasillo A-1',
-            estado: 'Disponible',
-        },
-        {
-            id: 2,
-            nombre: 'Agua Mineral Sin Gas 2L',
-            categoria: 'Bebidas',
-            cantidad: 200,
-            unidad: 'Botellas',
-            ubicacion: 'Pasillo A-2',
-            estado: 'Crítico',
-        },
-        {
-            id: 3,
-            nombre: 'Jugo de Naranja',
-            categoria: 'Bebidas',
-            cantidad: 800,
-            unidad: 'Litros',
-            ubicacion: 'Refrigerador 1',
-            estado: 'Disponible',
-        },
-        {
-            id: 4,
-            nombre: 'Sandwich de Pollo',
-            categoria: 'Alimentos',
-            cantidad: 50,
-            unidad: 'Unidades',
-            ubicacion: 'Cámara Fría 2',
-            estado: 'Crítico',
-        },
-        {
-            id: 5,
-            nombre: 'Cena Carne (Bandeja)',
-            categoria: 'Alimentos',
-            cantidad: 1200,
-            unidad: 'Bandejas',
-            ubicacion: 'Cámara Fría 1',
-            estado: 'Disponible',
-        },
-        {
-            id: 6,
-            nombre: 'Omelette Desayuno',
-            categoria: 'Alimentos',
-            cantidad: 0,
-            unidad: 'Bandejas',
-            ubicacion: 'Cámara Fría 1',
-            estado: 'Agotado',
-        },
-        {
-            id: 7,
-            nombre: 'Servilletas BoA',
-            categoria: 'Desechables',
-            cantidad: 5000,
-            unidad: 'Paquetes',
-            ubicacion: 'Estante B-3',
-            estado: 'Excedente',
-        },
-        {
-            id: 8,
-            nombre: 'Vasos Plásticos Logo',
-            categoria: 'Desechables',
-            cantidad: 2000,
-            unidad: 'Paquetes',
-            ubicacion: 'Estante B-4',
-            estado: 'Disponible',
-        },
-        {
-            id: 9,
-            nombre: 'Bandejas Aluminio',
-            categoria: 'Desechables',
-            cantidad: 150,
-            unidad: 'Cajas',
-            ubicacion: 'Estante B-1',
-            estado: 'Crítico',
-        },
-        {
-            id: 10,
-            nombre: 'Whisky Etiqueta Negra',
-            categoria: 'Licores',
-            cantidad: 0,
-            unidad: 'Botellas',
-            ubicacion: 'Jaula Seguridad',
-            estado: 'Agotado',
-        },
-        {
-            id: 11,
-            nombre: 'Vino Tinto Tannat',
-            categoria: 'Licores',
-            cantidad: 300,
-            unidad: 'Botellas',
-            ubicacion: 'Bodega Vinos',
-            estado: 'Disponible',
-        },
-        {
-            id: 12,
-            nombre: 'Manta Polar Económica',
-            categoria: 'Confort',
-            cantidad: 450,
-            unidad: 'Unidades',
-            ubicacion: 'Pasillo C-1',
-            estado: 'Disponible',
-        },
-        {
-            id: 13,
-            nombre: 'Almohada de Viaje',
-            categoria: 'Confort',
-            cantidad: 20,
-            unidad: 'Unidades',
-            ubicacion: 'Pasillo C-2',
-            estado: 'Crítico',
-        },
-        {
-            id: 14,
-            nombre: 'Kit Amenity Business',
-            categoria: 'Confort',
-            cantidad: 800,
-            unidad: 'Kits',
-            ubicacion: 'Pasillo C-3',
-            estado: 'Disponible',
-        },
-        {
-            id: 15,
-            nombre: 'Audífonos Desechables',
-            categoria: 'Confort',
-            cantidad: 5000,
-            unidad: 'Unidades',
-            ubicacion: 'Pasillo C-4',
-            estado: 'Disponible',
-        },
-        {
-            id: 16,
-            nombre: 'Jabón Líquido Manos',
-            categoria: 'Limpieza',
-            cantidad: 100,
-            unidad: 'Litros',
-            ubicacion: 'Estante L-1',
-            estado: 'Disponible',
-        },
-        {
-            id: 17,
-            nombre: 'Papel Higiénico Avión',
-            categoria: 'Limpieza',
-            cantidad: 600,
-            unidad: 'Rollos',
-            ubicacion: 'Estante L-2',
-            estado: 'Disponible',
-        },
-        {
-            id: 18,
-            nombre: 'Hielo Seco',
-            categoria: 'Insumos',
-            cantidad: 10,
-            unidad: 'Kilos',
-            ubicacion: 'Congelador Especial',
-            estado: 'Crítico',
-        },
-        {
-            id: 19,
-            nombre: 'Café en Grano',
-            categoria: 'Insumos',
-            cantidad: 200,
-            unidad: 'Kilos',
-            ubicacion: 'Alacena Seca',
-            estado: 'Disponible',
-        },
-        {
-            id: 20,
-            nombre: 'Azúcar en Sobres',
-            categoria: 'Insumos',
-            cantidad: 10000,
-            unidad: 'Sobres',
-            ubicacion: 'Alacena Seca',
-            estado: 'Disponible',
-        },
-    ];
-
-    itemsFiltrados: StockItem[] = [];
-
-    constructor() {}
+    // KPIs
+    kpiTotalItems: number = 0;
+    kpiAlertas: number = 0;
+    kpiValorTotal: number = 0;
 
     ngOnInit(): void {
-        this.itemsFiltrados = this.todosLosItems;
+        this.actualizarVista();
     }
 
-    /**
-     * Simula el cambio de almacén con un pequeño delay
-     */
-    cambiarAlmacen(): void {
-        this.cargando = true;
-        this.itemsFiltrados = []; // Limpiamos visualmente
+    aplicarFiltros() {
+        const term = this.searchTerm.toLowerCase();
 
-        setTimeout(() => {
-            // Aquí podríamos filtrar por ID de almacén si tuviéramos datos reales
-            // Por ahora, simulamos que cargamos los datos y aplicamos el filtro de búsqueda si existe
-            this.aplicarFiltro();
-            this.cargando = false;
-        }, 600);
+        this.inventarioFiltrado = this.inventario.filter(item => {
+            const matchNombre = item.nombre.toLowerCase().includes(term) || item.id.toLowerCase().includes(term);
+            const matchCat = this.filtroCategoria === 'Todos' || item.categoria === this.filtroCategoria;
+            return matchNombre && matchCat;
+        });
     }
 
-    /**
-     * Filtra la lista localmente por nombre o categoría
-     */
-    aplicarFiltro(): void {
-        const termino = this.terminoBusqueda.toLowerCase().trim();
+    actualizarVista() {
+        // Recalcular estados dinámicamente
+        this.inventario.forEach(item => {
+            if (item.stockActual <= item.stockMinimo * 0.25) {
+                item.estado = 'Crítico';
+            } else if (item.stockActual <= item.stockMinimo) {
+                item.estado = 'Bajo';
+            } else {
+                item.estado = 'Normal';
+            }
+        });
 
-        if (!termino) {
-            this.itemsFiltrados = [...this.todosLosItems];
-        } else {
-            this.itemsFiltrados = this.todosLosItems.filter(
-                (item) =>
-                    item.nombre.toLowerCase().includes(termino) ||
-                    item.categoria.toLowerCase().includes(termino) ||
-                    item.ubicacion.toLowerCase().includes(termino)
-            );
-        }
+        // Calcular KPIs
+        this.kpiTotalItems = this.inventario.length;
+        this.kpiAlertas = this.inventario.filter(i => i.estado !== 'Normal').length;
+        this.kpiValorTotal = this.inventario.reduce((acc, i) => acc + (i.stockActual * i.precioUnitario), 0);
+
+        this.aplicarFiltros();
     }
 
-    limpiarBusqueda(): void {
-        this.terminoBusqueda = '';
-        this.aplicarFiltro();
+    // Calcular porcentaje para barra de progreso (Visual)
+    getPorcentajeStock(item: ItemStock): number {
+        // Si el stock actual es el doble del mínimo, está al 100% visualmente
+        const maximoReferencia = item.stockMinimo * 3;
+        const porcentaje = (item.stockActual / maximoReferencia) * 100;
+        return Math.min(porcentaje, 100);
     }
 
-    /**
-     * Devuelve clases de CSS (Tailwind) según el estado
-     */
-    getEstadoClass(estado: string): string {
+    getColorBarra(estado: string): string {
         switch (estado) {
-            case 'Disponible':
-                return 'bg-green-100 text-green-800';
-            case 'Crítico':
-                return 'bg-orange-100 text-orange-800';
-            case 'Agotado':
-                return 'bg-red-100 text-red-800';
-            case 'Excedente':
-                return 'bg-blue-100 text-blue-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    }
-
-    getBarraColor(estado: string): string {
-        switch (estado) {
-            case 'Disponible':
-                return 'primary';
-            case 'Crítico':
-                return 'warn';
-            case 'Agotado':
-                return 'warn';
-            default:
-                return 'accent';
+            case 'Normal': return 'primary'; // Azul/Morado
+            case 'Bajo': return 'accent'; // Amarillo/Naranja (segun tema)
+            case 'Crítico': return 'warn'; // Rojo
+            default: return 'primary';
         }
     }
 }

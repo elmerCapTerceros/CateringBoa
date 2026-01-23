@@ -1,20 +1,44 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips'; // Agregado para etiquetas visuales
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import {
+    MatDialog,
+    MatDialogModule,
+    MatDialogRef,
+} from '@angular/material/dialog'; // Importar MatDialogRef
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip'; // Agregado para mejor UX
-import { Router } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-interface ConfigPlantilla {
+// --- INTERFACES ---
+interface ItemPlantilla {
+    id: string;
+    nombre: string;
+    cantidad: number;
+    unidad: string;
+}
+
+interface PlantillaCarga {
     id: number;
     nombre: string;
-    aeronave: string; // Modelo
-    clase: string;
-    tipoServicio: string; // Nuevo campo para dar más detalle
-    totalItems: number;
-    ultimaModificacion: string;
+    flotaObjetivo: string;
+    tipoVuelo: 'Nacional' | 'Internacional';
+    items: ItemPlantilla[];
+    fechaModificacion: Date;
+}
+
+interface ItemStockSelection {
+    id: string;
+    nombre: string;
+    unidad: string;
+    selected: boolean;
+    cantidadAgregar: number;
 }
 
 @Component({
@@ -22,243 +46,310 @@ interface ConfigPlantilla {
     standalone: true,
     imports: [
         CommonModule,
-        MatButtonModule,
+        FormsModule,
         MatIconModule,
+        MatButtonModule,
+        MatInputModule,
+        MatSelectModule,
+        MatFormFieldModule,
+        MatDialogModule,
         MatSnackBarModule,
         MatTooltipModule,
         MatChipsModule,
+        MatCheckboxModule,
     ],
     templateUrl: './lista-configuraciones.component.html',
 })
 export class ListaConfiguracionesComponent {
-    // --- DATOS DUROS: 20 PLANTILLAS DE CARGA ---
-    configuraciones: ConfigPlantilla[] = [
+    @ViewChild('modalPlantilla') modalPlantilla!: TemplateRef<any>;
+    @ViewChild('modalSelectorProductos')
+    modalSelectorProductos!: TemplateRef<any>;
+    @ViewChild('dialogConfirmar') dialogConfirmar!: TemplateRef<any>;
+
+    // Referencia para controlar el segundo modal individualmente
+    private selectorDialogRef: MatDialogRef<any> | null = null;
+
+    // --- DATOS MOCK ---
+    plantillas: PlantillaCarga[] = [
         {
-            id: 101,
-            nombre: 'Cena Madrid (Full Service)',
-            aeronave: 'Airbus A330-200',
-            clase: 'Ejecutiva',
-            tipoServicio: 'Cena',
-            totalItems: 120,
-            ultimaModificacion: '28/05/2026',
+            id: 1,
+            nombre: 'Desayuno B737 (Nacional)',
+            flotaObjetivo: 'Boeing 737-800',
+            tipoVuelo: 'Nacional',
+            fechaModificacion: new Date(),
+            items: [
+                {
+                    id: '101',
+                    nombre: 'Sandwich de Pollo',
+                    cantidad: 150,
+                    unidad: 'Unidad',
+                },
+                {
+                    id: '102',
+                    nombre: 'Jugo del Valle',
+                    cantidad: 20,
+                    unidad: 'Litro',
+                },
+                {
+                    id: '103',
+                    nombre: 'Servilletas',
+                    cantidad: 200,
+                    unidad: 'Unidad',
+                },
+            ],
         },
         {
-            id: 102,
-            nombre: 'Cena Madrid (Económica)',
-            aeronave: 'Airbus A330-200',
-            clase: 'Económica',
-            tipoServicio: 'Cena',
-            totalItems: 85,
-            ultimaModificacion: '28/05/2026',
-        },
-        {
-            id: 103,
-            nombre: 'Desayuno Miami (Llegada)',
-            aeronave: 'Airbus A330-200',
-            clase: 'Ejecutiva',
-            tipoServicio: 'Desayuno',
-            totalItems: 90,
-            ultimaModificacion: '27/05/2026',
-        },
-        {
-            id: 104,
-            nombre: 'Desayuno Miami (Económica)',
-            aeronave: 'Airbus A330-200',
-            clase: 'Económica',
-            tipoServicio: 'Desayuno',
-            totalItems: 60,
-            ultimaModificacion: '27/05/2026',
-        },
-        {
-            id: 105,
-            nombre: 'Snack Puente Aéreo (VVI-LPB)',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Económica',
-            tipoServicio: 'Snack',
-            totalItems: 15,
-            ultimaModificacion: '26/05/2026',
-        },
-        {
-            id: 106,
-            nombre: 'Almuerzo Sao Paulo (GRU)',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Económica',
-            tipoServicio: 'Almuerzo',
-            totalItems: 45,
-            ultimaModificacion: '25/05/2026',
-        },
-        {
-            id: 107,
-            nombre: 'Cena Buenos Aires (EZE)',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Económica',
-            tipoServicio: 'Cena',
-            totalItems: 50,
-            ultimaModificacion: '25/05/2026',
-        },
-        {
-            id: 108,
-            nombre: 'Servicio Mínimo Regional (CRJ)',
-            aeronave: 'CRJ-200',
-            clase: 'Económica',
-            tipoServicio: 'Bebidas',
-            totalItems: 8,
-            ultimaModificacion: '24/05/2026',
-        },
-        {
-            id: 109,
-            nombre: 'Snack Retorno (TJA-VVI)',
-            aeronave: 'CRJ-200',
-            clase: 'Económica',
-            tipoServicio: 'Snack Ligero',
-            totalItems: 12,
-            ultimaModificacion: '24/05/2026',
-        },
-        {
-            id: 110,
-            nombre: 'Vuelo Chárter Minería',
-            aeronave: 'Boeing 737-300',
-            clase: 'Única',
-            tipoServicio: 'Box Lunch',
-            totalItems: 25,
-            ultimaModificacion: '23/05/2026',
-        },
-        {
-            id: 111,
-            nombre: 'Desayuno Lima (LIM)',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Económica',
-            tipoServicio: 'Desayuno Caliente',
-            totalItems: 40,
-            ultimaModificacion: '22/05/2026',
-        },
-        {
-            id: 112,
-            nombre: 'Cena Asunción (ASU)',
-            aeronave: 'Boeing 737-700',
-            clase: 'Económica',
-            tipoServicio: 'Cena Fría',
-            totalItems: 35,
-            ultimaModificacion: '21/05/2026',
-        },
-        {
-            id: 113,
-            nombre: 'Kit Pernocte Tripulación',
-            aeronave: 'Airbus A330-200',
-            clase: 'Tripulación',
-            tipoServicio: 'Amenity Kit',
-            totalItems: 18,
-            ultimaModificacion: '20/05/2026',
-        },
-        {
-            id: 114,
-            nombre: 'Servicio VIP Oficial',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Ejecutiva',
-            tipoServicio: 'Gourmet',
-            totalItems: 65,
-            ultimaModificacion: '19/05/2026',
-        },
-        {
-            id: 115,
-            nombre: 'Snack Nocturno (MIA-VVI)',
-            aeronave: 'Boeing 767-300',
-            clase: 'Económica',
-            tipoServicio: 'Sandwich',
-            totalItems: 20,
-            ultimaModificacion: '18/05/2026',
-        },
-        {
-            id: 116,
-            nombre: 'Bebidas Calientes (Invierno)',
-            aeronave: 'Boeing 737-300',
-            clase: 'Económica',
-            tipoServicio: 'Café/Té',
-            totalItems: 10,
-            ultimaModificacion: '17/05/2026',
-        },
-        {
-            id: 117,
-            nombre: 'Almuerzo Caracas (CCS)',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Económica',
-            tipoServicio: 'Almuerzo',
-            totalItems: 55,
-            ultimaModificacion: '16/05/2026',
-        },
-        {
-            id: 118,
-            nombre: 'Snack La Habana (HAV)',
-            aeronave: 'Boeing 737-800 NG',
-            clase: 'Económica',
-            tipoServicio: 'Snack Reforzado',
-            totalItems: 30,
-            ultimaModificacion: '15/05/2026',
-        },
-        {
-            id: 119,
-            nombre: 'Carga Seca (Papelería)',
-            aeronave: 'Toda la Flota',
-            clase: 'General',
-            tipoServicio: 'Insumos',
-            totalItems: 100,
-            ultimaModificacion: '14/05/2026',
-        },
-        {
-            id: 120,
-            nombre: 'Kit Infantil (Verano)',
-            aeronave: 'Airbus A330-200',
-            clase: 'Económica',
-            tipoServicio: 'Juguetes/Snack',
-            totalItems: 5,
-            ultimaModificacion: '10/05/2026',
+            id: 2,
+            nombre: 'Cena A330 (Internacional)',
+            flotaObjetivo: 'Airbus A330',
+            tipoVuelo: 'Internacional',
+            fechaModificacion: new Date(),
+            items: [
+                {
+                    id: '201',
+                    nombre: 'Cena Carne (Bandeja)',
+                    cantidad: 250,
+                    unidad: 'Bandeja',
+                },
+                {
+                    id: '202',
+                    nombre: 'Vino Tinto',
+                    cantidad: 20,
+                    unidad: 'Botella',
+                },
+                {
+                    id: '203',
+                    nombre: 'Kit Cubiertos',
+                    cantidad: 270,
+                    unidad: 'Kit',
+                },
+            ],
         },
     ];
 
+    flotasDisponibles = [
+        'Boeing 737-300',
+        'Boeing 737-800',
+        'Airbus A330',
+        'CRJ-200',
+    ];
+
+    // Base de productos
+    productosBase: ItemStockSelection[] = [
+        {
+            id: '101',
+            nombre: 'Sandwich de Pollo',
+            unidad: 'Unidad',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+        {
+            id: '102',
+            nombre: 'Jugo del Valle',
+            unidad: 'Litro',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+        {
+            id: '201',
+            nombre: 'Cena Carne (Bandeja)',
+            unidad: 'Bandeja',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+        {
+            id: '202',
+            nombre: 'Vino Tinto',
+            unidad: 'Botella',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+        {
+            id: '301',
+            nombre: 'Hielo',
+            unidad: 'Bolsa 5kg',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+        {
+            id: '302',
+            nombre: 'Café Grano',
+            unidad: 'Kg',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+        {
+            id: '303',
+            nombre: 'Agua 500ml',
+            unidad: 'Botella',
+            selected: false,
+            cantidadAgregar: 1,
+        },
+    ];
+
+    // --- ESTADO ---
+    plantillaEnEdicion: PlantillaCarga = this.inicializarPlantilla();
+    esEdicion: boolean = false;
+    idParaEliminar: number | null = null;
+
+    productosFiltrados: ItemStockSelection[] = [];
+    searchTermProductos: string = '';
+
     constructor(
-        private router: Router,
+        protected dialog: MatDialog,
         private snackBar: MatSnackBar
     ) {}
 
-    irACrearNueva(): void {
-        this.router.navigate(['/catering/configuracion']);
-    }
-
-    editar(config: ConfigPlantilla): void {
-        // En una app real, aquí pasarías el ID para cargar los datos
-        this.router.navigate(['/catering/configuracion']);
-        this.snackBar.open(`Editando plantilla: ${config.nombre}`, 'Cerrar', {
-            duration: 2000,
+    // --- GESTIÓN PLANTILLAS (MODAL 1) ---
+    abrirModalCrear() {
+        this.esEdicion = false;
+        this.plantillaEnEdicion = this.inicializarPlantilla();
+        this.dialog.open(this.modalPlantilla, {
+            width: '800px',
+            maxHeight: '90vh',
         });
     }
 
-    eliminar(id: number): void {
-        if (confirm('¿Estás seguro de eliminar esta plantilla de carga?')) {
-            this.configuraciones = this.configuraciones.filter(
-                (c) => c.id !== id
+    abrirModalEditar(plantilla: PlantillaCarga) {
+        this.esEdicion = true;
+        this.plantillaEnEdicion = JSON.parse(JSON.stringify(plantilla));
+        this.dialog.open(this.modalPlantilla, {
+            width: '800px',
+            maxHeight: '90vh',
+        });
+    }
+
+    guardarPlantilla() {
+        if (!this.plantillaEnEdicion.nombre) {
+            this.snackBar.open('⚠️ El nombre es obligatorio', 'Cerrar', {
+                duration: 3000,
+            });
+            return;
+        }
+
+        if (this.esEdicion) {
+            const index = this.plantillas.findIndex(
+                (p) => p.id === this.plantillaEnEdicion.id
             );
-            this.snackBar.open(
-                '✅ Plantilla eliminada correctamente',
-                'Cerrar',
-                {
-                    duration: 3000,
-                    panelClass: ['bg-red-600', 'text-white'],
-                }
+            if (index !== -1) {
+                this.plantillaEnEdicion.fechaModificacion = new Date();
+                this.plantillas[index] = this.plantillaEnEdicion;
+            }
+        } else {
+            this.plantillaEnEdicion.id = Date.now();
+            this.plantillaEnEdicion.fechaModificacion = new Date();
+            this.plantillas.push(this.plantillaEnEdicion);
+        }
+
+        this.dialog.closeAll(); // Aquí sí cerramos todo porque terminamos el proceso
+        this.snackBar.open('Plantilla guardada correctamente', 'Cerrar', {
+            duration: 3000,
+        });
+    }
+
+    confirmarEliminar(id: number) {
+        this.idParaEliminar = id;
+        this.dialog.open(this.dialogConfirmar, { width: '350px' });
+    }
+
+    ejecutarEliminacion() {
+        if (this.idParaEliminar) {
+            this.plantillas = this.plantillas.filter(
+                (p) => p.id !== this.idParaEliminar
             );
+            this.dialog.closeAll();
+            this.snackBar.open('Plantilla eliminada', 'Cerrar', {
+                duration: 2000,
+            });
         }
     }
 
-    // Helper para colores de etiquetas
-    getClaseColor(clase: string): string {
-        switch (clase) {
-            case 'Ejecutiva':
-                return 'bg-purple-100 text-purple-800';
-            case 'Business':
-                return 'bg-purple-100 text-purple-800';
-            case 'Tripulación':
-                return 'bg-orange-100 text-orange-800';
-            default:
-                return 'bg-blue-100 text-blue-800';
+    // --- GESTIÓN ÍTEMS (SELECTOR MÚLTIPLE - MODAL 2) ---
+
+    abrirSelectorProductos() {
+        this.searchTermProductos = '';
+        this.productosFiltrados = this.productosBase.map((p) => ({
+            ...p,
+            selected: false,
+            cantidadAgregar: 1,
+        }));
+
+        // Guardamos la referencia para cerrar SOLO este modal después
+        this.selectorDialogRef = this.dialog.open(this.modalSelectorProductos, {
+            width: '600px',
+            maxHeight: '80vh',
+        });
+    }
+
+    cerrarSelectorProductos() {
+        if (this.selectorDialogRef) {
+            this.selectorDialogRef.close(); // Cierra solo el selector
         }
+    }
+
+    filtrarProductos() {
+        const term = this.searchTermProductos.toLowerCase();
+        this.productosFiltrados = this.productosBase
+            .map((p) => ({ ...p, selected: false, cantidadAgregar: 1 }))
+            .filter((p) => p.nombre.toLowerCase().includes(term));
+    }
+
+    toggleSeleccion(item: ItemStockSelection) {
+        item.selected = !item.selected;
+        if (!item.selected) item.cantidadAgregar = 1;
+    }
+
+    agregarSeleccionAPlantilla() {
+        const seleccionados = this.productosFiltrados.filter((p) => p.selected);
+
+        if (seleccionados.length === 0) return;
+
+        seleccionados.forEach((sel) => {
+            const existente = this.plantillaEnEdicion.items.find(
+                (i) => i.id === sel.id
+            );
+            if (existente) {
+                existente.cantidad += sel.cantidadAgregar;
+            } else {
+                this.plantillaEnEdicion.items.push({
+                    id: sel.id,
+                    nombre: sel.nombre,
+                    unidad: sel.unidad,
+                    cantidad: sel.cantidadAgregar,
+                });
+            }
+        });
+
+        // IMPORTANTE: Cerramos solo el selector, no "closeAll()"
+        this.cerrarSelectorProductos();
+
+        this.snackBar.open(
+            `${seleccionados.length} productos agregados`,
+            'OK',
+            { duration: 2000 }
+        );
+    }
+
+    eliminarItemDePlantilla(index: number) {
+        this.plantillaEnEdicion.items.splice(index, 1);
+    }
+
+    // --- HELPERS ---
+    private inicializarPlantilla(): PlantillaCarga {
+        return {
+            id: 0,
+            nombre: '',
+            flotaObjetivo: '',
+            tipoVuelo: 'Nacional',
+            items: [],
+            fechaModificacion: new Date(),
+        };
+    }
+
+    get countSeleccionados() {
+        return this.productosFiltrados.filter((p) => p.selected).length;
+    }
+    getTotalItems(p: PlantillaCarga) {
+        return p.items.length;
     }
 }

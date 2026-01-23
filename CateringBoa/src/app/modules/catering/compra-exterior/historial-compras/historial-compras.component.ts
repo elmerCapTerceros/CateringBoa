@@ -1,29 +1,38 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+    FormBuilder,
+    FormGroup,
+    FormsModule,
+    ReactiveFormsModule,
+} from '@angular/forms';
 
 // Material Imports
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 interface DetalleItem {
     nombre: string;
-    cantidad: number;
-    costo: number;
+    cantidad: number; // Cantidad Pedida
+    cantidadRecibida: number; // Cantidad Verificada en Almacén
+    costoTotal: number; // Presupuesto
+    ingresoActual?: number; // Input temporal para la recepción
 }
 
 interface OrdenHistorica {
     id: string;
     proveedor: string;
     fecha: Date;
-    totalCosto: number;
-    estado: 'Completado' | 'Cancelado' | 'Parcial';
+    estado: 'Completado' | 'Cancelado' | 'Parcial' | 'Pendiente';
     items: DetalleItem[];
     expandido?: boolean;
 }
@@ -32,125 +41,202 @@ interface OrdenHistorica {
     selector: 'app-historial-compras',
     standalone: true,
     imports: [
-        CommonModule, FormsModule, ReactiveFormsModule,
-        MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
-        MatIconModule, MatDatepickerModule, MatNativeDateModule, MatChipsModule
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatButtonModule,
+        MatIconModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatChipsModule,
+        MatSnackBarModule,
+        MatDialogModule,
+        MatProgressBarModule,
     ],
     templateUrl: './historial-compras.component.html',
-    styleUrl: './historial-compras.component.scss'
+    styleUrl: './historial-compras.component.scss',
 })
 export class HistorialComprasComponent implements OnInit {
+    @ViewChild('dialogRecepcion') dialogRecepcion!: TemplateRef<any>;
 
     filterForm: FormGroup;
     listaVisible: OrdenHistorica[] = [];
+    ordenSeleccionada: OrdenHistorica | null = null;
+    montoAPagarEnEstaRecepcion: number = 0;
 
-    // --- DATOS DUROS: 20 REGISTROS HISTÓRICOS ---
+    // --- DATOS REALISTAS DE CATERING AÉREO ---
     datosOriginales: OrdenHistorica[] = [
         {
-            id: 'OC-2024-001', proveedor: 'Amazon Inc.', fecha: new Date('2024-01-10'), totalCosto: 1500.00, estado: 'Completado',
-            items: [{ nombre: 'Hielo Bolsa', cantidad: 200, costo: 500 }, { nombre: 'Vasos Térmicos', cantidad: 1000, costo: 1000 }]
-        },
+            id: 'OC-2025-015',
+            proveedor: 'Gate Gourmet MIA',
+            fecha: new Date(),
+            estado: 'Pendiente',
+            items: [
+                {
+                    nombre: 'Omelette Queso/Espinaca (Precocido)',
+                    cantidad: 500,
+                    cantidadRecibida: 0,
+                    costoTotal: 2500.0,
+                },
+                {
+                    nombre: 'Ensalada Frutas Fresca (Copa)',
+                    cantidad: 500,
+                    cantidadRecibida: 0,
+                    costoTotal: 1500.0,
+                },
+                {
+                    nombre: 'Yogurt Griego (Individual)',
+                    cantidad: 500,
+                    cantidadRecibida: 0,
+                    costoTotal: 750.0,
+                },
+            ],
+        } as any,
         {
-            id: 'OC-2024-002', proveedor: 'Catering Miami Services', fecha: new Date('2024-02-15'), totalCosto: 3200.50, estado: 'Completado',
-            items: [{ nombre: 'Bandejas Aluminio', cantidad: 500, costo: 3200.50 }]
-        },
+            id: 'OC-2025-014',
+            proveedor: 'Duty Free Suppliers',
+            fecha: new Date(),
+            estado: 'Parcial',
+            items: [
+                {
+                    nombre: 'Whisky Black Label (Mini 50ml)',
+                    cantidad: 1000,
+                    cantidadRecibida: 500,
+                    costoTotal: 5000.0,
+                }, // Faltan 500
+                {
+                    nombre: 'Vino Tinto Merlot (Mini 187ml)',
+                    cantidad: 1000,
+                    cantidadRecibida: 1000,
+                    costoTotal: 3500.0,
+                }, // Completo
+            ],
+        } as any,
         {
-            id: 'OC-2024-003', proveedor: 'Frutas Santa Cruz', fecha: new Date('2024-03-20'), totalCosto: 800.00, estado: 'Parcial',
-            items: [{ nombre: 'Limón Granel', cantidad: 50, costo: 80.00 }, { nombre: 'Piña Golden', cantidad: 100, costo: 720.00 }]
-        },
+            id: 'OC-2025-012',
+            proveedor: 'Bebidas Globales SA',
+            fecha: new Date('2025-01-20'),
+            estado: 'Pendiente',
+            items: [
+                {
+                    nombre: 'Agua Sin Gas (Botella 330ml)',
+                    cantidad: 5000,
+                    cantidadRecibida: 0,
+                    costoTotal: 1500.0,
+                },
+                {
+                    nombre: 'Coca Cola Regular (Lata 350ml)',
+                    cantidad: 2000,
+                    cantidadRecibida: 0,
+                    costoTotal: 1200.0,
+                },
+                {
+                    nombre: 'Jugo Naranja Tetrapack 1L',
+                    cantidad: 500,
+                    cantidadRecibida: 0,
+                    costoTotal: 1000.0,
+                },
+            ],
+        } as any,
         {
-            id: 'OC-2024-004', proveedor: 'Proveedora del Valle', fecha: new Date('2024-04-01'), totalCosto: 1200.00, estado: 'Cancelado',
-            items: [{ nombre: 'Carne de Res Premium', cantidad: 100, costo: 1200.00 }]
-        },
+            id: 'OC-2025-010',
+            proveedor: 'Panadería La Francesa',
+            fecha: new Date('2025-01-18'),
+            estado: 'Pendiente',
+            items: [
+                {
+                    nombre: 'Croissant Mantequilla (Congelado)',
+                    cantidad: 2000,
+                    cantidadRecibida: 0,
+                    costoTotal: 1800.0,
+                },
+                {
+                    nombre: 'Panini Pollo Grillé',
+                    cantidad: 300,
+                    cantidadRecibida: 0,
+                    costoTotal: 900.0,
+                },
+            ],
+        } as any,
         {
-            id: 'OC-2024-005', proveedor: 'Gate Gourmet MAD', fecha: new Date('2024-05-12'), totalCosto: 5400.00, estado: 'Completado',
-            items: [{ nombre: 'Menu Turista A', cantidad: 300, costo: 2400 }, { nombre: 'Menu Ejec. B', cantidad: 100, costo: 3000 }]
-        },
-        {
-            id: 'OC-2024-006', proveedor: 'Insumos Bolivia', fecha: new Date('2024-06-05'), totalCosto: 450.00, estado: 'Completado',
-            items: [{ nombre: 'Servilletas BoA', cantidad: 2000, costo: 450.00 }]
-        },
-        {
-            id: 'OC-2024-007', proveedor: 'Lácteos del Norte', fecha: new Date('2024-06-20'), totalCosto: 600.00, estado: 'Completado',
-            items: [{ nombre: 'Yogurt Frutilla', cantidad: 500, costo: 600.00 }]
-        },
-        {
-            id: 'OC-2024-008', proveedor: 'Panadería Victoria', fecha: new Date('2024-07-11'), totalCosto: 150.00, estado: 'Completado',
-            items: [{ nombre: 'Panini', cantidad: 300, costo: 150.00 }]
-        },
-        {
-            id: 'OC-2024-009', proveedor: 'Bebidas Globales', fecha: new Date('2024-08-01'), totalCosto: 2100.00, estado: 'Completado',
-            items: [{ nombre: 'Coca Cola 2L', cantidad: 200, costo: 1100 }, { nombre: 'Sprite 2L', cantidad: 200, costo: 1000 }]
-        },
-        {
-            id: 'OC-2024-010', proveedor: 'Vinos Aranjuez', fecha: new Date('2024-08-15'), totalCosto: 3500.00, estado: 'Completado',
-            items: [{ nombre: 'Vino Tinto Tannat', cantidad: 100, costo: 3500.00 }]
-        },
-        {
-            id: 'OC-2024-011', proveedor: 'Cleaning Solutions', fecha: new Date('2024-09-02'), totalCosto: 890.00, estado: 'Parcial',
-            items: [{ nombre: 'Detergente Industrial', cantidad: 50, costo: 890.00 }]
-        },
-        {
-            id: 'OC-2024-012', proveedor: 'Café Alexander', fecha: new Date('2024-09-25'), totalCosto: 1200.00, estado: 'Completado',
-            items: [{ nombre: 'Café Grano', cantidad: 40, costo: 1200.00 }]
-        },
-        {
-            id: 'OC-2024-013', proveedor: 'Catering Sao Paulo', fecha: new Date('2024-10-10'), totalCosto: 4200.00, estado: 'Completado',
-            items: [{ nombre: 'Desayuno Continental', cantidad: 400, costo: 4200.00 }]
-        },
-        {
-            id: 'OC-2024-014', proveedor: 'Plasticos y Mas', fecha: new Date('2024-11-05'), totalCosto: 300.00, estado: 'Cancelado',
-            items: [{ nombre: 'Cubiertos Desechables', cantidad: 1000, costo: 300.00 }]
-        },
-        {
-            id: 'OC-2024-015', proveedor: 'Hielos Andes', fecha: new Date('2024-12-01'), totalCosto: 50.00, estado: 'Completado',
-            items: [{ nombre: 'Hielo Seco', cantidad: 10, costo: 50.00 }]
-        },
-        {
-            id: 'OC-2025-001', proveedor: 'Embutidos Stege', fecha: new Date('2025-01-05'), totalCosto: 900.00, estado: 'Completado',
-            items: [{ nombre: 'Jamon Ahumado', cantidad: 50, costo: 900.00 }]
-        },
-        {
-            id: 'OC-2025-002', proveedor: 'Aero Supplies MIA', fecha: new Date('2025-01-08'), totalCosto: 5600.00, estado: 'Parcial',
-            items: [{ nombre: 'Auriculares Econ', cantidad: 2000, costo: 5600.00 }]
-        },
-        {
-            id: 'OC-2025-003', proveedor: 'Bebidas Globales', fecha: new Date('2025-01-12'), totalCosto: 1100.00, estado: 'Completado',
-            items: [{ nombre: 'Agua Sin Gas 500ml', cantidad: 1000, costo: 1100.00 }]
-        },
-        {
-            id: 'OC-2025-004', proveedor: 'Frutas Santa Cruz', fecha: new Date('2025-01-14'), totalCosto: 400.00, estado: 'Completado',
-            items: [{ nombre: 'Manzana Verde', cantidad: 200, costo: 400.00 }]
-        },
-        {
-            id: 'OC-2025-005', proveedor: 'Catering Services', fecha: new Date('2025-01-15'), totalCosto: 320.50, estado: 'Completado',
-            items: [{ nombre: 'Servilletas', cantidad: 500, costo: 320.50 }]
-        }
+            id: 'OC-2024-155',
+            proveedor: 'Insumos Generales BoA',
+            fecha: new Date('2024-12-15'),
+            estado: 'Completado',
+            items: [
+                {
+                    nombre: 'Servilletas Logo BoA (Caja 1000un)',
+                    cantidad: 50,
+                    cantidadRecibida: 50,
+                    costoTotal: 500.0,
+                },
+                {
+                    nombre: 'Vasos Plásticos Claros',
+                    cantidad: 5000,
+                    cantidadRecibida: 5000,
+                    costoTotal: 250.0,
+                },
+            ],
+        } as any,
     ];
 
-    constructor(private fb: FormBuilder) {}
-
-    ngOnInit(): void {
+    constructor(
+        private fb: FormBuilder,
+        private snackBar: MatSnackBar,
+        private dialog: MatDialog
+    ) {
         this.filterForm = this.fb.group({
             fechaInicio: [null],
             fechaFin: [null],
-            proveedor: ['']
+            proveedor: [''],
         });
-        this.listaVisible = this.datosOriginales;
     }
 
+    ngOnInit(): void {
+        this.listaVisible = [...this.datosOriginales];
+    }
+
+    // --- CÁLCULOS (Dinero) ---
+    getTotalPresupuestado(orden: OrdenHistorica): number {
+        return orden.items.reduce((acc, item) => acc + item.costoTotal, 0);
+    }
+
+    getTotalEjecutado(orden: OrdenHistorica): number {
+        return orden.items.reduce((acc, item) => {
+            const costoUnitario = item.costoTotal / item.cantidad;
+            return acc + item.cantidadRecibida * costoUnitario;
+        }, 0);
+    }
+
+    calcularMontoRecepcionActual(): void {
+        if (!this.ordenSeleccionada) return;
+        this.montoAPagarEnEstaRecepcion = this.ordenSeleccionada.items.reduce(
+            (acc, item) => {
+                const ingreso = item.ingresoActual || 0;
+                const costoUnitario = item.costoTotal / item.cantidad;
+                return acc + ingreso * costoUnitario;
+            },
+            0
+        );
+    }
+
+    // --- ACCIONES ---
     aplicarFiltros(): void {
         const { fechaInicio, fechaFin, proveedor } = this.filterForm.value;
-        this.listaVisible = this.datosOriginales.filter(orden => {
+        this.listaVisible = this.datosOriginales.filter((orden) => {
             let cumpleFecha = true;
-            let cumpleProveedor = true;
-
+            let cumpleProv = true;
             if (fechaInicio && orden.fecha < fechaInicio) cumpleFecha = false;
             if (fechaFin && orden.fecha > fechaFin) cumpleFecha = false;
-            if (proveedor && !orden.proveedor.toLowerCase().includes(proveedor.toLowerCase())) {
-                cumpleProveedor = false;
-            }
-            return cumpleFecha && cumpleProveedor;
+            if (
+                proveedor &&
+                !orden.proveedor.toLowerCase().includes(proveedor.toLowerCase())
+            )
+                cumpleProv = false;
+            return cumpleFecha && cumpleProv;
         });
     }
 
@@ -158,12 +244,63 @@ export class HistorialComprasComponent implements OnInit {
         this.filterForm.reset();
         this.listaVisible = this.datosOriginales;
     }
-
     toggleDetalle(orden: OrdenHistorica): void {
         orden.expandido = !orden.expandido;
     }
 
+    abrirRecepcion(orden: OrdenHistorica, event: Event): void {
+        event.stopPropagation();
+        this.ordenSeleccionada = orden;
+        this.montoAPagarEnEstaRecepcion = 0;
+        // Sugerir el restante por defecto
+        this.ordenSeleccionada.items.forEach(
+            (i) => (i.ingresoActual = i.cantidad - i.cantidadRecibida)
+        );
+        this.calcularMontoRecepcionActual();
+        this.dialog.open(this.dialogRecepcion, { width: '700px' });
+    }
+
+    confirmarRecepcion(): void {
+        if (!this.ordenSeleccionada) return;
+        let huboCambios = false;
+        let recepcionCompleta = true;
+
+        this.ordenSeleccionada.items.forEach((item) => {
+            const ingreso = item.ingresoActual || 0;
+            if (ingreso > 0) {
+                item.cantidadRecibida += ingreso;
+                huboCambios = true;
+            }
+            if (item.cantidadRecibida < item.cantidad)
+                recepcionCompleta = false;
+            item.ingresoActual = 0;
+        });
+
+        if (huboCambios) {
+            this.ordenSeleccionada.estado = recepcionCompleta
+                ? 'Completado'
+                : 'Parcial';
+            const monto = this.montoAPagarEnEstaRecepcion.toLocaleString(
+                'en-US',
+                { style: 'currency', currency: 'USD' }
+            );
+            this.snackBar.open(
+                `✅ Ingreso verificado. Monto autorizado a pagar: ${monto}`,
+                'Cerrar',
+                {
+                    duration: 5000,
+                    panelClass: ['bg-green-700', 'text-white'],
+                }
+            );
+        }
+        this.dialog.closeAll();
+        this.ordenSeleccionada = null;
+    }
+
+    getProgreso(item: DetalleItem): number {
+        return (item.cantidadRecibida / item.cantidad) * 100;
+    }
     exportarReporte(): void {
-        alert("Generando reporte Excel de " + this.listaVisible.length + " órdenes...");
+        this.snackBar.open('📄 Generando reporte...', 'OK', { duration: 2000 });
     }
 }

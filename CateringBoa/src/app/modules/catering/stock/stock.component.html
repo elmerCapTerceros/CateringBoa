@@ -1,92 +1,159 @@
-<div class="w-full flex-auto p-6 sm:p-10">
+<div class="flex flex-col w-full min-h-screen bg-gray-50/50 p-6 sm:p-10 gap-8">
 
-    <h2 class="text-3xl font-bold tracking-tight mb-8">Inventario / Stock</h2>
+    <div class="flex flex-col gap-6">
+        <div>
+            <h2 class="text-3xl font-bold tracking-tight text-slate-800">Inventario General</h2>
+            <p class="text-secondary">Monitoreo de existencias y valoración de almacén.</p>
+        </div>
 
-    <div class="flex flex-col sm:flex-row gap-6 mb-8 items-end">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
 
-        <mat-form-field appearance="outline" class="w-full sm:w-1/3">
-            <mat-label>Seleccionar Almacén</mat-label>
-            <mat-select [(value)]="almacenSeleccionado" (selectionChange)="cambiarAlmacen()">
-                @for (almacen of almacenes; track almacen.id) {
-                    <mat-option [value]="almacen.id">
-                        {{ almacen.nombre }} ({{almacen.codigo}})
-                    </mat-option>
-                }
-            </mat-select>
-        </mat-form-field>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <div class="text-gray-500 text-xs font-bold uppercase tracking-wider">Productos Únicos</div>
+                    <div class="text-3xl font-black text-slate-800 mt-1">{{ kpiTotalItems }}</div>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                    <mat-icon>inventory_2</mat-icon>
+                </div>
+            </div>
 
-        <mat-form-field appearance="outline" class="w-full sm:w-1/3">
-            <mat-label>Buscar ítem...</mat-label>
-            <input matInput
-                   [(ngModel)]="terminoBusqueda"
-                   (keyup)="aplicarFiltro()"
-                   placeholder="Ej. Coca Cola">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <div class="text-gray-500 text-xs font-bold uppercase tracking-wider">Alertas Stock</div>
+                    <div class="text-3xl font-black" [ngClass]="kpiAlertas > 0 ? 'text-red-600' : 'text-green-600'">
+                        {{ kpiAlertas }}
+                    </div>
+                    <div class="text-xs text-red-400 font-medium mt-1" *ngIf="kpiAlertas > 0">Requieren reposición</div>
+                </div>
+                <div class="w-12 h-12 rounded-full flex items-center justify-center"
+                     [ngClass]="kpiAlertas > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'">
+                    <mat-icon>notifications_active</mat-icon>
+                </div>
+            </div>
 
-            @if (terminoBusqueda) {
-                <button mat-icon-button matSuffix (click)="limpiarBusqueda()">
-                    <mat-icon>close</mat-icon>
-                </button>
-            } @else {
-                <mat-icon matSuffix>search</mat-icon>
-            }
-        </mat-form-field>
-
-        <div class="pb-5">
-            <button mat-stroked-button color="primary" class="h-12" (click)="cambiarAlmacen()">
-                <mat-icon class="mr-2" [class.animate-spin]="cargando">refresh</mat-icon>
-                Actualizar
-            </button>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <div class="text-gray-500 text-xs font-bold uppercase tracking-wider">Valor Inventario</div>
+                    <div class="text-3xl font-black text-slate-800 mt-1">${{ kpiValorTotal | number:'1.0-0' }}</div>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+                    <mat-icon>attach_money</mat-icon>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="bg-gray-100 rounded-lg overflow-hidden shadow">
-        <table class="w-full">
-            <thead>
-            <tr class="text-left text-white" style="background-color: #0B1E47;">
-                <th class="p-4 font-medium">Ítem</th>
-                <th class="p-4 font-medium">Categoría</th>
-                <th class="p-4 font-medium">Ubicación</th>
-                <th class="p-4 font-medium text-center">Cantidad</th>
-                <th class="p-4 font-medium text-center">Unidad</th>
-                <th class="p-4 font-medium">Estado</th>
-            </tr>
-            </thead>
-            <tbody>
-                @if (cargando) {
-                    <tr>
-                        <td colspan="6" class="p-0">
-                            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                        </td>
-                    </tr>
-                }
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
 
-                @for (item of itemsFiltrados; track item.id) {
-                    <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
-                        <td class="p-4 font-medium text-gray-900">{{ item.nombre }}</td>
-                        <td class="p-4 text-gray-600">{{ item.categoria }}</td>
-                        <td class="p-4 text-gray-600 text-sm">
-                            <div class="flex items-center">
-                                <mat-icon class="text-gray-400 icon-size-4 mr-1">location_on</mat-icon>
-                                {{ item.ubicacion }}
+        <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white">
+
+            <div class="relative w-full sm:w-96">
+                <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
+                <input type="text" [(ngModel)]="searchTerm" (keyup)="aplicarFiltros()"
+                       placeholder="Buscar por nombre, código..."
+                       class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto">
+                @for (cat of categorias; track cat) {
+                    <button (click)="filtroCategoria = cat; aplicarFiltros()"
+                            class="px-4 py-2 rounded-full text-xs font-bold transition-colors whitespace-nowrap"
+                            [ngClass]="filtroCategoria === cat ? 'bg-slate-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+                        {{ cat }}
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="inventarioFiltrado" class="w-full">
+
+                <ng-container matColumnDef="producto">
+                    <th mat-header-cell *matHeaderCellDef class="text-xs font-bold uppercase text-gray-500 px-6 py-4">Producto</th>
+                    <td mat-cell *matCellDef="let item" class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400">
+                                <mat-icon class="icon-size-5">image</mat-icon> </div>
+                            <div>
+                                <div class="font-bold text-slate-700 text-sm">{{ item.nombre }}</div>
+                                <div class="text-xs text-gray-400 font-mono">{{ item.id }}</div>
                             </div>
-                        </td>
-                        <td class="p-4 text-gray-900 font-bold text-center text-lg">{{ item.cantidad }}</td>
-                        <td class="p-4 text-gray-500 text-sm text-center">{{ item.unidad }}</td>
-                        <td class="p-4">
-                            <span [class]="getEstadoClass(item.estado)">
-                                {{ item.estado }}
-                            </span>
-                        </td>
-                    </tr>
-                }
-                @if (itemsFiltrados.length === 0 && !cargando) {
-                    <tr>
-                        <td colspan="6" class="p-8 text-center text-gray-500">
-                            No se encontraron ítems.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="categoria">
+                    <th mat-header-cell *matHeaderCellDef class="text-xs font-bold uppercase text-gray-500 px-6">Categoría</th>
+                    <td mat-cell *matCellDef="let item" class="px-6">
+                        <span class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 font-medium">{{ item.categoria }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="ubicacion">
+                    <th mat-header-cell *matHeaderCellDef class="text-xs font-bold uppercase text-gray-500 px-6">Ubicación</th>
+                    <td mat-cell *matCellDef="let item" class="px-6 text-sm text-gray-500">
+                        <div class="flex items-center gap-1">
+                            <mat-icon class="icon-size-3 text-gray-300">location_on</mat-icon> {{ item.ubicacion }}
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="stock">
+                    <th mat-header-cell *matHeaderCellDef class="text-xs font-bold uppercase text-gray-500 px-6 w-48">Nivel de Stock</th>
+                    <td mat-cell *matCellDef="let item" class="px-6">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-bold text-slate-700">{{ item.stockActual }} {{ item.unidad }}</span>
+                            <span class="text-gray-400">Min: {{ item.stockMinimo }}</span>
+                        </div>
+                        <mat-progress-bar mode="determinate"
+                                          [value]="getPorcentajeStock(item)"
+                                          [color]="getColorBarra(item.estado)"
+                                          class="rounded h-2"></mat-progress-bar>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="estado">
+                    <th mat-header-cell *matHeaderCellDef class="text-xs font-bold uppercase text-gray-500 px-6 text-center">Estado</th>
+                    <td mat-cell *matCellDef="let item" class="px-6 text-center">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                              [ngClass]="{
+                                  'bg-green-100 text-green-700': item.estado === 'Normal',
+                                  'bg-orange-100 text-orange-700': item.estado === 'Bajo',
+                                  'bg-red-100 text-red-700': item.estado === 'Crítico'
+                              }">
+                            {{ item.estado }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef class="px-6"></th>
+                    <td mat-cell *matCellDef="let item" class="px-6 text-right">
+                        <button mat-icon-button [matMenuTriggerFor]="menu">
+                            <mat-icon class="text-gray-400">more_vert</mat-icon>
+                        </button>
+                        <mat-menu #menu="matMenu">
+                            <button mat-menu-item>
+                                <mat-icon>edit</mat-icon> Editar Producto
+                            </button>
+                            <button mat-menu-item>
+                                <mat-icon>history</mat-icon> Ver Movimientos
+                            </button>
+                        </mat-menu>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors border-b border-gray-50"></tr>
+            </table>
+
+            @if (inventarioFiltrado.length === 0) {
+                <div class="text-center py-12 text-gray-400">
+                    <mat-icon class="icon-size-12 opacity-20 mb-2">search_off</mat-icon>
+                    <p>No se encontraron productos con esos filtros.</p>
+                </div>
+            }
+        </div>
     </div>
 </div>

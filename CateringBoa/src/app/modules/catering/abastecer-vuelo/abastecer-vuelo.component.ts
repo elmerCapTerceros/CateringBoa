@@ -1,248 +1,408 @@
-import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import { Component, ViewChild, TemplateRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
-
-// Material Imports
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatCheckboxModule } from '@angular/material/checkbox'; // <--- IMPORTANTE
 
-// Asegúrate de que la ruta sea correcta
-import { DialogSeleccionarItemComponent } from './dialog-seleccionar-item/dialog-seleccionar-item.component';
-
-interface DetalleCarga {
+// --- INTERFACES ---
+interface VueloProgramado {
     id: number;
-    nombre: string;
-    cantidad: number;
     codigo: string;
-    tipo: string;
-    esExtra: boolean;
+    ruta: string;
+    matricula: string;
+    horaSalida: string;
+    estado: 'Pendiente' | 'En Proceso' | 'Despachado';
 }
 
-interface HistorialRegistro {
-    aeronave: string;
-    destino: string;
-    fecha: string;
-    usuario: string;
-    items: DetalleCarga[];
+interface ItemCarga {
+    id: string;
+    nombre: string;
+    cantidad: number;
+    unidad: string;
+    tipo: 'Base' | 'Extra';
+}
+
+interface ItemStock {
+    id: string;
+    nombre: string;
+    categoria: string;
+    stockActual: number;
+    unidad: string;
+}
+
+// Nueva interfaz para manejar la selección en el modal
+interface ItemStockSelection extends ItemStock {
+    selected: boolean;
+    cantidadAgregar: number;
+}
+
+interface PlantillaResumen {
+    id: number;
+    nombre: string;
+    totalItems: number;
+    items: ItemCarga[];
 }
 
 @Component({
     selector: 'app-abastecer-vuelo',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatFormFieldModule,
-        MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatDatepickerModule,
-        MatNativeDateModule, MatAutocompleteModule, MatSnackBarModule, MatTooltipModule
+        CommonModule,
+        FormsModule,
+        MatIconModule,
+        MatButtonModule,
+        MatInputModule,
+        MatSelectModule,
+        MatFormFieldModule,
+        MatDialogModule,
+        MatSnackBarModule,
+        MatTooltipModule,
+        MatChipsModule,
+        MatDividerModule,
+        MatCheckboxModule,
     ],
     templateUrl: './abastecer-vuelo.component.html',
-    styleUrl: './abastecer-vuelo.component.scss'
 })
 export class AbastecerVueloComponent implements OnInit {
+    @ViewChild('modalAgregarItem') modalAgregarItem!: TemplateRef<any>;
 
-    abastecimientoForm: FormGroup;
-    listaCarga: DetalleCarga[] = [];
-    minDate: Date = new Date();
+    // Búsqueda
+    searchVueloTerm: string = '';
+    searchStockTerm: string = '';
 
-    @ViewChild('detalleModal') detalleModal!: TemplateRef<any>;
-    registroSeleccionado: HistorialRegistro | null = null;
+    // Listas
+    vuelosFiltrados: VueloProgramado[] = [];
 
-    // --- DATOS: Flota Real BoA ---
-    aeronaves = [
-        { id: 1, matricula: 'CP-3030', modelo: 'Airbus A330-200 (Largo Alcance)' },
-        { id: 2, matricula: 'CP-3204', modelo: 'Airbus A330-200 (Largo Alcance)' },
-        { id: 3, matricula: 'CP-2923', modelo: 'Boeing 737-800 NG' },
-        { id: 4, matricula: 'CP-3151', modelo: 'Boeing 737-800 NG' },
-        { id: 5, matricula: 'CP-3138', modelo: 'Boeing 737-800 NG' },
-        { id: 6, matricula: 'CP-2550', modelo: 'Boeing 737-300' },
-        { id: 7, matricula: 'CP-2551', modelo: 'Boeing 737-300' },
-        { id: 8, matricula: 'CP-2850', modelo: 'CRJ-200 (Regional)' },
-        { id: 9, matricula: 'CP-2881', modelo: 'CRJ-200 (Regional)' }
+    // --- LÓGICA DE SELECCIÓN MÚLTIPLE ---
+    stockCompleto: ItemStockSelection[] = []; // Todos los ítems con estado
+    stockFiltrado: ItemStockSelection[] = []; // Lo que se ve en pantalla al buscar
+
+    // Datos Mock (Stock Base)
+    stockAlmacen: ItemStock[] = [
+        {
+            id: 'STK-1',
+            nombre: 'Whisky Etiqueta Negra',
+            categoria: 'Licores',
+            stockActual: 50,
+            unidad: 'Botella',
+        },
+        {
+            id: 'STK-2',
+            nombre: 'Vino Tinto Tannat',
+            categoria: 'Licores',
+            stockActual: 120,
+            unidad: 'Botella',
+        },
+        {
+            id: 'STK-3',
+            nombre: 'Coca Cola 2L',
+            categoria: 'Bebidas',
+            stockActual: 500,
+            unidad: 'Botella',
+        },
+        {
+            id: 'STK-4',
+            nombre: 'Agua Mineral 500ml',
+            categoria: 'Bebidas',
+            stockActual: 1000,
+            unidad: 'Botella',
+        },
+        {
+            id: 'STK-5',
+            nombre: 'Hielo 5kg',
+            categoria: 'Insumos',
+            stockActual: 30,
+            unidad: 'Bolsa',
+        },
+        {
+            id: 'STK-6',
+            nombre: 'Kit Cubiertos VIP',
+            categoria: 'Menaje',
+            stockActual: 200,
+            unidad: 'Kit',
+        },
+        {
+            id: 'STK-7',
+            nombre: 'Sandwich Pollo',
+            categoria: 'Alimentos',
+            stockActual: 80,
+            unidad: 'Unidad',
+        },
+        {
+            id: 'STK-8',
+            nombre: 'Menu Vegetariano',
+            categoria: 'Alimentos',
+            stockActual: 15,
+            unidad: 'Bandeja',
+        },
     ];
 
-    // --- DATOS: Destinos BoA ---
-    destinos = [
-        { codigo: 'VVI', nombre: 'Santa Cruz (Viru Viru)' },
-        { codigo: 'LPB', nombre: 'La Paz (El Alto)' },
-        { codigo: 'CBB', nombre: 'Cochabamba' },
-        { codigo: 'MIA', nombre: 'Miami (Intl)' },
-        { codigo: 'MAD', nombre: 'Madrid (Barajas)' },
-        { codigo: 'GRU', nombre: 'Sao Paulo (Guarulhos)' },
-        { codigo: 'EZE', nombre: 'Buenos Aires (Ezeiza)' },
-        { codigo: 'LIM', nombre: 'Lima (Jorge Chávez)' },
-        { codigo: 'ASU', nombre: 'Asunción' },
-        { codigo: 'CCS', nombre: 'Caracas' },
-        { codigo: 'HAV', nombre: 'La Habana' },
-        { codigo: 'SRE', nombre: 'Sucre' },
-        { codigo: 'TJA', nombre: 'Tarija' },
-        { codigo: 'CIJ', nombre: 'Cobija' }
+    vuelosDelDia: VueloProgramado[] = [
+        {
+            id: 101,
+            codigo: 'OB-760',
+            ruta: 'VVI ➔ MIA',
+            matricula: 'CP-3030',
+            horaSalida: '08:00',
+            estado: 'Pendiente',
+        },
+        {
+            id: 102,
+            codigo: 'OB-770',
+            ruta: 'VVI ➔ MAD',
+            matricula: 'CP-3204',
+            horaSalida: '12:30',
+            estado: 'En Proceso',
+        },
+        {
+            id: 103,
+            codigo: 'OB-550',
+            ruta: 'CBB ➔ LPB',
+            matricula: 'CP-2923',
+            horaSalida: '14:00',
+            estado: 'Pendiente',
+        },
+        {
+            id: 104,
+            codigo: 'OB-680',
+            ruta: 'VVI ➔ SAO',
+            matricula: 'CP-3151',
+            horaSalida: '16:45',
+            estado: 'Pendiente',
+        },
     ];
 
-    // --- DATOS: Plantillas de Servicio ---
-    plantillasCarga = [
+    plantillasDisponibles: PlantillaResumen[] = [
         {
-            id: 10, nombre: 'Nacional: Snack Estándar (737)',
+            id: 1,
+            nombre: 'Desayuno Estándar B737',
+            totalItems: 3,
             items: [
-                { id: 1, nombre: 'Sandwich Pollo', unidad: 'Unidad', cantidad: 150 },
-                { id: 2, nombre: 'Coca Cola 2L', unidad: 'Botella', cantidad: 10 },
-                { id: 3, nombre: 'Agua 2L', unidad: 'Botella', cantidad: 10 },
-                { id: 4, nombre: 'Servilletas', unidad: 'Paquete', cantidad: 5 },
-                { id: 5, nombre: 'Vasos Plásticos', unidad: 'Paquete', cantidad: 4 }
-            ]
+                {
+                    id: 'P1',
+                    nombre: 'Sandwich Pollo',
+                    cantidad: 150,
+                    unidad: 'Unidad',
+                    tipo: 'Base',
+                },
+                {
+                    id: 'P2',
+                    nombre: 'Jugo Valle',
+                    cantidad: 20,
+                    unidad: 'Litro',
+                    tipo: 'Base',
+                },
+                {
+                    id: 'P3',
+                    nombre: 'Servilletas',
+                    cantidad: 200,
+                    unidad: 'Unidad',
+                    tipo: 'Base',
+                },
+            ],
         },
         {
-            id: 11, nombre: 'Internacional: Cena Full (A330)',
+            id: 2,
+            nombre: 'Cena Internacional A330',
+            totalItems: 3,
             items: [
-                { id: 6, nombre: 'Cena Carne', unidad: 'Bandeja', cantidad: 250 },
-                { id: 7, nombre: 'Cena Pasta', unidad: 'Bandeja', cantidad: 50 },
-                { id: 8, nombre: 'Vino Tinto', unidad: 'Botella', cantidad: 30 },
-                { id: 9, nombre: 'Vino Blanco', unidad: 'Botella', cantidad: 20 },
-                { id: 10, nombre: 'Hielo 5kg', unidad: 'Bolsa', cantidad: 15 },
-                { id: 11, nombre: 'Kit Café', unidad: 'Caja', cantidad: 5 }
-            ]
+                {
+                    id: 'P4',
+                    nombre: 'Cena Carne',
+                    cantidad: 250,
+                    unidad: 'Bandeja',
+                    tipo: 'Base',
+                },
+                {
+                    id: 'P5',
+                    nombre: 'Vino Tinto',
+                    cantidad: 15,
+                    unidad: 'Botella',
+                    tipo: 'Base',
+                },
+                {
+                    id: 'P6',
+                    nombre: 'Kit Café',
+                    cantidad: 10,
+                    unidad: 'Caja',
+                    tipo: 'Base',
+                },
+            ],
         },
-        {
-            id: 12, nombre: 'Regional: Bebidas (CRJ)',
-            items: [
-                { id: 3, nombre: 'Agua 500ml', unidad: 'Botella', cantidad: 50 },
-                { id: 12, nombre: 'Galletas Surtidas', unidad: 'Caja', cantidad: 2 }
-            ]
-        },
-        {
-            id: 13, nombre: 'Internacional: Desayuno (MIA/MAD)',
-            items: [
-                { id: 13, nombre: 'Omelette', unidad: 'Bandeja', cantidad: 200 },
-                { id: 14, nombre: 'Fruta Picada', unidad: 'Pote', cantidad: 200 },
-                { id: 15, nombre: 'Yogurt', unidad: 'Unidad', cantidad: 200 },
-                { id: 16, nombre: 'Café Destilado', unidad: 'Litro', cantidad: 20 }
-            ]
-        }
     ];
 
-    // --- DATOS: Últimos registros (Solo 3 para mostrar en esta vista) ---
-    historialAbastecimientos: HistorialRegistro[] = [
-        {
-            aeronave: 'CP-3030', destino: 'MAD', fecha: '28/05/2026', usuario: 'Maria Delgado',
-            items: [{ id: 6, nombre: 'Cena Carne', cantidad: 270, codigo: 'ITM-6', tipo: 'Bandeja', esExtra: true }]
-        },
-        {
-            aeronave: 'CP-2923', destino: 'MIA', fecha: '28/05/2026', usuario: 'Juan Perez',
-            items: [{ id: 1, nombre: 'Sandwich Pollo', cantidad: 160, codigo: 'ITM-1', tipo: 'Unidad', esExtra: false }]
-        },
-        {
-            aeronave: 'CP-2850', destino: 'SRE', fecha: '27/05/2026', usuario: 'Carlos Ruiz',
-            items: [{ id: 3, nombre: 'Agua 500ml', cantidad: 60, codigo: 'ITM-3', tipo: 'Botella', esExtra: false }]
-        }
-    ];
+    vueloSeleccionado: VueloProgramado | null = null;
+    listaCargaActual: ItemCarga[] = [];
+    plantillaSeleccionadaId: number | null = null;
 
     constructor(
-        private fb: FormBuilder,
-        private dialog: MatDialog,
         private snackBar: MatSnackBar,
-        private router: Router
+        protected dialog: MatDialog
     ) {}
 
     ngOnInit(): void {
-        this.abastecimientoForm = this.fb.group({
-            aeronaveId: ['', Validators.required],
-            destino: ['', Validators.required],
-            fecha: [new Date(), Validators.required],
-            plantillaId: ['']
-        });
+        this.vuelosFiltrados = this.vuelosDelDia;
+    }
 
-        this.abastecimientoForm.get('plantillaId')?.valueChanges.subscribe(id => {
-            this.cargarPlantilla(id);
+    // --- VUELOS ---
+    filtrarVuelos() {
+        const term = this.searchVueloTerm.toLowerCase();
+        this.vuelosFiltrados = this.vuelosDelDia.filter(
+            (v) =>
+                v.codigo.toLowerCase().includes(term) ||
+                v.ruta.toLowerCase().includes(term) ||
+                v.matricula.toLowerCase().includes(term)
+        );
+    }
+
+    seleccionarVuelo(vuelo: VueloProgramado) {
+        this.vueloSeleccionado = vuelo;
+        this.listaCargaActual = [];
+        this.plantillaSeleccionadaId = null;
+        if (vuelo.estado === 'En Proceso') this.simularCargaExistente();
+    }
+
+    // --- MODAL STOCK MULTIPLE ---
+    abrirModalItem() {
+        this.searchStockTerm = '';
+
+        // Inicializamos el stock con estado de selección en falso
+        // Mapeamos los datos originales a la interfaz con selección
+        this.stockCompleto = this.stockAlmacen.map((item) => ({
+            ...item,
+            selected: false,
+            cantidadAgregar: 1,
+        }));
+
+        this.stockFiltrado = this.stockCompleto; // Al inicio mostramos todo
+
+        this.dialog.open(this.modalAgregarItem, {
+            width: '800px',
+            maxHeight: '90vh',
         });
     }
 
-    irAGestionarCargas(): void {
-        this.router.navigate(['/catering/configuracion']);
+    filtrarStock() {
+        const term = this.searchStockTerm.toLowerCase();
+        // Filtramos sobre la lista completa que MANTIENE EL ESTADO selected
+        this.stockFiltrado = this.stockCompleto.filter(
+            (s) =>
+                s.nombre.toLowerCase().includes(term) ||
+                s.categoria.toLowerCase().includes(term)
+        );
     }
 
-    cargarPlantilla(idPlantilla: number): void {
-        const plantilla = this.plantillasCarga.find(p => p.id === idPlantilla);
-        if (plantilla) {
-            this.listaCarga = plantilla.items.map(item => ({
-                id: item.id,
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                codigo: 'ITM-' + item.id,
-                tipo: item.unidad,
-                esExtra: false
-            }));
-            this.snackBar.open(`📋 Plantilla "${plantilla.nombre}" cargada.`, 'OK', { duration: 2000 });
-        }
+    // Toggle simple al hacer click en la fila
+    toggleSeleccion(item: ItemStockSelection) {
+        item.selected = !item.selected;
+        if (!item.selected) item.cantidadAgregar = 1; // Reset cantidad al deseleccionar
     }
 
-    abrirNuevoItem(): void {
-        const dialogRef = this.dialog.open(DialogSeleccionarItemComponent, {
-            width: '900px',
-            maxWidth: '95vw',
-            height: '85vh',
-            panelClass: 'custom-dialog-container'
-        });
+    // Getter para saber cuántos hay seleccionados (globalmente, no solo los filtrados)
+    get countSeleccionados(): number {
+        return this.stockCompleto.filter((i) => i.selected).length;
+    }
 
-        dialogRef.afterClosed().subscribe((itemsSeleccionados: any[]) => {
-            if (itemsSeleccionados && itemsSeleccionados.length > 0) {
-                itemsSeleccionados.forEach(item => {
-                    const existe = this.listaCarga.find(i => i.id === item.id);
-                    if (!existe) {
-                        this.listaCarga.push({
-                            id: item.id,
-                            nombre: item.nombre,
-                            cantidad: item.cantidad,
-                            codigo: 'ITM-' + item.id,
-                            tipo: item.unidad,
-                            esExtra: true
-                        });
-                    } else {
-                        existe.cantidad += item.cantidad;
-                    }
+    guardarSeleccionMultiple() {
+        const seleccionados = this.stockCompleto.filter((i) => i.selected);
+
+        if (seleccionados.length === 0) return;
+
+        let agregadosCount = 0;
+
+        seleccionados.forEach((itemSel) => {
+            // Validar Stock individualmente
+            if (itemSel.cantidadAgregar > itemSel.stockActual) {
+                // Podrías mostrar un aviso específico, aquí lo saltamos o ajustamos
+                // itemSel.cantidadAgregar = itemSel.stockActual; // Opcional: Ajustar al máx
+            }
+
+            // Buscar si ya existe en la carga del vuelo
+            const existente = this.listaCargaActual.find(
+                (i) => i.id === itemSel.id
+            );
+
+            if (existente) {
+                existente.cantidad += itemSel.cantidadAgregar;
+            } else {
+                this.listaCargaActual.push({
+                    id: itemSel.id,
+                    nombre: itemSel.nombre,
+                    unidad: itemSel.unidad,
+                    cantidad: itemSel.cantidadAgregar,
+                    tipo: 'Extra',
                 });
             }
+            agregadosCount++;
         });
+
+        this.dialog.closeAll();
+        this.snackBar.open(
+            `✅ Se agregaron ${agregadosCount} ítems a la carga`,
+            'Cerrar',
+            { duration: 3000 }
+        );
     }
 
-    eliminarFila(index: number): void {
-        this.listaCarga.splice(index, 1);
-    }
-
-    verDetalle(registro: HistorialRegistro): void {
-        this.registroSeleccionado = registro;
-        this.dialog.open(this.detalleModal, { width: '600px' });
-    }
-
-    guardarAbastecimiento(): void {
-        if (this.abastecimientoForm.valid && this.listaCarga.length > 0) {
-            const formValue = this.abastecimientoForm.value;
-            const avionObj = this.aeronaves.find(a => a.id === formValue.aeronaveId);
-            const matricula = avionObj ? avionObj.matricula : 'Desconocido';
-
-            const nuevoRegistro: HistorialRegistro = {
-                aeronave: matricula,
-                destino: formValue.destino,
-                fecha: new Date(formValue.fecha).toLocaleDateString(),
-                usuario: 'Usuario Actual',
-                items: JSON.parse(JSON.stringify(this.listaCarga))
-            };
-
-            this.historialAbastecimientos = [nuevoRegistro, ...this.historialAbastecimientos];
-            this.snackBar.open('✅ Abastecimiento registrado correctamente', 'Cerrar', { duration: 3000 });
-
-            this.listaCarga = [];
-            this.abastecimientoForm.get('plantillaId')?.setValue('');
-            this.abastecimientoForm.get('aeronaveId')?.reset();
-        } else {
-            this.snackBar.open('⚠️ Faltan datos.', 'Cerrar', { duration: 3000, panelClass: ['bg-red-600', 'text-white'] });
+    // --- HELPERS ---
+    cargarPlantilla() {
+        if (!this.plantillaSeleccionadaId) return;
+        const plantilla = this.plantillasDisponibles.find(
+            (p) => p.id === this.plantillaSeleccionadaId
+        );
+        if (plantilla) {
+            if (this.listaCargaActual.length > 0) {
+                if (!confirm('¿Reemplazar carga actual?')) return;
+            }
+            this.listaCargaActual = plantilla.items.map((i) => ({ ...i }));
+            this.snackBar.open(`Plantilla cargada`, 'OK', { duration: 2000 });
         }
+    }
+
+    eliminarItem(index: number) {
+        this.listaCargaActual.splice(index, 1);
+    }
+
+    guardarCambios(despachar: boolean = false) {
+        if (!this.vueloSeleccionado || this.listaCargaActual.length === 0)
+            return;
+        this.vueloSeleccionado.estado = despachar ? 'Despachado' : 'En Proceso';
+        const msg = despachar ? 'Vuelo despachado ✈️' : 'Borrador guardado 💾';
+        this.snackBar.open(msg, 'Cerrar', {
+            duration: 3000,
+            panelClass: despachar ? ['bg-green-600', 'text-white'] : [],
+        });
+        if (despachar) {
+            this.vueloSeleccionado = null;
+            this.listaCargaActual = [];
+        }
+    }
+
+    private simularCargaExistente() {
+        this.listaCargaActual = [
+            {
+                id: 'P1',
+                nombre: 'Sandwich Pollo',
+                cantidad: 100,
+                unidad: 'Unidad',
+                tipo: 'Base',
+            },
+        ];
+    }
+
+    get totalItems() {
+        return this.listaCargaActual.length;
+    }
+    get totalUnidades() {
+        return this.listaCargaActual.reduce((acc, i) => acc + i.cantidad, 0);
     }
 }

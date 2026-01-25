@@ -5,7 +5,7 @@ import { AuthModule } from './core/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './providers/prisma/prisma.module';
 import { UserModule } from './core/user/user.module';
-import { PlantillasModule } from './catering/plantillas/plantillas.module';
+
 
 @Module({
   imports: [
@@ -13,7 +13,6 @@ import { PlantillasModule } from './catering/plantillas/plantillas.module';
     AuthModule,
     PrismaModule,
     UserModule,
-    PlantillasModule
   ],
   controllers: [AppController],
   providers: [AppService],

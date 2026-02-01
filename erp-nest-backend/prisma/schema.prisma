@@ -39,9 +39,6 @@ model Customer {
   name String
 }
 
-// --------------------------------------------------------
-// 2. INTEGRACIÓN DEL SCRIPT SQL (CATERING & FLOTA)
-// --------------------------------------------------------
 
 model Flota {
   idFlota     Int        @id @default(autoincrement())
@@ -101,11 +98,9 @@ model Item {
   detallesCarga     DetalleCarga[]
   detallesStock     DetalleStock[]
 
-  // Para la funcionalidad de Plantillas (Frontend)
   detallesPlantilla DetallePlantilla[]
 }
 
-// 3. OPERACIONES (ABASTECIMIENTO, CARGA, SOLICITUDES)
 
 model Abastecimiento {
   idAbastecimiento Int      @default(autoincrement())

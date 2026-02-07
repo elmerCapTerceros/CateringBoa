@@ -56,17 +56,19 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @for (item of listaItemsCompra; track $index) {
+                    @for (item of listaItemsCompra; track item.id) {
                         <tr class="hover:bg-blue-50 transition-colors">
                             <td class="p-3 font-medium text-gray-800">{{ item.nombre }}</td>
                             <td class="p-3 text-center text-gray-500">{{ item.unidad }}</td>
 
                             <td class="p-3 text-center">
-                                <input type="number" min="1" [(ngModel)]="item.cantidadSolicitada" (change)="actualizarSubtotal(item)"
+                                <input type="number" min="1" [(ngModel)]="item.cantidadSolicitada"
+                                       (ngModelChange)="item.subtotal = item.cantidadSolicitada * item.costoUnitario"
                                        class="w-full text-center border-gray-300 rounded p-1 font-bold text-blue-600 focus:ring-2 focus:ring-blue-500 border">
                             </td>
                             <td class="p-3 text-right">
-                                <input type="number" min="0" [(ngModel)]="item.costoUnitario" (change)="actualizarSubtotal(item)"
+                                <input type="number" min="0" [(ngModel)]="item.costoUnitario"
+                                       (ngModelChange)="item.subtotal = item.cantidadSolicitada * item.costoUnitario"
                                        class="w-full text-right border-gray-300 rounded p-1 focus:ring-2 focus:ring-blue-500 border">
                             </td>
                             <td class="p-3 text-right font-bold text-slate-700">
@@ -152,22 +154,12 @@
                         }
                     </div>
                 }
-
-                @if (productosFiltrados.length === 0) {
-                    <div class="text-center py-10 text-gray-400">
-                        <mat-icon class="icon-size-8 mb-2 opacity-50">search_off</mat-icon>
-                        <p>No se encontraron productos.</p>
-                    </div>
-                }
             </div>
         </div>
 
-        <div class="p-4 border-t border-gray-100 bg-white flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <div class="text-sm font-medium text-gray-600">
-                <span class="font-bold text-purple-700">{{ countSeleccionados }}</span> productos seleccionados
-            </div>
+        <div class="p-4 border-t border-gray-100 bg-white flex justify-end items-center shadow-lg">
             <button mat-flat-button color="primary" class="bg-purple-600 text-white"
-                    [disabled]="countSeleccionados === 0" (click)="agregarSeleccion()">
+                    (click)="agregarSeleccion()">
                 <mat-icon class="mr-2">add_shopping_cart</mat-icon> Agregar a la Orden
             </button>
         </div>

@@ -17,9 +17,6 @@
             <button mat-raised-button color="primary" class="h-[42px]" style="background-color: #0B1E47;" [routerLink]="['../compra']">
                 <mat-icon>add</mat-icon> Nueva
             </button>
-            <button mat-stroked-button class="h-[42px]" (click)="exportarDatos()">
-                <mat-icon>download</mat-icon> Exportar
-            </button>
         </div>
     </div>
 
@@ -31,8 +28,11 @@
                 <th class="p-4 text-center">Fecha</th>
                 <th class="p-4 text-center">Destino</th>
                 <th class="p-4 text-center">Costo Estimado</th>
-                <th class="p-4 text-center">Costo Final</th> <th class="p-4 text-center">Cumplimiento</th> <th class="p-4 text-center">Estado Final</th>
-                <th class="p-4 text-center w-10"></th> </tr>
+                <th class="p-4 text-center">Costo Final</th>
+                <th class="p-4 text-center">Cumplimiento</th>
+                <th class="p-4 text-center">Estado Final</th>
+                <th class="p-4 text-center w-10"></th>
+            </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @for (orden of ordenesVisibles; track orden.id) {
@@ -55,7 +55,7 @@
                         <td class="p-4 w-1/5 align-middle">
                             <div class="flex justify-between text-xs mb-1 text-gray-500">
                                 <span>Entregado</span>
-                                <span class="font-bold">{{ orden.progreso }}%</span>
+                                <span class="font-bold">{{ orden.progreso | number:'1.0-0' }}%</span>
                             </div>
                             <mat-progress-bar mode="determinate" [value]="orden.progreso" class="rounded h-2"></mat-progress-bar>
                         </td>
@@ -111,13 +111,6 @@
                                                     </tr>
                                                 }
                                             </tbody>
-                                            <tfoot class="bg-gray-50 font-bold text-gray-700 border-t">
-                                            <tr>
-                                                <td colspan="4" class="p-3 text-right text-xs uppercase">Total Ejecutado</td>
-                                                <td class="p-3 text-right text-base">{{ orden.costoTotalReal | currency }}</td>
-                                                <td></td>
-                                            </tr>
-                                            </tfoot>
                                         </table>
                                     </div>
                                 </div>

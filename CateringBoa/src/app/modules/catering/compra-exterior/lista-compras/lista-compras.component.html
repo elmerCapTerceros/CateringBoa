@@ -1,13 +1,23 @@
 <div class="w-full flex-auto p-6 sm:p-10 bg-gray-50 min-h-screen">
 
-    <div class="mb-8 flex justify-between items-end">
+    <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
             <h2 class="text-3xl font-bold tracking-tight text-blue-900">Historial de Compras</h2>
-            <p class="text-gray-500">Listado general de órdenes y seguimiento de entregas.</p>
+            <p class="text-gray-500">Consulta de órdenes pasadas, costos y estados de entrega.</p>
         </div>
-        <button mat-raised-button color="primary" style="background-color: #0B1E47;">
-            <mat-icon>add</mat-icon> Nueva Compra
-        </button>
+
+        <div class="flex gap-3 w-full md:w-auto items-center">
+            <div class="relative w-full md:w-64">
+                <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
+                <input type="text" [(ngModel)]="filtroTexto" (keyup)="filtrarOrdenes()"
+                       placeholder="Buscar orden o proveedor..."
+                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white h-[42px]">
+            </div>
+
+            <button mat-raised-button color="primary" class="h-[42px]" style="background-color: #0B1E47;" [routerLink]="['../compra']">
+                <mat-icon>add</mat-icon> Nueva
+            </button>
+        </div>
     </div>
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -17,27 +27,37 @@
                 <th class="p-4 text-left">N° Orden / Proveedor</th>
                 <th class="p-4 text-center">Fecha</th>
                 <th class="p-4 text-center">Destino</th>
-                <th class="p-4 text-center">Avance Global</th>
-                <th class="p-4 text-center">Estado</th>
-                <th class="p-4 text-right">Acción</th>
+                <th class="p-4 text-center">Costo Estimado</th>
+                <th class="p-4 text-center">Costo Final</th>
+                <th class="p-4 text-center">Cumplimiento</th>
+                <th class="p-4 text-center">Estado Final</th>
+                <th class="p-4 text-center w-10"></th>
             </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-                @for (orden of ordenes; track orden.id) {
-                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="toggleDetalle(orden)">
+                @for (orden of ordenesVisibles; track orden.id) {
+                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer group" (click)="toggleDetalle(orden)">
+
                         <td class="p-4">
                             <div class="font-bold text-blue-900">{{ orden.id }}</div>
                             <div class="text-sm text-gray-600">{{ orden.proveedor }}</div>
                         </td>
+
                         <td class="p-4 text-center text-gray-600">{{ orden.fecha }}</td>
                         <td class="p-4 text-center text-gray-600">{{ orden.destino }}</td>
 
-                        <td class="p-4 w-1/4 align-middle">
-                            <div class="flex justify-between text-xs mb-1">
-                                <span>Entrega</span>
-                                <span class="font-bold">{{ orden.progreso }}%</span>
+                        <td class="p-4 text-center text-gray-500">{{ orden.costoTotalEstimado | currency }}</td>
+                        <td class="p-4 text-center font-bold"
+                            [ngClass]="orden.costoTotalReal > 0 ? 'text-slate-800' : 'text-gray-300'">
+                            {{ orden.costoTotalReal | currency }}
+                        </td>
+
+                        <td class="p-4 w-1/5 align-middle">
+                            <div class="flex justify-between text-xs mb-1 text-gray-500">
+                                <span>Entregado</span>
+                                <span class="font-bold">{{ orden.progreso | number:'1.0-0' }}%</span>
                             </div>
-                            <mat-progress-bar mode="determinate" [value]="orden.progreso" class="rounded"></mat-progress-bar>
+                            <mat-progress-bar mode="determinate" [value]="orden.progreso" class="rounded h-2"></mat-progress-bar>
                         </td>
 
                         <td class="p-4 text-center">
@@ -46,57 +66,65 @@
                             </span>
                         </td>
 
-                        <td class="p-4 text-right">
-                            <button mat-icon-button color="primary">
-                                <mat-icon>{{ orden.expandido ? 'expand_less' : 'visibility' }}</mat-icon>
-                            </button>
+                        <td class="p-4 text-center">
+                            <mat-icon class="text-gray-400 transition-transform duration-200" [class.rotate-180]="orden.expandido">expand_more</mat-icon>
                         </td>
                     </tr>
 
                     @if (orden.expandido) {
-                        <tr class="bg-slate-50">
-                            <td colspan="6" class="p-0">
-                                <div class="p-6 border-t border-b border-gray-200 shadow-inner">
-                                    <h4 class="font-bold text-gray-700 mb-3 text-sm">Detalle de Ítems en esta Orden:</h4>
+                        <tr class="bg-slate-50 border-b border-gray-200 shadow-inner animate-in fade-in slide-in-from-top-2 duration-200">
+                            <td colspan="8" class="p-0">
+                                <div class="p-6">
+                                    <h4 class="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2 uppercase tracking-wide">
+                                        <mat-icon class="icon-size-4 text-gray-400">receipt_long</mat-icon> Detalle de la Orden
+                                    </h4>
 
-                                    <table class="w-full text-sm">
-                                        <thead class="text-gray-500 border-b">
-                                        <tr>
-                                            <th class="pb-2 text-left">Producto</th>
-                                            <th class="pb-2 text-center">Solicitado</th>
-                                            <th class="pb-2 text-center">Recibido</th>
-                                            <th class="pb-2 text-right">Estado</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                            @for (item of orden.detalle; track item.nombre) {
-                                                <tr class="border-b border-gray-100 last:border-0">
-                                                    <td class="py-2 text-gray-800">{{ item.nombre }}</td>
-                                                    <td class="py-2 text-center font-medium">{{ item.cantidadSolicitada }}</td>
-                                                    <td class="py-2 text-center font-bold text-blue-700">{{ item.cantidadRecibida }}</td>
-                                                    <td class="py-2 text-right">
-                                                        @if (item.cantidadRecibida >= item.cantidadSolicitada) {
-                                                            <span class="text-green-600 font-bold text-xs">Completo</span>
-                                                        } @else if (item.cantidadRecibida > 0) {
-                                                            <span class="text-blue-600 font-bold text-xs">Parcial</span>
-                                                        } @else {
-                                                            <span class="text-gray-400 font-bold text-xs">Pendiente</span>
-                                                        }
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-
-                                    <div class="mt-4 text-right">
-                                        <button mat-stroked-button color="primary" class="text-xs">
-                                            + Registrar Recepción de Mercadería
-                                        </button>
+                                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                        <table class="w-full text-sm">
+                                            <thead class="text-gray-500 bg-gray-50 border-b text-xs uppercase">
+                                            <tr>
+                                                <th class="p-3 text-left">Producto</th>
+                                                <th class="p-3 text-center">Solicitado</th>
+                                                <th class="p-3 text-center">Recibido</th>
+                                                <th class="p-3 text-right">Costo Unit.</th>
+                                                <th class="p-3 text-right">Subtotal Real</th>
+                                                <th class="p-3 text-right">Estado Ítem</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-50">
+                                                @for (item of orden.detalle; track item.nombre) {
+                                                    <tr class="hover:bg-gray-50 transition-colors">
+                                                        <td class="p-3 text-gray-800 font-medium">{{ item.nombre }}</td>
+                                                        <td class="p-3 text-center text-gray-500">{{ item.cantidadSolicitada }} {{ item.unidad }}</td>
+                                                        <td class="p-3 text-center font-bold text-slate-700">{{ item.cantidadRecibida }}</td>
+                                                        <td class="p-3 text-right text-gray-500">{{ item.costoUnitario | currency }}</td>
+                                                        <td class="p-3 text-right font-bold text-slate-800">{{ (item.cantidadRecibida * item.costoUnitario) | currency }}</td>
+                                                        <td class="p-3 text-right">
+                                                            @if (item.cantidadRecibida >= item.cantidadSolicitada) {
+                                                                <span class="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded border border-green-100">Completo</span>
+                                                            } @else if (item.cantidadRecibida > 0) {
+                                                                <span class="text-blue-600 font-bold text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100">Parcial</span>
+                                                            } @else {
+                                                                <span class="text-orange-500 font-bold text-xs bg-orange-50 px-2 py-1 rounded border border-orange-100">Pendiente</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </td>
                         </tr>
                     }
+                }
+                @if (ordenesVisibles.length === 0) {
+                    <tr>
+                        <td colspan="8" class="p-12 text-center text-gray-400">
+                            <mat-icon class="icon-size-12 mb-2 opacity-20">search_off</mat-icon>
+                            <p>No se encontraron registros en el historial.</p>
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>

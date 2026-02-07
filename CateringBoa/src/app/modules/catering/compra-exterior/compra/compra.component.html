@@ -2,12 +2,11 @@
 
     <div class="mb-8">
         <h2 class="text-3xl font-bold tracking-tight text-blue-900">Nueva Compra Exterior</h2>
-        <p class="text-gray-500">Generar orden de compra y envío a Viru Viru.</p>
+        <p class="text-gray-500">Generar orden de compra y envío a bases internacionales/nacionales.</p>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
         <form [formGroup]="compraForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
             <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Proveedor</mat-label>
                 <input matInput formControlName="proveedor" placeholder="Ej. Amazon Inc.">
@@ -21,7 +20,7 @@
                 <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="w-full bg-gray-50 rounded text-gray-500">
+            <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Almacén Destino</mat-label>
                 <mat-select formControlName="almacenDestino">
                     @for (almacen of almacenes; track almacen) {
@@ -30,54 +29,139 @@
                 </mat-select>
                 <mat-icon matSuffix>flight_land</mat-icon>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full md:col-span-3">
+                <mat-label>Observaciones</mat-label>
+                <textarea matInput formControlName="observaciones" rows="2" placeholder="Notas de entrega..."></textarea>
+            </mat-form-field>
         </form>
 
         <div class="flex justify-between items-center mt-6 border-t pt-6">
-            <h3 class="font-bold text-gray-700">Detalle de Productos</h3>
-            <button mat-raised-button color="primary" style="background-color: #0B1E47;" (click)="abrirSeleccionLote()">
-                <mat-icon>playlist_add</mat-icon>
-                Seleccionar en Lote
+            <h3 class="font-bold text-gray-700 text-lg">Detalle Económico</h3>
+            <button mat-stroked-button color="primary" class="border-dashed border-2" (click)="abrirSelector()">
+                <mat-icon class="mr-2">playlist_add</mat-icon> Seleccionar Productos
             </button>
         </div>
 
         <div class="mt-4 border border-gray-200 rounded-lg overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-gray-100">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
                 <tr>
-                    <th class="p-3 text-left font-bold text-gray-600">Ítem</th>
-                    <th class="p-3 text-left font-bold text-gray-600">Unidad</th>
-                    <th class="p-3 text-center font-bold text-gray-600">Cantidad Solicitada</th>
-                    <th class="p-3 text-right font-bold text-gray-600">Acción</th>
+                    <th class="p-3 text-left font-bold">Ítem</th>
+                    <th class="p-3 text-center font-bold">Unidad</th>
+                    <th class="p-3 text-center font-bold w-32">Cant.</th>
+                    <th class="p-3 text-right font-bold w-32">Costo ($)</th>
+                    <th class="p-3 text-right font-bold w-32">Subtotal</th>
+                    <th class="p-3 text-center w-16"></th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @for (item of listaItemsCompra; track $index) {
-                        <tr class="hover:bg-blue-50">
-                            <td class="p-3 text-gray-800 font-medium">{{ item.nombre }}</td>
-                            <td class="p-3 text-gray-500 text-sm">{{ item.unidad }}</td>
-                            <td class="p-3 text-center font-bold">{{ item.cantidadSolicitada }}</td>
+                    @for (item of listaItemsCompra; track item.id) {
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <td class="p-3 font-medium text-gray-800">{{ item.nombre }}</td>
+                            <td class="p-3 text-center text-gray-500">{{ item.unidad }}</td>
+
+                            <td class="p-3 text-center">
+                                <input type="number" min="1" [(ngModel)]="item.cantidadSolicitada"
+                                       (ngModelChange)="item.subtotal = item.cantidadSolicitada * item.costoUnitario"
+                                       class="w-full text-center border-gray-300 rounded p-1 font-bold text-blue-600 focus:ring-2 focus:ring-blue-500 border">
+                            </td>
                             <td class="p-3 text-right">
+                                <input type="number" min="0" [(ngModel)]="item.costoUnitario"
+                                       (ngModelChange)="item.subtotal = item.cantidadSolicitada * item.costoUnitario"
+                                       class="w-full text-right border-gray-300 rounded p-1 focus:ring-2 focus:ring-blue-500 border">
+                            </td>
+                            <td class="p-3 text-right font-bold text-slate-700">
+                                {{ item.subtotal | number:'1.2-2' }}
+                            </td>
+                            <td class="p-3 text-center">
                                 <button mat-icon-button color="warn" (click)="eliminarItem($index)">
-                                    <mat-icon>delete</mat-icon>
+                                    <mat-icon class="icon-size-4">close</mat-icon>
                                 </button>
                             </td>
                         </tr>
                     }
                     @if (listaItemsCompra.length === 0) {
                         <tr>
-                            <td colspan="4" class="p-8 text-center text-gray-400">
-                                No hay ítems en la orden. Presiona el botón para agregar.
+                            <td colspan="6" class="p-10 text-center text-gray-400">
+                                <mat-icon class="icon-size-10 mb-2 opacity-50">shopping_cart_off</mat-icon>
+                                <p>No hay ítems. Usa "Seleccionar Productos" para agregar.</p>
                             </td>
                         </tr>
                     }
                 </tbody>
+                @if (listaItemsCompra.length > 0) {
+                    <tfoot class="bg-gray-50 font-bold border-t border-gray-200">
+                    <tr>
+                        <td colspan="4" class="p-4 text-right text-gray-600 uppercase text-xs">Total Estimado</td>
+                        <td class="p-4 text-right text-xl text-green-700">${{ totalOrden | number:'1.2-2' }}</td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                }
             </table>
         </div>
 
-        <div class="mt-6 flex justify-end">
-            <button mat-raised-button color="primary" class="px-8 py-2 text-lg" (click)="guardarCompra()">
-                Generar Orden
+        <div class="mt-8 flex justify-end gap-3">
+            <button mat-button color="warn">Cancelar</button>
+            <button mat-raised-button color="primary" class="px-8 py-2" (click)="guardarCompra()" [disabled]="listaItemsCompra.length === 0 || compraForm.invalid">
+                <mat-icon class="mr-2">save_alt</mat-icon> Generar Orden
             </button>
         </div>
     </div>
 </div>
+
+<ng-template #modalSelectorProductos>
+    <div class="flex flex-col h-full bg-white">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <mat-icon class="text-purple-600">library_add_check</mat-icon> Catálogo de Productos
+            </h2>
+            <button mat-icon-button (click)="cerrarSelector()"><mat-icon>close</mat-icon></button>
+        </div>
+
+        <div class="p-4 bg-white border-b border-gray-100 sticky top-0 z-10">
+            <div class="relative">
+                <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
+                <input type="text" [(ngModel)]="searchTermProductos" (keyup)="filtrarProductos()"
+                       placeholder="Buscar producto..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50">
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2 bg-gray-50">
+            <div class="space-y-2">
+                @for (prod of productosFiltrados; track prod.id) {
+                    <div (click)="toggleSeleccion(prod)"
+                         class="flex items-center p-3 bg-white border rounded-xl cursor-pointer hover:shadow-sm select-none transition-all"
+                         [ngClass]="prod.selected ? 'border-purple-600 ring-1 ring-purple-600 bg-purple-50' : 'border-gray-200'">
+
+                        <div class="mr-4">
+                            <mat-checkbox color="primary" [checked]="prod.selected" (click)="$event.stopPropagation(); toggleSeleccion(prod)"></mat-checkbox>
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="font-bold text-slate-700">{{ prod.nombre }}</div>
+                            <div class="text-xs text-gray-500">Ref: ${{ prod.costoDefault }} / {{ prod.unidad }}</div>
+                        </div>
+
+                        @if (prod.selected) {
+                            <div class="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300" (click)="$event.stopPropagation()">
+                                <span class="text-xs font-bold text-purple-700">Cant:</span>
+                                <input type="number" min="1" [(ngModel)]="prod.cantidadPedir"
+                                       class="w-20 p-2 border border-purple-200 rounded-lg text-center font-bold focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-gray-100 bg-white flex justify-end items-center shadow-lg">
+            <button mat-flat-button color="primary" class="bg-purple-600 text-white"
+                    (click)="agregarSeleccion()">
+                <mat-icon class="mr-2">add_shopping_cart</mat-icon> Agregar a la Orden
+            </button>
+        </div>
+    </div>
+</ng-template>

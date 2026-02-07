@@ -55,7 +55,7 @@ interface Carga {
     templateUrl: './listar-carga.component.html',
     styleUrls: ['./listar-carga.component.scss']
 })
-export class ListarCargaComponent implements OnInit {
+export class    ListarCargaComponent implements OnInit {
 
     @ViewChild(MatPaginator) paginator!: MatPaginator;
 

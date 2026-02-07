@@ -1,70 +1,244 @@
-<div class="w-full flex-auto p-6 sm:p-10 bg-gray-50 min-h-screen">
+<div class="flex flex-col w-full min-h-screen bg-gray-50/50 p-6 sm:p-10 gap-8">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h2 class="text-3xl font-bold tracking-tight text-blue-900">Plantillas de Carga</h2>
-            <p class="text-gray-500">Gestión de configuraciones estándar por tipo de avión.</p>
+            <h2 class="text-3xl font-bold tracking-tight text-slate-800">Plantillas de Carga</h2>
+            <p class="text-secondary">Defina los estándares de catering por tipo de avión y ruta.</p>
         </div>
-
-        <button mat-raised-button
-                color="primary"
-                style="background-color: #0B1E47;"
-                (click)="irACrearNueva()">
-            <mat-icon class="mr-2">add</mat-icon>
-            Nueva Plantilla
+        <button mat-flat-button color="primary" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-md" (click)="abrirModalCrear()">
+            <mat-icon class="mr-2">add</mat-icon> Nueva Plantilla
         </button>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-gray-100 text-xs uppercase text-gray-500 font-semibold">
-            <tr>
-                <th class="p-4">Nombre Configuración</th>
-                <th class="p-4">Aeronave Compatible</th>
-                <th class="p-4 text-center">Clase</th>
-                <th class="p-4 text-center">Cant. Ítems</th>
-                <th class="p-4 text-right">Última Mod.</th>
-                <th class="p-4 text-right">Acciones</th>
-            </tr>
-            </thead>
-            <tbody class="text-sm text-gray-700 divide-y divide-gray-100">
-                @for (config of configuraciones; track config.id) {
-                    <tr class="hover:bg-blue-50 transition-colors">
-                        <td class="p-4 font-bold text-gray-800">{{ config.nombre }}</td>
-                        <td class="p-4">
-                            <div class="flex items-center">
-                                <mat-icon class="text-gray-400 icon-size-4 mr-2">flight</mat-icon>
-                                {{ config.aeronave }}
-                            </div>
-                        </td>
-                        <td class="p-4 text-center">
-                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs border border-gray-200">
-                                {{ config.clase }}
-                            </span>
-                        </td>
-                        <td class="p-4 text-center font-medium">{{ config.totalItems }}</td>
-                        <td class="p-4 text-right text-gray-500 text-xs">{{ config.ultimaModificacion }}</td>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                        <td class="p-4 text-right">
-                            <div class="flex justify-end gap-1">
-                                <button mat-icon-button color="primary" (click)="editar(config)" matTooltip="Editar">
-                                    <mat-icon>edit</mat-icon>
-                                </button>
-                                <button mat-icon-button color="warn" (click)="eliminar(config.id)" matTooltip="Eliminar">
-                                    <mat-icon>delete</mat-icon>
-                                </button>
+        @for (plantilla of plantillas; track plantilla.id) {
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 group overflow-hidden flex flex-col">
+
+                <div class="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-start">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                            <mat-icon>inventory_2</mat-icon>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg leading-tight">{{ plantilla.nombre }}</h3>
+                            <span class="text-xs text-gray-500 font-medium">{{ plantilla.flotaObjetivo }}</span>
+                        </div>
+                    </div>
+                    <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider"
+                          [ngClass]="plantilla.tipoVuelo === 'Internacional' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'">
+                        {{ plantilla.tipoVuelo }}
+                    </span>
+                </div>
+
+                <div class="p-6 flex-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-2xl font-bold text-slate-700">{{ getTotalItems(plantilla) }}</span>
+                        <span class="text-sm text-gray-400">productos configurados</span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        @for (item of plantilla.items.slice(0, 2); track item.id) {
+                            <div class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 flex items-center">
+                                {{ item.nombre }} <span class="font-bold ml-1">x{{ item.cantidad }}</span>
                             </div>
-                        </td>
-                    </tr>
-                }
-                @if (configuraciones.length === 0) {
-                    <tr>
-                        <td colspan="6" class="p-12 text-center text-gray-400">
-                            No hay plantillas creadas.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        }
+                        @if (plantilla.items.length > 2) {
+                            <div class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-400">
+                                +{{ plantilla.items.length - 2 }} más
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center bg-white">
+                    <span class="text-[10px] text-gray-400">Modificado: {{ plantilla.fechaModificacion | date:'shortDate' }}</span>
+                    <div class="flex gap-2">
+                        <button mat-icon-button class="text-gray-400 hover:text-blue-600" (click)="abrirModalEditar(plantilla)" matTooltip="Editar">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="text-gray-400 hover:text-red-600" (click)="confirmarEliminar(plantilla.id)" matTooltip="Eliminar">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div (click)="abrirModalCrear()" class="border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center p-8 cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition-colors group min-h-[250px]">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                <mat-icon class="text-gray-400 group-hover:text-blue-600 icon-size-8">add</mat-icon>
+            </div>
+            <span class="font-bold text-gray-500 group-hover:text-blue-600">Crear Nueva Plantilla</span>
+        </div>
+
     </div>
 </div>
+
+<ng-template #modalPlantilla>
+    <div class="flex flex-col h-full max-h-[85vh]">
+
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 bg-white sticky top-0 z-10">
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <mat-icon class="text-blue-600">{{ esEdicion ? 'edit' : 'add_circle' }}</mat-icon>
+                {{ esEdicion ? 'Editar Plantilla' : 'Nueva Plantilla de Carga' }}
+            </h2>
+            <button mat-icon-button (click)="dialog.closeAll()"><mat-icon>close</mat-icon></button>
+        </div>
+
+        <div class="p-6 overflow-y-auto flex-1">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Nombre de la Plantilla</mat-label>
+                    <input matInput [(ngModel)]="plantillaEnEdicion.nombre" placeholder="Ej: Cena Ejecutiva A330">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Flota Objetivo</mat-label>
+                    <mat-select [(ngModel)]="plantillaEnEdicion.flotaObjetivo">
+                        @for (flota of flotasDisponibles; track flota) {
+                            <mat-option [value]="flota">{{ flota }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Tipo de Vuelo</mat-label>
+                    <mat-select [(ngModel)]="plantillaEnEdicion.tipoVuelo">
+                        <mat-option value="Nacional">Nacional</mat-option>
+                        <mat-option value="Internacional">Internacional</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="border-t border-gray-200 my-4"></div>
+
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold uppercase text-gray-500">Configuración de Ítems</h3>
+                <button mat-stroked-button color="primary" class="border-dashed border-2" (click)="abrirSelectorProductos()">
+                    <mat-icon class="mr-2">playlist_add</mat-icon> Seleccionar Productos
+                </button>
+            </div>
+
+            @if (plantillaEnEdicion.items.length > 0) {
+                <div class="border rounded-lg overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-3">Producto</th>
+                            <th class="px-4 py-3 text-center">Unidad</th>
+                            <th class="px-4 py-3 text-center">Cantidad</th>
+                            <th class="px-4 py-3 text-right">Acción</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @for (item of plantillaEnEdicion.items; track item.id; let i = $index) {
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-3 font-medium text-slate-700">{{ item.nombre }}</td>
+                                    <td class="px-4 py-3 text-center text-gray-500">{{ item.unidad }}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <input type="number" [(ngModel)]="item.cantidad" class="w-16 text-center border rounded p-1 font-bold text-blue-600">
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <button mat-icon-button color="warn" (click)="eliminarItemDePlantilla(i)">
+                                            <mat-icon>delete</mat-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            } @else {
+                <div class="text-center py-12 text-gray-400 border-2 border-dashed rounded-xl bg-gray-50">
+                    <mat-icon class="icon-size-8 mb-2">post_add</mat-icon>
+                    <p>La plantilla está vacía.</p>
+                    <p class="text-xs">Haz clic en "Seleccionar Productos" para agregar.</p>
+                </div>
+            }
+
+        </div>
+
+        <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 sticky bottom-0">
+            <button mat-stroked-button (click)="dialog.closeAll()">Cancelar</button>
+            <button mat-flat-button color="primary" class="bg-blue-600 text-white" (click)="guardarPlantilla()">
+                <mat-icon class="mr-2">save</mat-icon> Guardar Plantilla
+            </button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #modalSelectorProductos>
+    <div class="flex flex-col h-full bg-white">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <mat-icon class="text-purple-600">library_add_check</mat-icon> Agregar Productos al Stock
+            </h2>
+            <button mat-icon-button (click)="dialog.closeAll()"><mat-icon>close</mat-icon></button>
+        </div>
+
+        <div class="p-4 bg-white border-b border-gray-100 sticky top-0 z-10">
+            <div class="relative">
+                <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
+                <input type="text" [(ngModel)]="searchTermProductos" (keyup)="filtrarProductos()"
+                       placeholder="Buscar producto..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50">
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2 bg-gray-50">
+            <div class="space-y-2">
+                @for (item of productosFiltrados; track item.id) {
+                    <div (click)="toggleSeleccion(item)"
+                         class="flex items-center p-3 bg-white border rounded-xl cursor-pointer transition-all hover:shadow-md select-none"
+                         [ngClass]="item.selected ? 'border-purple-600 ring-1 ring-purple-600' : 'border-gray-200'">
+
+                        <div class="mr-4">
+                            <mat-checkbox color="primary" [checked]="item.selected" (click)="$event.stopPropagation(); toggleSeleccion(item)"></mat-checkbox>
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="font-bold text-slate-700">{{ item.nombre }}</div>
+                            <div class="text-xs text-gray-400">{{ item.unidad }}</div>
+                        </div>
+
+                        @if (item.selected) {
+                            <div class="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300" (click)="$event.stopPropagation()">
+                                <span class="text-xs font-bold text-purple-700">Cant:</span>
+                                <input type="number" min="1" [(ngModel)]="item.cantidadAgregar"
+                                       class="w-20 p-2 border border-purple-200 rounded-lg text-center font-bold focus:ring-2 focus:ring-purple-500 outline-none">
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-gray-100 bg-white flex justify-between items-center shadow-lg">
+            <div class="text-sm font-medium text-gray-600">
+                <span class="font-bold text-purple-700">{{ countSeleccionados }}</span> productos seleccionados
+            </div>
+            <button mat-flat-button color="primary"
+                    class="bg-purple-600 text-white"
+                    [disabled]="countSeleccionados === 0"
+                    (click)="agregarSeleccionAPlantilla()">
+                <mat-icon class="mr-2">playlist_add_check</mat-icon> Agregar a Plantilla
+            </button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #dialogConfirmar>
+    <div class="p-6 text-center">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <mat-icon class="text-red-600">warning</mat-icon>
+        </div>
+        <h2 class="text-lg font-bold text-slate-800 mb-2">¿Eliminar Plantilla?</h2>
+        <p class="text-sm text-gray-500 mb-6">Esta acción no se puede deshacer.</p>
+        <div class="flex justify-center gap-3">
+            <button mat-stroked-button (click)="dialog.closeAll()">Cancelar</button>
+            <button mat-flat-button color="warn" (click)="ejecutarEliminacion()">Eliminar</button>
+        </div>
+    </div>
+</ng-template>

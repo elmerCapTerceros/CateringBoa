@@ -1,150 +1,141 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
+import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { Router, RouterModule } from '@angular/router';
-import {
-    NgApexchartsModule,
-    ChartComponent,
-    ApexAxisChartSeries,
-    ApexChart,
-    ApexXAxis,
-    ApexDataLabels,
-    ApexStroke,
-    ApexYAxis,
-    ApexTooltip,
-    ApexLegend,
-    ApexGrid,
-    ApexPlotOptions,
-    ApexNonAxisChartSeries,
-    ApexResponsive,
-} from 'ng-apexcharts';
-
-
-
-export type ChartOptions = {
-    series: ApexAxisChartSeries | ApexNonAxisChartSeries;
-    chart: ApexChart;
-    xaxis: ApexXAxis;
-    stroke: ApexStroke;
-    tooltip: ApexTooltip;
-    dataLabels: ApexDataLabels;
-    labels: string[];
-    legend: ApexLegend;
-    colors: string[];
-    grid: ApexGrid;
-    plotOptions: ApexPlotOptions;
-};
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router'; // Importante
 
 @Component({
     selector: 'app-dashboard',
+    standalone: true,
     imports: [
         CommonModule,
         MatIconModule,
         MatButtonModule,
-        RouterModule,
-        NgApexchartsModule,
+        MatCardModule,
+        MatMenuModule,
+        MatProgressBarModule,
+        RouterModule, // <--- Asegúrate que esté aquí
     ],
     templateUrl: './dashboard.component.html',
-    styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent {
-    usuario = 'Juan Perez';
-    fechaHoy = new Date().toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-
-    // TUS CARDS ORIGINALES (Datos)
-    cards = [
+export class DashboardComponent implements OnInit {
+    // ... (Tus variables kpis, vuelosProximos, etc. se mantienen igual) ...
+    kpis = [
         {
-            title: 'Operaciones Vuelo',
+            title: 'Vuelos Hoy',
             value: '12',
-            subtitle: 'Vuelos pendientes hoy',
+            sub: '4 pendientes',
             icon: 'flight_takeoff',
-            color: 'text-blue-600 bg-blue-50',
-            route: '/catering/carga',
-            actionText: 'Abastecer Vuelo',
+            color: 'text-blue-600',
+            bg: 'bg-blue-50',
         },
         {
-            title: 'Compras Exteriores',
+            title: 'Alertas Stock',
             value: '3',
-            subtitle: 'Órdenes en tránsito',
-            icon: 'local_shipping',
-            color: 'text-orange-600 bg-orange-50',
-            route: '/catering/compra-exterior/listar',
-            actionText: 'Gestionar Compras',
+            sub: 'Productos críticos',
+            icon: 'warning',
+            color: 'text-red-600',
+            bg: 'bg-red-50',
         },
         {
-            title: 'Inventario General',
+            title: 'Pedidos Activos',
             value: '5',
-            subtitle: 'Items con stock bajo',
-            icon: 'inventory_2',
-            color: 'text-emerald-600 bg-emerald-50',
-            route: '/catering/stock',
-            actionText: 'Ver Almacén',
+            sub: 'Esperando entrega',
+            icon: 'local_shipping',
+            color: 'text-orange-600',
+            bg: 'bg-orange-50',
         },
         {
-            title: 'Configuraciones',
-            value: '8',
-            subtitle: 'Plantillas activas',
-            icon: 'settings_suggest',
-            color: 'text-purple-600 bg-purple-50',
-            route: '/catering/configuracion/listado',
-            actionText: 'Editar Plantillas',
+            title: 'Cargas Completas',
+            value: '98%',
+            sub: 'Efectividad',
+            icon: 'task_alt',
+            color: 'text-green-600',
+            bg: 'bg-green-50',
         },
     ];
 
-    // --- CONFIGURACIÓN GRÁFICO 1: GASTOS MENSUALES (Curva) ---
-    public chartGastos: Partial<ChartOptions>;
+    vuelosProximos = [
+        {
+            codigo: 'OB-760',
+            destino: 'MIA',
+            hora: '08:00',
+            estado: 'Despachado',
+            color: 'green',
+        },
+        {
+            codigo: 'OB-770',
+            destino: 'MAD',
+            hora: '12:30',
+            estado: 'Cargando...',
+            color: 'blue',
+        },
+        {
+            codigo: 'OB-550',
+            destino: 'LPB',
+            hora: '14:00',
+            estado: 'Pendiente',
+            color: 'orange',
+        },
+        {
+            codigo: 'OB-680',
+            destino: 'SAO',
+            hora: '16:45',
+            estado: 'Pendiente',
+            color: 'gray',
+        },
+    ];
 
-    // --- CONFIGURACIÓN GRÁFICO 2: STOCK POR CATEGORÍA (Dona) ---
-    public chartStock: Partial<ChartOptions>;
+    stockCritico = [
+        { nombre: 'Sandwich Pollo', stock: 5, min: 50, percent: 10 },
+        { nombre: 'Whisky Black', stock: 12, min: 20, percent: 60 },
+        { nombre: 'Hielo 5kg', stock: 2, min: 20, percent: 10 },
+    ];
 
-    constructor(private router: Router) {
-        this.initCharts();
+    actividades = [
+        {
+            user: 'Juan P.',
+            action: 'Despachó vuelo OB-760',
+            time: 'Hace 10 min',
+            icon: 'flight_takeoff',
+        },
+        {
+            user: 'Maria G.',
+            action: 'Creó Orden de Compra #085',
+            time: 'Hace 30 min',
+            icon: 'shopping_cart',
+        },
+        {
+            user: 'Sistema',
+            action: 'Alerta: Stock bajo en Licores',
+            time: 'Hace 1 hora',
+            icon: 'notifications',
+        },
+    ];
+
+    constructor(
+        private _router: Router,
+        private _route: ActivatedRoute
+    ) {}
+
+    ngOnInit(): void {}
+
+    // Función opcional si prefieres navegar desde TS
+    navegarA(ruta: string) {
+        // '../' sube un nivel (al padre 'catering') y luego entra a la ruta hija
+        this._router.navigate(['../' + ruta], { relativeTo: this._route });
     }
 
-    navegar(ruta: string) {
-        this.router.navigate([ruta]);
-    }
-
-    initCharts() {
-        // 1. Gráfico de Área (Gastos)
-        this.chartGastos = {
-            series: [
-                {
-                    name: 'Compras ($)',
-                    data: [12000, 15500, 13000, 18000, 22000, 19500, 24000],
-                },
-            ],
-            chart: {
-                type: 'area',
-                height: 350,
-                toolbar: { show: false },
-                fontFamily: 'inherit',
-            },
-            colors: ['#2563EB'], // Azul Tailwind
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 2 },
-            xaxis: {
-                categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'],
-            },
-            grid: { borderColor: '#f3f4f6', strokeDashArray: 4 },
-            tooltip: { theme: 'light' },
+    getEstadoClass(color: string): string {
+        const map: any = {
+            green: 'bg-green-100 text-green-700',
+            blue: 'bg-blue-100 text-blue-700',
+            orange: 'bg-orange-100 text-orange-700',
+            gray: 'bg-gray-100 text-gray-700',
         };
-
-        // 2. Gráfico de Dona (Categorías)
-        this.chartStock = {
-            series: [44, 55, 13, 33],
-            labels: ['Bebidas', 'Comida', 'Insumos', 'Licores'],
-            chart: { type: 'donut', height: 350, fontFamily: 'inherit' },
-            colors: ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'], // Azul, Verde, Naranja, Morado
-            legend: { position: 'bottom' },
-            plotOptions: { pie: { donut: { size: '65%' } } },
-            dataLabels: { enabled: false },
-        };
+        return map[color] || 'bg-gray-100';
     }
 }

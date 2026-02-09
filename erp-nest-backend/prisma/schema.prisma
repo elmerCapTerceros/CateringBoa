@@ -4,6 +4,8 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// ... (GENERATOR & DATASOURCE remain the same) ...
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,19 +21,21 @@ enum Role {
 }
 
 model User {
-  id                String              @id @default(uuid())
-  name              String
-  email             String              @unique
-  emailVerified     DateTime?
-  password          String
-  role              Role                @default(user)
-  avatar            String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  // Relations and Indexes
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  role          Role      @default(user)
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
   Abastecimiento    Abastecimiento[]
   Solicitud         Solicitud[]
   SolicitudDotacion SolicitudDotacion[]
+  OrdenesCompra     OrdenCompra[]       @relation("UsuarioCreoOrden") // New
 }
 
 model Customer {
@@ -39,6 +43,9 @@ model Customer {
   name String
 }
 
+// --------------------------------------------------------
+// 2. FLEET & ALMACEN
+// --------------------------------------------------------
 
 model Flota {
   idFlota     Int        @id @default(autoincrement())
@@ -72,6 +79,9 @@ model Almacen {
   solicitudesOrigen  Solicitud[]         @relation("AlmacenSolicitante")
   solicitudesDestino Solicitud[]         @relation("AlmacenSolicitado")
   solicitudesDot     SolicitudDotacion[]
+
+  // Relations for Purchases
+  ordenesCompra OrdenCompra[]
 }
 
 model Stock {
@@ -82,25 +92,31 @@ model Stock {
 
   abastecimientos Abastecimiento[]
   detallesStock   DetalleStock[]
-  entregas        Entrega[]
+  // entregas removed from here, logic moved to Recepcion
 }
 
 model Item {
-  idItem        Int    @id @default(autoincrement())
-  nombreItem    String @map("nombre_item") @db.VarChar(45)
-  tipoItem      String @map("tipo_item") @db.VarChar(45)
-  categoriaItem String @map("categoria_item") @db.VarChar(45)
+  idItem        Int     @id @default(autoincrement())
+  nombreItem    String  @map("nombre_item") @db.VarChar(45)
+  tipoItem      String  @map("tipo_item") @db.VarChar(45)
+  categoriaItem String  @map("categoria_item") @db.VarChar(45)
+  unidadMedida  String? @default("Unidad") // Added for frontend display
 
   // Relaciones
   abastecimientos   Abastecimiento[]
-  comprasExteriores ComprasExteriores[]
   detallesSolicitud DetalleSolicitud[]
   detallesCarga     DetalleCarga[]
   detallesStock     DetalleStock[]
-
   detallesPlantilla DetallePlantilla[]
+
+  // New Relation for Purchase Details
+  detallesOrden DetalleOrdenCompra[]
 }
 
+// --------------------------------------------------------
+// 3. OPERACIONES (ABASTECIMIENTO, CARGA, SOLICITUDES)
+// --------------------------------------------------------
+// ... (This section remains mostly the same, abbreviated for clarity) ...
 
 model Abastecimiento {
   idAbastecimiento Int      @default(autoincrement())
@@ -155,6 +171,7 @@ model Ruta {
   idRuta    Int               @id @default(autoincrement())
   origen    String            @db.VarChar(45)
   destino   String            @db.VarChar(45)
+  codigo    String? // Added for frontend form
   aeronaves AeronaveHasRuta[]
 }
 
@@ -168,31 +185,77 @@ model AeronaveHasRuta {
   @@id([aeronaveId, rutaId])
 }
 
-// 4. COMPRAS Y DETALLES
+// --------------------------------------------------------
+// 4. MODULO DE COMPRAS (REFACTORIZADO)
+// --------------------------------------------------------
 
-model ComprasExteriores {
-  idComprasExteriores Int      @id @default(autoincrement()) @map("idCompras_exteriores")
-  itemId              Int      @map("Item_idItem")
-  cantidad            Int      @map("Cantidad")
-  fecha               DateTime @map("date") @db.Date
+model OrdenCompra {
+  idOrdenCompra  Int       @id @default(autoincrement())
+  codigoOrden    String    @unique // Ej: "OC-2025-001"
+  proveedor      String    @db.VarChar(100)
+  fechaSolicitud DateTime  @default(now()) @db.Date
+  fechaEntrega   DateTime? @db.Date
 
-  item     Item      @relation(fields: [itemId], references: [idItem])
-  entregas Entrega[]
+  // Estados: 'Pendiente', 'Parcial', 'Completado', 'Cancelado'
+  estado String @default("Pendiente") @db.VarChar(20)
+
+  // Costos
+  costoTotalEstimado Float @default(0)
+  costoTotalReal     Float @default(0) // Se actualiza al recibir mercadería
+
+  observaciones String? @db.Text
+
+  // Relaciones
+  almacenDestinoId Int
+  almacenDestino   Almacen @relation(fields: [almacenDestinoId], references: [idAlmacen])
+
+  usuarioId String
+  usuario   User   @relation("UsuarioCreoOrden", fields: [usuarioId], references: [id])
+
+  detalles    DetalleOrdenCompra[]
+  recepciones Recepcion[] // Historial de camiones que llegaron
 }
 
-model Entrega {
-  idParcial           Int      @default(autoincrement()) @map("id_parcial")
-  tipoEntrega         String   @map("tipo_entrega") @db.VarChar(45)
-  fecha               DateTime @db.Date
-  cantidad            Int
-  comprasExterioresId Int      @map("Compras_exteriores_idCompras_exteriores")
-  stockId             Int      @map("Stock_idStock")
+model DetalleOrdenCompra {
+  idDetalle     Int @id @default(autoincrement())
+  ordenCompraId Int
+  itemId        Int
 
-  comprasExteriores ComprasExteriores @relation(fields: [comprasExterioresId], references: [idComprasExteriores])
-  stock             Stock             @relation(fields: [stockId], references: [idStock])
+  cantidadSolicitada Int
+  cantidadRecibida   Int @default(0) // Se incrementa con las recepciones
 
-  @@id([idParcial, comprasExterioresId, stockId])
+  costoUnitario Float // Costo pactado con el proveedor
+
+  // Relaciones
+  orden OrdenCompra @relation(fields: [ordenCompraId], references: [idOrdenCompra], onDelete: Cascade)
+  item  Item        @relation(fields: [itemId], references: [idItem])
 }
+
+// Historial de recepciones (Cuando llega el camión)
+model Recepcion {
+  idRecepcion    Int      @id @default(autoincrement())
+  ordenCompraId  Int
+  fechaRecepcion DateTime @default(now())
+  usuarioRecibio String? // Nombre o ID del usuario que dio click en "Recibir"
+  observaciones  String?
+
+  orden OrdenCompra     @relation(fields: [ordenCompraId], references: [idOrdenCompra])
+  items RecepcionItem[]
+}
+
+// Detalle de qué ítems llegaron en una recepción específica
+model RecepcionItem {
+  id               Int @id @default(autoincrement())
+  recepcionId      Int
+  itemId           Int
+  cantidadRecibida Int
+
+  recepcion Recepcion @relation(fields: [recepcionId], references: [idRecepcion], onDelete: Cascade)
+}
+
+// --------------------------------------------------------
+// ... (RESTO DEL ESQUEMA IGUAL: DetalleSolicitud, Carga, etc.)
+// --------------------------------------------------------
 
 model DetalleSolicitud {
   idDetalleSolicitud Int @default(autoincrement()) @map("idDetalle_solicitud")
@@ -266,8 +329,6 @@ model Configuracion {
   carga Carga @relation(fields: [cargaId, cargaAeronaveId], references: [idCarga, aeronaveId])
 }
 
-// 5. SOLUCIÓN AL ERROR DE DOTACIÓN (Simplificación)
-
 model SolicitudDotacion {
   idSolicitudDotacion Int @id @default(autoincrement()) @map("idSolicitud_Dotacion")
 
@@ -294,13 +355,13 @@ model DetalleDotacion {
   @@id([idDetalleDotacion, solicitudDotacionId])
 }
 
-// 6. NUEVOS MODELOS (NECESARIOS PARA EL FRONTEND QUE HICIMOS)
+// 6. PLANTILLAS (Para el Módulo Configuración de Carga)
 
 model Plantilla {
   id                 Int      @id @default(autoincrement())
   nombre             String
-  modeloAeronave     String // Ej: "Boeing 737-300"
-  clase              String // Ej: "Económica"
+  modeloAeronave     String
+  clase              String
   fechaCreacion      DateTime @default(now())
   ultimaModificacion DateTime @updatedAt
 

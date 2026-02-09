@@ -5,6 +5,7 @@ import { seedAlmacenes } from './seeds/almacenes';
 import { seedItems } from './seeds/items';
 import { seedFlotas } from './seeds/flotas';
 import { seedCompras } from './seeds/compras';
+import { seedStock} from "./seeds/stock";
 
 const prisma = new PrismaClient();
 
@@ -19,6 +20,9 @@ async function main() {
         await seedUsers(prisma);
         await seedAlmacenes(prisma);
         await seedItems(prisma);
+
+        // 3. Inventario Inicial
+        await seedStock(prisma);
 
         // 3. Operaciones Complejas
         await seedFlotas(prisma);

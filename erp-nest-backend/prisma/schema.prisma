@@ -153,13 +153,13 @@ model Carga {
 
 model Solicitud {
   idSolicitud          Int      @id @default(autoincrement())
-  usuarioId            String   @map("Usuario_idUsuario")
+  usuarioId            String   @map("usuarioId")
   descripcion          String   @db.VarChar(45)
   fecha                DateTime @db.Date
   prioridad            String   @db.VarChar(45)
   estado               String   @map("Estado") @db.VarChar(45)
-  almacenSolicitanteId Int      @map("AlmacenSolicitante_id")
-  almacenSolicitadoId  Int      @map("AlmacenSolicitado_id")
+  almacenSolicitanteId Int      @map("AlmacenSolicitanteId")
+  almacenSolicitadoId  Int      @map("AlmacenSolicitadoId")
 
   usuario            User    @relation(fields: [usuarioId], references: [id])
   almacenSolicitante Almacen @relation("AlmacenSolicitante", fields: [almacenSolicitanteId], references: [idAlmacen])

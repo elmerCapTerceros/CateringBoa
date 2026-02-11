@@ -12,10 +12,10 @@ export class SolicitudService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  //  Crear solicitud de dotación
+  //Crear solicitud de dotación
   async create(dto: CreateSolicitudDto, userId?: string) {
 
-    // Validar que no haya items duplicados
+    //Validar que no haya items duplicados
     const itemIds = dto.detalles.map(d => d.itemId);
     const uniqueItemIds = new Set(itemIds);
 
@@ -25,7 +25,7 @@ export class SolicitudService {
       );
     }
 
-    // Validar que los items existan
+    //Validar que los items existan
     const items = await this.prisma.item.findMany({
       where: { idItem: { in: itemIds } }
     });
@@ -85,7 +85,7 @@ export class SolicitudService {
     });
   }
 
-  // 🔍 Obtener una solicitud por ID
+  //Obtener una solicitud por ID
   async findOne(id: number) {
     const solicitud = await this.prisma.solicitudDotacion.findUnique({
       where: { idSolicitudDotacion: id },
@@ -108,7 +108,7 @@ export class SolicitudService {
     return solicitud;
   }
 
-  // ✏️ Actualizar datos básicos (no detalles)
+  //Actualizar datos básicos (no detalles)
   async update(id: number, dto: UpdateSolicitudDto) {
     return this.prisma.solicitudDotacion.update({
       where: { idSolicitudDotacion: id },
@@ -122,7 +122,7 @@ export class SolicitudService {
     });
   }
 
-  //  Eliminar solicitud
+  //Eliminar solicitud
   async remove(id: number) {
     return this.prisma.solicitudDotacion.delete({
       where: { idSolicitudDotacion: id }

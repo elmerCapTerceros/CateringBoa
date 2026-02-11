@@ -17,7 +17,7 @@
                 <!-- Filtro por Almacén -->
                 <div>
                     <mat-form-field appearance="outline" class="w-64">
-                        <mat-label>Filtrar por almaacén:</mat-label>
+                        <mat-label>Filtrar por almacén:</mat-label>
                         <mat-select formControlName="almacen">
                             @for (almacen of almacenes; track almacen.value) {
                                 <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>

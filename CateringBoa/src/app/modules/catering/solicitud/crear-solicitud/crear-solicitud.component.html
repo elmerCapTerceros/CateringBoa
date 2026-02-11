@@ -1,138 +1,175 @@
 <div class="flex-auto p-6 sm:p-10">
     <h2 class="text-3xl font-bold mb-8">Crear Nueva Solicitud</h2>
 
+    <!-- Loading de catálogos -->
+    @if (isLoadingCatalogos) {
+        <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+            <div class="flex items-center">
+                <mat-spinner diameter="20" class="mr-3"></mat-spinner>
+                <span>Cargando catálogos...</span>
+            </div>
+        </div>
+    }
+
     <form [formGroup]="solicitudForm" (ngSubmit)="guardarSolicitud()">
-
         <div class="flex flex-wrap gap-3 mb-6">
-
+            <!-- Almacén -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">
                     <mat-label>Almacén solicitado:</mat-label>
-                    <mat-select formControlName="almacen" placeholder="Seleccionar almacén">
-                        @for (almacen of almacenes; track almacen.value) {
-                            <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>
+                    <mat-select formControlName="almacenId" placeholder="Seleccionar almacén" 
+                                [disabled]="isLoadingCatalogos">
+                        <mat-option>Seleccionar</mat-option>
+                        @for (almacen of almacenes; track almacen.idAlmacen) {
+                            <!-- 🟢 CORREGIDO: usar idAlmacen, no id -->
+                            <mat-option [value]="almacen.idAlmacen">
+                                {{ almacen.codigo || '' }} {{ almacen.nombreAlmacen }}
+                                @if (almacen.ubicacion) {
+                                    <span class="text-gray-500 text-sm ml-2">({{ almacen.ubicacion }})</span>
+                                }
+                            </mat-option>
                         }
                     </mat-select>
+                    @if (solicitudForm.get('almacenId')?.hasError('required') && solicitudForm.get('almacenId')?.touched) {
+                        <mat-error>El almacén es requerido</mat-error>
+                    }
                 </mat-form-field>
             </div>
 
+            <!-- Aeronave -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">
                     <mat-label>Aeronave:</mat-label>
-                    <mat-select formControlName="aeronave" placeholder="Seleccionar aeronave">
-                        @for (aeronave of aeronaves; track aeronave.value) {
-                            <mat-option [value]="aeronave.value">{{aeronave.viewValue}}</mat-option>
+                    <mat-select formControlName="aeronaveId" placeholder="Seleccionar aeronave"
+                                [disabled]="isLoadingCatalogos">
+                        <mat-option>Seleccionar</mat-option>
+                        @for (aeronave of aeronaves; track aeronave.idAeronave) {
+                            <!-- 🟢 CORREGIDO: usar idAeronave, no id -->
+                            <mat-option [value]="aeronave.idAeronave">
+                                {{ aeronave.matricula }}
+                                @if (aeronave.tipoAeronave) {
+                                    <span class="text-gray-500 text-sm ml-2">({{ aeronave.tipoAeronave }})</span>
+                                }
+                            </mat-option>
                         }
                     </mat-select>
+                    @if (solicitudForm.get('aeronaveId')?.hasError('required') && solicitudForm.get('aeronaveId')?.touched) {
+                        <mat-error>La aeronave es requerida</mat-error>
+                    }
                 </mat-form-field>
             </div>
 
-            <!-- Fecha -->
+            <!-- Fecha requerida -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">
                     <mat-label>Fecha requerida:</mat-label>
-                    <input matInput [matDatepicker]="picker" formControlName="fecha" placeholder="dd/mm/aaaa" [min]="minDate" required>
+                    <input matInput [matDatepicker]="picker" 
+                           formControlName="fechaRequerida" 
+                           placeholder="dd/mm/aaaa" 
+                           [min]="minDate" 
+                           required>
                     <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-datepicker #picker></mat-datepicker>
+                    @if (solicitudForm.get('fechaRequerida')?.hasError('required') && solicitudForm.get('fechaRequerida')?.touched) {
+                        <mat-error>La fecha es requerida</mat-error>
+                    }
                 </mat-form-field>
             </div>
 
+            <!-- Prioridad -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Prioridad:</label>
                 <mat-radio-group formControlName="prioridad" class="flex gap-6">
-                    <mat-radio-button value="1">Alta</mat-radio-button>
-                    <mat-radio-button value="2">Media</mat-radio-button>
-                    <mat-radio-button value="3">Baja</mat-radio-button>
+                    <mat-radio-button value="Alta">Alta</mat-radio-button>
+                    <mat-radio-button value="Media">Media</mat-radio-button>
+                    <mat-radio-button value="Baja">Baja</mat-radio-button>
                 </mat-radio-group>
             </div>
         </div>
 
-        <!-- Fila 3: Descripción -->
+        <!-- Descripción -->
         <div class="mb-6">
             <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Descripción:</mat-label>
-                <textarea
-                    matInput
-                    formControlName="descripcion"
-                    rows="3"
-                    placeholder="Escriba una descripción detallada de la solicitud"></textarea>
+                <textarea matInput formControlName="descripcion" rows="3"
+                          placeholder="Escriba una descripción detallada de la solicitud"></textarea>
+                @if (solicitudForm.get('descripcion')?.hasError('required') && solicitudForm.get('descripcion')?.touched) {
+                    <mat-error>La descripción es requerida</mat-error>
+                }
             </mat-form-field>
         </div>
 
-        <!-- Tabla de Items Solicitados -->
+        <!-- Tabla de Detalles -->
         <mat-card class="mb-6">
             <mat-card-header class="flex justify-between items-center pb-4">
                 <div>
                     <mat-card-title class="text-base font-semibold">
-                        Ítems solicitados: <span class="text-red-500">*</span>
+                        Detalles de la solicitud: <span class="text-red-500">*</span>
                     </mat-card-title>
                 </div>
-                <button
-                    mat-button
-                    color="primary"
-                    type="button"
-                    (click)="agregarItem()"
-                    class="flex items-center gap-1">
+                <button mat-button color="primary" type="button" 
+                        (click)="agregarDetalle()" class="flex items-center gap-1"
+                        [disabled]="isLoadingCatalogos">
                     <mat-icon>add</mat-icon>
-                    Agregar ítem
+                    Agregar detalle
                 </button>
             </mat-card-header>
 
             <mat-card-content>
                 <!-- Encabezados -->
                 <div class="grid grid-cols-12 gap-4 mb-4 px-2 text-sm font-semibold text-gray-600">
-                    <div class="col-span-3">CATEGORÍA</div>
-                    <div class="col-span-4">NOMBRE DE ÍTEM</div>
-                    <div class="col-span-3">CANTIDAD</div>
-                    <div class="col-span-2"></div>
+                    <div class="col-span-6">Item</div>
+                    <div class="col-span-4">Cantidad</div>
+                    <div class="col-span-2">Acciones</div>
                 </div>
 
-                <!-- Items dinámicos -->
-                <div formArrayName="items">
-                    @for (item of items.controls; track $index) {
-                        <div [formGroupName]="$index" class="grid grid-cols-12 gap-4 mb-3 items-start">
-
-                            <!-- Categoría -->
-                            <div class="col-span-3">
+                <!-- Detalles dinámicos -->
+                <div formArrayName="detalles">
+                    @for (detalle of detalles.controls; track $index) {
+                        <div [formGroupName]="$index" class="grid grid-cols-12 gap-4 mb-3 items-start p-3 border rounded-lg">
+                            <!-- Item -->
+                            <div class="col-span-6">
                                 <mat-form-field appearance="outline" class="w-full">
-                                    <mat-select formControlName="categoria" placeholder="Seleccione Categoria">
-                                        @for (cat of categorias; track cat) {
-                                            <mat-option [value]="cat">{{ cat }}</mat-option>
+                                    <mat-label>Seleccionar Item</mat-label>
+                                    <mat-select formControlName="itemId" [disabled]="isLoadingCatalogos">
+                                        <mat-option>Seleccionar</mat-option>
+                                        @for (item of items; track item.idItem) {
+                                            <!-- 🟢 CORREGIDO: usar idItem, no id -->
+                                            <mat-option [value]="item.idItem">
+                                                {{ item.nombreItem }}
+                                                <span class="text-gray-500 text-sm ml-2">
+                                                    ({{ item.categoriaItem }} - {{ item.unidadMedida }})
+                                                </span>
+                                            </mat-option>
                                         }
                                     </mat-select>
-                                </mat-form-field>
-                            </div>
-
-                            <!-- Nombre del ítem -->
-                            <div class="col-span-4">
-                                <mat-form-field appearance="outline" class="w-full">
-                                    <input
-                                        matInput
-                                        formControlName="nombre"
-                                        placeholder="Seleccione Item">
+                                    @if (detalle.get('itemId')?.hasError('required') && detalle.get('itemId')?.touched) {
+                                        <mat-error>El item es requerido</mat-error>
+                                    }
                                 </mat-form-field>
                             </div>
 
                             <!-- Cantidad -->
-                            <div class="col-span-3">
+                            <div class="col-span-4">
                                 <mat-form-field appearance="outline" class="w-full">
-                                    <input
-                                        matInput
-                                        type="number"
-                                        formControlName="cantidad"
-                                        placeholder="0"
-                                        min="0">
+                                    <mat-label>Cantidad</mat-label>
+                                    <input matInput type="number" formControlName="cantidad"
+                                           placeholder="0" min="1" [disabled]="isLoadingCatalogos">
+                                    @if (detalle.get('cantidad')?.hasError('required') && detalle.get('cantidad')?.touched) {
+                                        <mat-error>La cantidad es requerida</mat-error>
+                                    }
+                                    @if (detalle.get('cantidad')?.hasError('min') && detalle.get('cantidad')?.touched) {
+                                        <mat-error>Mínimo 1</mat-error>
+                                    }
                                 </mat-form-field>
                             </div>
 
                             <!-- Botón eliminar -->
                             <div class="col-span-2 flex items-center pt-2">
-                                <button
-                                    mat-icon-button
-                                    color="warn"
-                                    type="button"
-                                    (click)="eliminarItem($index)"
-                                    matTooltip="Eliminar ítem">
+                                <button mat-icon-button color="warn" type="button"
+                                        (click)="eliminarDetalle($index)"
+                                        matTooltip="Eliminar detalle"
+                                        [disabled]="detalles.length <= 1">
                                     <mat-icon>delete</mat-icon>
                                 </button>
                             </div>
@@ -140,26 +177,25 @@
                     }
                 </div>
 
-                <!-- Mensaje si no hay items -->
-                @if (items.length === 0) {
+                <!-- Mensaje si no hay detalles -->
+                @if (detalles.length === 0) {
                     <div class="text-center py-8 text-gray-500">
-                        No hay ítems agregados. Haz clic en "Agregar ítem" para comenzar.
+                        No hay detalles agregados. Haz clic en "Agregar detalle" para comenzar.
                     </div>
                 }
             </mat-card-content>
         </mat-card>
+
         <!-- Botones de acción -->
         <div class="flex justify-end gap-4 mt-8">
-            <button
-                mat-stroked-button
-                type="button"
-                (click)="cancelar()">
+            <button mat-stroked-button type="button" (click)="cancelar()" [disabled]="isLoading">
                 Cancelar
             </button>
-            <button
-                mat-raised-button
-                color="primary"
-                type="submit">
+            <button mat-raised-button color="primary" type="submit" 
+                    [disabled]="isLoading || isLoadingCatalogos">
+                @if (isLoading) {
+                    <mat-spinner diameter="20" class="mr-2"></mat-spinner>
+                }
                 Crear Solicitud
             </button>
         </div>

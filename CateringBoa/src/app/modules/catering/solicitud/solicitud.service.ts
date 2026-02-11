@@ -1,128 +1,254 @@
-// solicitud.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
+import { environment } from 'environments/environment';
 
+// Importar interfaces del CatalogosService
+import { Almacen, Aeronave, Item} from '../services/catalogo.service'; // Ajusta la ruta según tu estructura
+
+export interface DetalleResponse {
+    idDetalleDotacion: number;
+    cantidad: number;
+    itemId: number;
+    solicitudDotacionId: number;
+    item?: Item;
+}
+
+export interface SolicitudBackendResponse {
+    idSolicitudDotacion: number;
+    fecha: string;
+    fechaRequerida: string;
+    estado: string;
+    descripcion: string;
+    prioridad: string;
+    almacenId: number;
+    usuarioId: string;
+    aeronaveId: number;
+    almacen?: Almacen;
+    aeronave?: Aeronave;
+    detalles?: DetalleResponse[];
+    usuario?: {
+        id: string;
+        name: string;
+    };
+}
+
+// Interfaces Frontend (para la vista)
 export interface Solicitud {
     id: number;
     almacen: string;
+    aeronave: string;
     fecha: string;
     descripcion: string;
     prioridad: 'Alta' | 'Media' | 'Baja';
     estado: 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada';
     items: ItemSolicitud[];
 }
+
 export interface ItemSolicitud {
     categoria: string;
     nombre: string;
     cantidad: number;
 }
+
+//DTO para crear
+export interface CreateSolicitudDto {
+    fechaRequerida: string;
+    descripcion: string;
+    prioridad: string;
+    almacenId: number;
+    usuarioId?: string;
+    aeronaveId: number;
+    detalles: {
+        itemId: number;
+        cantidad: number;
+    }[];
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class SolicitudService {
+    private apiUrl = `${environment.apiUrl}/solicitudes-dotacion`;
 
-    // BehaviorSubject para mantener el estado de las solicitudes
     private solicitudesSubject = new BehaviorSubject<Solicitud[]>([]);
-
-    // Observable público que los componentes pueden suscribirse
     public solicitudes$ = this.solicitudesSubject.asObservable();
 
-    constructor(private _http: HttpClient) { }
+    constructor(private http: HttpClient) {}
 
-    /**
-     * Obtener todas las solicitudes del Mock API
-     * Actualiza el BehaviorSubject con los datos recibidos
-     */
+    // ============================================
+    // 🔄 MÉTODOS PARA SOLICITUDES
+    // ============================================
+
+    // Mapear backend → frontend (USANDO INTERFACES CORRECTAS)
+    private mapBackendToFrontend(backend: SolicitudBackendResponse): Solicitud {
+        return {
+            id: backend.idSolicitudDotacion,
+            
+            // 🟢 Usar los campos REALES de tus interfaces
+            almacen: backend.almacen ? 
+                `${backend.almacen.codigo || ''} ${backend.almacen.nombreAlmacen}`.trim() 
+                : `Almacén ${backend.almacenId}`,
+            
+            aeronave: backend.aeronave ? 
+                backend.aeronave.matricula 
+                : `Aeronave ${backend.aeronaveId}`,
+            
+            fecha: this.formatearFecha(backend.fechaRequerida || backend.fecha),
+            descripcion: backend.descripcion,
+            
+            prioridad: this.mapearPrioridadBackendToFrontend(backend.prioridad),
+            estado: backend.estado as 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada',
+            
+            items: (backend.detalles || []).map(detalle => ({
+                // 🟢 Usar categoriaItem de tu interfaz Item
+                categoria: detalle.item?.categoriaItem || 'Sin categoría',
+                nombre: detalle.item?.nombreItem || 'Sin nombre',
+                cantidad: detalle.cantidad
+            }))
+        };
+    }
+
+    private mapearPrioridadBackendToFrontend(prioridadBackend: string): 'Alta' | 'Media' | 'Baja' {
+        const prioridades: Record<string, 'Alta' | 'Media' | 'Baja'> = {
+            'Alta': 'Alta',
+            'Media': 'Media', 
+            'Baja': 'Baja',
+            '1': 'Alta', 
+            '2': 'Media',
+            '3': 'Baja'
+        };
+        return prioridades[prioridadBackend] || 'Media';
+    }
+
+    private formatearFecha(fecha: string): string {
+        try {
+            const date = new Date(fecha);
+            if (isNaN(date.getTime())) {
+                return 'Fecha inválida';
+            }
+            const dia = String(date.getDate()).padStart(2, '0');
+            const mes = String(date.getMonth() + 1).padStart(2, '0');
+            const anio = date.getFullYear();
+            return `${dia}/${mes}/${anio}`;
+        } catch {
+            return fecha;
+        }
+    }
+
+    // 📋 GETLIST - Obtener todas las solicitudes
     getList(): Observable<Solicitud[]> {
-        return this._http.get<Solicitud[]>('api/catering/list').pipe(
-            tap((response: Solicitud[]) => {
-                console.warn('getList', response);
-                // Actualizar el BehaviorSubject con los datos del servidor
-                this.solicitudesSubject.next(response);
-            })
-        );
-    }
+        console.log('🌐 GET solicitudes:', this.apiUrl);
 
-    /**
-     * Crear nueva solicitud
-     * Envía al Mock API y actualiza el estado local
-     */
-    create(solicitudData: any): Observable<Solicitud> {
-        return this._http.post<Solicitud>('api/catering/list', solicitudData).pipe(
-            tap((nuevaSolicitud: Solicitud) => {
-                console.warn('Solicitud creada:', nuevaSolicitud);
-
-                // Obtener solicitudes actuales
-                const solicitudesActuales = this.solicitudesSubject.value;
-
-                // Agregar la nueva solicitud al inicio (más reciente primero)
-                const solicitudesActualizadas = [nuevaSolicitud, ...solicitudesActuales];
-
-                // Actualizar el BehaviorSubject (esto notifica a todos los suscriptores)
-                this.solicitudesSubject.next(solicitudesActualizadas);
-            })
-        );
-    }
-
-    /**
-     * Actualizar solicitud existente (opcional - para futuro)
-     */
-    update(id: number, solicitudData: Partial<Solicitud>): Observable<Solicitud> {
-        return this._http.put<Solicitud>(`api/catering/list/${id}`, solicitudData).pipe(
-            tap((solicitudActualizada: Solicitud) => {
-                const solicitudesActuales = this.solicitudesSubject.value;
-                const index = solicitudesActuales.findIndex(s => s.id === id);
-
-                if (index !== -1) {
-                    const solicitudesActualizadas = [...solicitudesActuales];
-                    solicitudesActualizadas[index] = solicitudActualizada;
-                    this.solicitudesSubject.next(solicitudesActualizadas);
-                }
-            })
-        );
-    }
-
-    /**
-     * Eliminar solicitud (opcional - para futuro)
-     */
-    delete(id: number): Observable<any> {
-        console.log('Intentando eliminar solicitud con ID:', id);
-        console.log('URL completa:', `api/catering/list/${id}`);
-
-        return this._http.delete(`api/catering/list/${id}`).pipe(
-            tap((response) => {
-                console.log('Respuesta del servidor:', response);
-
-                const solicitudesActuales = this.solicitudesSubject.value;
-                const solicitudesActualizadas = solicitudesActuales.filter(s => s.id !== id);
-                this.solicitudesSubject.next(solicitudesActualizadas);
+        return this.http.get<SolicitudBackendResponse[]>(this.apiUrl).pipe(
+            tap(response => {
+                console.log('📥 Respuesta RAW:', response?.length || 0, 'registros');
             }),
-            catchError((error) => {
-                console.error('Error en delete:', error);
+            map(response => {
+                const mapped = (response || []).map(item => this.mapBackendToFrontend(item));
+                console.log('🔄 Datos mapeados:', mapped.length);
+                return mapped;
+            }),
+            tap(solicitudes => {
+                console.log('💾 Actualizando BehaviorSubject:', solicitudes.length);
+                this.solicitudesSubject.next(solicitudes);
+            }),
+            catchError(error => {
+                console.error('❌ Error en getList():', error);
                 throw error;
             })
         );
     }
 
-    /**
-     * Obtener solicitud por ID (opcional - para futuro)
-     */
-    getById(id: number): Observable<Solicitud | undefined> {
-        const solicitud = this.solicitudesSubject.value.find(s => s.id === id);
-        return new Observable(observer => {
-            observer.next(solicitud);
-            observer.complete();
+    // 🆕 CREATE - Crear solicitud
+    create(solicitudData: CreateSolicitudDto): Observable<Solicitud> {
+        console.log('📤 CREATE solicitud:', {
+            ...solicitudData,
+            detalles: solicitudData.detalles
         });
+
+        return this.http.post<SolicitudBackendResponse>(this.apiUrl, solicitudData).pipe(
+            map(response => this.mapBackendToFrontend(response)),
+            tap(nuevaSolicitud => {
+                // Actualizar caché de solicitudes
+                const solicitudesActuales = this.solicitudesSubject.value;
+                this.solicitudesSubject.next([nuevaSolicitud, ...solicitudesActuales]);
+                console.log('✅ Solicitud agregada a BehaviorSubject');
+            }),
+            catchError(error => {
+                console.error('❌ Error CREATE:', error);
+                if (error.error) {
+                    console.error('Detalles del error:', error.error);
+                }
+                throw error;
+            })
+        );
     }
 
-    /**
-     * Refrescar la lista desde el servidor
-     * Útil si necesitas sincronizar con el backend
-     */
+    // 🔍 GETBYID - Obtener una solicitud por ID
+    getById(id: number): Observable<Solicitud> {
+        return this.http.get<SolicitudBackendResponse>(`${this.apiUrl}/${id}`).pipe(
+            map(response => this.mapBackendToFrontend(response)),
+            catchError(error => {
+                console.error('❌ Error GET by ID:', error);
+                throw error;
+            })
+        );
+    }
+
+    // ✏️ UPDATE - Actualizar solicitud
+    update(id: number, solicitudData: Partial<CreateSolicitudDto>): Observable<Solicitud> {
+        return this.http.patch<SolicitudBackendResponse>(
+            `${this.apiUrl}/${id}`,
+            solicitudData
+        ).pipe(
+            map(response => this.mapBackendToFrontend(response)),
+            tap(actualizada => {
+                // Actualizar en caché
+                const solicitudes = this.solicitudesSubject.value.map(s =>
+                    s.id === id ? actualizada : s
+                );
+                this.solicitudesSubject.next(solicitudes);
+                console.log('✏️ Solicitud actualizada en caché');
+            }),
+            catchError(error => {
+                console.error('❌ Error UPDATE:', error);
+                throw error;
+            })
+        );
+    }
+
+    // ❌ DELETE - Eliminar solicitud
+    delete(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+            tap(() => {
+                // Eliminar de caché
+                const filtradas = this.solicitudesSubject.value
+                    .filter(s => s.id !== id);
+                this.solicitudesSubject.next(filtradas);
+                console.log('🗑️ Solicitud eliminada de caché');
+            }),
+            catchError(error => {
+                console.error('❌ Error DELETE:', error);
+                throw error;
+            })
+        );
+    }
+
+    // 🔄 REFRESH - Refrescar datos
     refresh(): void {
         this.getList().subscribe();
+    }
+
+    // 🎯 Método para probar conexión
+    testConnection(): Observable<any> {
+        return this.http.get(this.apiUrl).pipe(
+            tap(() => console.log('✅ Conexión con backend exitosa')),
+            catchError(error => {
+                console.error('❌ Error de conexión:', error);
+                throw error;
+            })
+        );
     }
 }

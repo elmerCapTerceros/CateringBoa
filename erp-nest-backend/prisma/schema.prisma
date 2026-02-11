@@ -70,8 +70,8 @@ model Aeronave {
 
 model Almacen {
   idAlmacen     Int    @id @default(autoincrement())
-  nombreAlmacen String @map("nombre_almacer") @db.VarChar(45)
-  tipoAlmacen   String @map("tipo_almacen") @db.VarChar(45)
+  nombreAlmacen String @map("nombreAlmacen") @db.VarChar(45)
+  tipoAlmacen   String @map("tipoAlmacen") @db.VarChar(45)
   ubicacion     String @db.VarChar(45)
   codigo        String @db.VarChar(45)
 
@@ -108,6 +108,7 @@ model Item {
   detallesCarga     DetalleCarga[]
   detallesStock     DetalleStock[]
   detallesPlantilla DetallePlantilla[]
+  detallesDotacion DetalleDotacion[]
 
   // New Relation for Purchase Details
   detallesOrden DetalleOrdenCompra[]
@@ -332,17 +333,18 @@ model Configuracion {
 model SolicitudDotacion {
   idSolicitudDotacion Int @id @default(autoincrement()) @map("idSolicitud_Dotacion")
 
-  fecha       DateTime @db.Date
-  estado      String   @map("Estado") @db.VarChar(45)
+  fecha       DateTime @default(now()) @db.Date
+  fechaRequerida      DateTime @map("FechaRequerida") @db.Date 
+  estado      String   @map("Estado") @db.VarChar(45) @default("Pendiente")
   descripcion String   @map("Descripcion") @db.VarChar(45)
+  prioridad  String   @map("Prioridad") @db.VarChar(10)
   almacenId   Int      @map("Almacen_idAlmacen")
-  usuarioId   String   @map("Usuario_idUsuario")
+  usuarioId   String   @map("Usuario_idUsuario") @default("admin1234")
   aeronaveId  Int      @map("Aeronave_idAeronave")
 
   almacen  Almacen  @relation(fields: [almacenId], references: [idAlmacen])
   usuario  User     @relation(fields: [usuarioId], references: [id])
   aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
-
   detalles DetalleDotacion[]
 }
 
@@ -350,9 +352,10 @@ model DetalleDotacion {
   idDetalleDotacion   Int               @default(autoincrement()) @map("idDetalle_dotacion")
   cantidad            Int
   solicitudDotacionId Int               @map("Solicitud_Dotacion_idSolicitud_Dotacion")
+  itemId              Int @map("Item_idItem")
   solicitud           SolicitudDotacion @relation(fields: [solicitudDotacionId], references: [idSolicitudDotacion])
-
-  @@id([idDetalleDotacion, solicitudDotacionId])
+  item       Item              @relation(fields: [itemId], references: [idItem])
+  @@unique([solicitudDotacionId, itemId])
 }
 
 // 6. PLANTILLAS (Para el Módulo Configuración de Carga)

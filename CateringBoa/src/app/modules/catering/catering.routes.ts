@@ -1,117 +1,119 @@
 import { Routes } from '@angular/router';
 import { CateringComponent } from './catering.component';
-import { CrearSolicitudComponent } from './solicitud/crear-solicitud/crear-solicitud.component';
-import { ListarSolicitudComponent } from './solicitud/listar-solicitud/listar-solicitud.component';
-import {DetalleSolicitudComponent} from './solicitud/detalle-solicitud/detalle-solicitud.component';
-import { CompraComponent } from './compra-exterior/compra/compra.component';
-import { ListaComprasComponent } from './compra-exterior/lista-compras/lista-compras.component';
-import { ListarCargaComponent } from './carga/listar-carga/listar-carga.component';
-import { CrearCargaComponent } from './carga/crear-carga/crear-carga.component';
-import {StockComponent} from './stock/stock.component';
-import {ConfiguracionCargaComponent } from './configuracion-carga/configuracion-carga.component';
-import {AbastecerVueloComponent} from './abastecer-vuelo/abastecer-vuelo.component';
-import {CierreVueloComponent} from './cierre-vuelo/cierre-vuelo.component';
-import {HistorialAbastecimientoComponent} from './historial-abastecimiento/historial-abastecimiento.component';
-import {ListarSolicitudesAlmacenComponent} from './almacen/listar-solicitudes-almacen/listar-solicitudes-almacen.component';
-import {CrearSolicitudAlmacenComponent} from './almacen/crear-solicitud-almacen/crear-solicitud-almacen.component';
-import {DetalleSolicitudAlmacenComponent} from './almacen/detalle-solicitud-almacen/detalle-solicitud-almacen.component';
-import { FlotaComponent } from './flota/flota/flota.component';
-import { HistorialComprasComponent } from './compra-exterior/historial-compras/historial-compras.component';
-import {ListaConfiguracionesComponent} from './configuracion-carga/lista-configuraciones/lista-configuraciones.component';
+
 import { DashboardComponent } from './dashboard/dashboard.component';
 
+import { StockComponent } from './stock/stock.component';
+import { ListarSolicitudesAlmacenComponent } from './almacen/listar-solicitudes-almacen/listar-solicitudes-almacen.component';
+import { CrearSolicitudAlmacenComponent } from './almacen/crear-solicitud-almacen/crear-solicitud-almacen.component';
+import { DetalleSolicitudAlmacenComponent } from './almacen/detalle-solicitud-almacen/detalle-solicitud-almacen.component';
+
+import { CompraComponent } from './compra-exterior/compra/compra.component';
+import { ListaComprasComponent } from './compra-exterior/lista-compras/lista-compras.component';
+import { HistorialComprasComponent } from './compra-exterior/historial-compras/historial-compras.component';
+import { CrearSolicitudComponent } from './solicitud/crear-solicitud/crear-solicitud.component';
+import { ListarSolicitudComponent } from './solicitud/listar-solicitud/listar-solicitud.component';
+import { DetalleSolicitudComponent } from './solicitud/detalle-solicitud/detalle-solicitud.component';
+
+import { ListaConfiguracionesComponent } from './configuracion-carga/lista-configuraciones/lista-configuraciones.component';
+
+import { FlotaComponent } from './flota/flota/flota.component';
+
+import { AbastecerVueloComponent } from './abastecer-vuelo/abastecer-vuelo.component';
+import { HistorialAbastecimientoComponent } from './historial-abastecimiento/historial-abastecimiento.component';
+
+import { ListarCargaComponent } from './carga/listar-carga/listar-carga.component';
+import { CierreVueloComponent } from './cierre-vuelo/cierre-vuelo.component';
+import {IngresoMercaderiaComponent} from './ingreso-mercaderia/ingreso-mercaderia.component';
 
 export default [
     {
         path: '',
         component: CateringComponent,
         children: [
+            // DASHBOARD
             {
-                path: 'list',
-                component: ListarSolicitudComponent
+                path: 'dashboard',
+                component: DashboardComponent,
             },
             {
-                path: 'new',
-                component: CrearSolicitudComponent
+                path: 'almacen/ingreso',
+                component: IngresoMercaderiaComponent,
             },
-
+            // LOGÍSTICA
             {
-                path: 'abastecer',
-                component: AbastecerVueloComponent
+                path: 'stock',
+                component: StockComponent,
             },
-
             {
-                path: 'detalle/:id',
-                component: DetalleSolicitudComponent
+                path: 'listar-solicitudes-almacen',
+                component: ListarSolicitudesAlmacenComponent,
             },
-            //Rutas para carga
             {
-                path: 'carga',
-                component: ListarCargaComponent
+                path: 'crear-solicitud-almacen',
+                component: CrearSolicitudAlmacenComponent,
             },
-
             {
-                path: 'newCarga',
-                component: CrearCargaComponent
+                path: 'detalle-soltitud-almacen/:id',
+                component: DetalleSolicitudAlmacenComponent,
             },
 
-            // --- Rutas de Compra Exterior ---
+            // COMPRAS
             {
                 path: 'compra-exterior/crear',
-                component: CompraComponent
+                component: CompraComponent,
             },
             {
                 path: 'compra-exterior/listar',
-                component: ListaComprasComponent
-            },
-            {
-                path: 'stock',
-                component: StockComponent
-            },
-            {
-                path: 'configuracion',
-                component: ConfiguracionCargaComponent
-            },
-            {
-                path: 'cierre',
-                component: CierreVueloComponent
-            },
-            {
-                path: 'abastecer/historial',
-                component: HistorialAbastecimientoComponent
-            },
-            //rutas de solicitud-almacenes
-            {
-                path: 'listar-solicitudes-almacen',
-                component: ListarSolicitudesAlmacenComponent
-            },
-            {
-                path :'crear-solicitud-almacen',
-                component: CrearSolicitudAlmacenComponent
-            },
-            {
-                path : 'detalle-soltitud-almacen/:id',
-                component: DetalleSolicitudAlmacenComponent
-            },
-            //rutas de flotas
-            {
-                path: 'flotas-inicio',
-                component: FlotaComponent
+                component: ListaComprasComponent,
             },
             {
                 path: 'compra-exterior/historial',
-                component: HistorialComprasComponent
+                component: HistorialComprasComponent,
             },
+            {
+                path: 'list',
+                component: ListarSolicitudComponent,
+            },
+            {
+                path: 'new',
+                component: CrearSolicitudComponent,
+            },
+            {
+                path: 'detalle/:id',
+                component: DetalleSolicitudComponent,
+            },
+
+            // CONFIGURACIÓN (PLANTILLAS)
             {
                 path: 'configuracion/listado',
-                component: ListaConfiguracionesComponent
+                component: ListaConfiguracionesComponent,
             },
-            //Dashboard
+            // FLOTAS
             {
-                path: 'dashboard',
-                component: DashboardComponent
-            }
+                path: 'flotas-inicio',
+                component: FlotaComponent,
+            },
 
-        ]
-    }
+            // EJECUCIÓN
+            {
+                path: 'abastecer',
+                component: AbastecerVueloComponent,
+            },
+            {
+                path: 'abastecer/historial',
+                component: HistorialAbastecimientoComponent,
+            },
+
+            // CONTROL
+            {
+                path: 'carga',
+                component: ListarCargaComponent,
+            },
+            {
+                path: 'cierre',
+                component: CierreVueloComponent,
+            },
+        ],
+    },
 ] as Routes;

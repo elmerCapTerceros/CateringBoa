@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+    FormBuilder,
+    FormGroup,
+    FormsModule,
+    ReactiveFormsModule,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -20,9 +25,20 @@ import { ComprasService } from '../../services/compras.service';
     selector: 'app-historial-compras',
     standalone: true,
     imports: [
-        CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-        MatSelectModule, MatButtonModule, MatIconModule, MatDatepickerModule, MatNativeDateModule,
-        MatChipsModule, MatSnackBarModule, MatDialogModule, MatProgressBarModule
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatButtonModule,
+        MatIconModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatChipsModule,
+        MatSnackBarModule,
+        MatDialogModule,
+        MatProgressBarModule,
     ],
     templateUrl: './historial-compras.component.html',
     styleUrl: './historial-compras.component.scss',
@@ -42,7 +58,11 @@ export class HistorialComprasComponent implements OnInit {
         private dialog: MatDialog,
         private comprasService: ComprasService // <--- INYECTADO
     ) {
-        this.filterForm = this.fb.group({ fechaInicio: [null], fechaFin: [null], proveedor: [''] });
+        this.filterForm = this.fb.group({
+            fechaInicio: [null],
+            fechaFin: [null],
+            proveedor: [''],
+        });
     }
 
     ngOnInit(): void {
@@ -50,9 +70,10 @@ export class HistorialComprasComponent implements OnInit {
     }
 
     cargarDatosReales() {
-        this.comprasService.getAll().subscribe(data => {
-            this.listaVisible = data.map(orden => ({
-                id: orden.codigoOrden,       // Visual
+        // CORRECCIÓN: Usar obtenerHistorial()
+        this.comprasService.obtenerHistorial().subscribe((data) => {
+            this.listaVisible = data.map((orden: any) => ({
+                id: orden.codigoOrden, // Visual
                 idReal: orden.idOrdenCompra, // Para Backend
                 proveedor: orden.proveedor,
                 fecha: new Date(orden.fechaSolicitud),
@@ -65,8 +86,8 @@ export class HistorialComprasComponent implements OnInit {
                     cantidadRecibida: d.cantidadRecibida,
                     costoTotal: d.cantidadSolicitada * d.costoUnitario,
                     costoUnitario: d.costoUnitario, // Necesario para el cálculo
-                    ingresoActual: 0
-                }))
+                    ingresoActual: 0,
+                })),
             }));
             this.datosOriginales = [...this.listaVisible];
         });
@@ -91,9 +112,12 @@ export class HistorialComprasComponent implements OnInit {
 
     calcularMontoRecepcionActual(): void {
         if (!this.ordenSeleccionada) return;
-        this.montoAPagarEnEstaRecepcion = this.ordenSeleccionada.items.reduce((acc: number, item: any) => {
-            return acc + (item.ingresoActual || 0) * item.costoUnitario;
-        }, 0);
+        this.montoAPagarEnEstaRecepcion = this.ordenSeleccionada.items.reduce(
+            (acc: number, item: any) => {
+                return acc + (item.ingresoActual || 0) * item.costoUnitario;
+            },
+            0
+        );
     }
 
     // --- ENVIAR AL BACKEND ---
@@ -104,35 +128,61 @@ export class HistorialComprasComponent implements OnInit {
             .filter((i: any) => i.ingresoActual > 0)
             .map((i: any) => ({
                 itemId: i.itemId,
-                cantidad: i.ingresoActual
+                cantidadRecibida: i.ingresoActual, // Ajustar nombre según DTO
             }));
 
         if (itemsAEnviar.length === 0) {
-            this.snackBar.open('⚠️ Ingrese cantidad en al menos un item', 'Cerrar');
+            this.snackBar.open(
+                '⚠️ Ingrese cantidad en al menos un item',
+                'Cerrar'
+            );
             return;
         }
 
         // Llamada al servicio usando el ID Real numérico
-        this.comprasService.registrarRecepcion(this.ordenSeleccionada.idReal, {
-            usuario: 'Admin Web',
-            itemsRecibidos: itemsAEnviar
-        }).subscribe({
+        const payload = {
+            ordenCompraId: this.ordenSeleccionada.idReal,
+            observaciones: 'Recepción desde Web',
+            items: itemsAEnviar,
+        };
+
+        // CORRECCIÓN: Usar recepcionarOrden
+        this.comprasService.recepcionarOrden(payload).subscribe({
             next: (res) => {
-                this.snackBar.open(`✅ Recepción registrada. Estado: ${res.nuevoEstado}`, 'Cerrar', {
-                    duration: 5000, panelClass: ['bg-green-700', 'text-white']
-                });
+                this.snackBar.open(
+                    `✅ Recepción registrada correctamente`,
+                    'Cerrar',
+                    {
+                        duration: 5000,
+                        panelClass: ['bg-green-700', 'text-white'],
+                    }
+                );
                 this.dialog.closeAll();
                 this.cargarDatosReales(); // Recargar tabla
             },
-            error: (err) => this.snackBar.open('❌ Error al procesar recepción', 'Cerrar')
+            error: (err) =>
+                this.snackBar.open('❌ Error al procesar recepción', 'Cerrar'),
         });
     }
 
     // Auxiliares Visuales
-    getProgreso(item: any): number { return (item.cantidadRecibida / item.cantidad) * 100; }
-    toggleDetalle(orden: any): void { orden.expandido = !orden.expandido; }
-    getTotalPresupuestado(orden: any): number { return orden.items.reduce((acc: number, item: any) => acc + item.costoTotal, 0); }
+    getProgreso(item: any): number {
+        return (item.cantidadRecibida / item.cantidad) * 100;
+    }
+    toggleDetalle(orden: any): void {
+        orden.expandido = !orden.expandido;
+    }
+    getTotalPresupuestado(orden: any): number {
+        return orden.items.reduce(
+            (acc: number, item: any) => acc + item.costoTotal,
+            0
+        );
+    }
     getTotalEjecutado(orden: any): number {
-        return orden.items.reduce((acc: number, item: any) => acc + (item.cantidadRecibida * item.costoUnitario), 0);
+        return orden.items.reduce(
+            (acc: number, item: any) =>
+                acc + item.cantidadRecibida * item.costoUnitario,
+            0
+        );
     }
 }

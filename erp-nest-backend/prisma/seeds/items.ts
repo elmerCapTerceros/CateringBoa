@@ -1,31 +1,29 @@
 import { PrismaClient } from '@prisma/client';
 
 export const seedItems = async (prisma: PrismaClient) => {
-    console.log('📦 Sembrando Catálogo de Items (50+)...');
+    console.log('📦 Creando Items con Stock Inicial...');
 
-    const categorias = [
-        { cat: 'Bebida', tipo: 'Refresco', items: ['Coca Cola', 'Sprite', 'Fanta', 'Pepsi', '7Up', 'Agua Con Gas', 'Agua Sin Gas', 'Jugo Naranja', 'Jugo Manzana', 'Jugo Durazno'] },
-        { cat: 'Bebida Alcoholica', tipo: 'Licor', items: ['Vino Tinto', 'Vino Blanco', 'Whisky', 'Ron', 'Cerveza', 'Champagne'] },
-        { cat: 'Plato Fuerte', tipo: 'Comida', items: ['Cena Pollo', 'Cena Carne', 'Pasta', 'Lasaña', 'Sandwich Pollo', 'Sandwich Carne', 'Hamburguesa', 'Pizza', 'Ensalada Cesar'] },
-        { cat: 'Desayuno', tipo: 'Comida', items: ['Omelette', 'Huevos Revueltos', 'Panqueques', 'Fruta Picada', 'Yogurt', 'Cereal', 'Pan', 'Mermelada'] },
-        { cat: 'Insumo', tipo: 'General', items: ['Hielo', 'Azúcar', 'Sal', 'Pimienta', 'Café Grano', 'Té', 'Limón', 'Servilletas', 'Vasos Plásticos', 'Cubiertos'] },
-        { cat: 'Snack', tipo: 'Seco', items: ['Maní', 'Almendras', 'Papas Fritas', 'Galletas Saladas', 'Galletas Dulces', 'Chocolate', 'Barra Cereal'] }
+    const catalogo = [
+        { nombre: 'Sandwich de Pollo', cat: 'Alimentos', unit: 'Unidad', precio: 12 },
+        { nombre: 'Coca Cola 350ml', cat: 'Bebidas', unit: 'Lata', precio: 5 },
+        { nombre: 'Jugo del Valle', cat: 'Bebidas', unit: 'Botella', precio: 6 },
+        { nombre: 'Vino Tinto', cat: 'Licores', unit: 'Botella', precio: 45 },
+        { nombre: 'Agua Mineral', cat: 'Bebidas', unit: 'Botella', precio: 4 },
+        { nombre: 'Servilletas', cat: 'Insumos', unit: 'Paquete', precio: 3 },
+        { nombre: 'Café Juan Valdez', cat: 'Insumos', unit: 'Kg', precio: 80 },
+        { nombre: 'Cena Carne (VIP)', cat: 'Alimentos', unit: 'Bandeja', precio: 35 },
+        { nombre: 'Hielo', cat: 'Insumos', unit: 'Bolsa 5kg', precio: 10 },
     ];
 
-    const itemsData = [];
-
-    // Generamos combinaciones
-    for (const c of categorias) {
-        for (const nombre of c.items) {
-            // Variantes de tamaño para tener más items
-            itemsData.push({ nombreItem: `${nombre} (Normal)`, categoriaItem: c.cat, tipoItem: c.tipo, unidadMedida: 'Unidad' });
-            itemsData.push({ nombreItem: `${nombre} (Grande)`, categoriaItem: c.cat, tipoItem: c.tipo, unidadMedida: 'Unidad' });
-        }
+    for (const p of catalogo) {
+        await prisma.item.create({
+            data: {
+                nombreItem: p.nombre,
+                categoriaItem: p.cat,
+                tipoItem: 'Estándar',
+                unidadMedida: p.unit,
+                stockActual: 1000,
+            }
+        });
     }
-
-    // Aseguramos al menos 50 items únicos
-    await prisma.item.createMany({
-        data: itemsData,
-        skipDuplicates: true,
-    });
 };

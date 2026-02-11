@@ -3,153 +3,110 @@ import { ErpNavigationItem } from '@erp/components/navigation';
 
 export const defaultNavigation: ErpNavigationItem[] = [
     {
-        id   : 'example',
+        id: 'example',
         title: 'Ejemplo',
-        type : 'basic',
-        icon : 'heroicons_outline:chart-pie',
-        link : '/example'
-    }
+        type: 'basic',
+        icon: 'heroicons_outline:chart-pie',
+        link: '/example',
+    },
 ];
 export const compactNavigation: ErpNavigationItem[] = [
     {
-        id   : 'example',
+        id: 'example',
         title: 'Ejemplo',
-        type : 'basic',
-        icon : 'heroicons_outline:chart-pie',
-        link : '/example'
-    }
+        type: 'basic',
+        icon: 'heroicons_outline:chart-pie',
+        link: '/example',
+    },
 ];
 export const futuristicNavigation: ErpNavigationItem[] = [
     {
-        id   : 'example',
+        id: 'example',
         title: 'Ejemplo',
-        type : 'basic',
-        icon : 'heroicons_outline:chart-pie',
-        link : '/example'
-    }
+        type: 'basic',
+        icon: 'heroicons_outline:chart-pie',
+        link: '/example',
+    },
 ];
 export const horizontalNavigation: ErpNavigationItem[] = [
     {
-        id   : 'solicitud',
+        id: 'solicitud',
         title: 'Solicitud',
-        type : 'collapsable',
-        icon : 'heroicons_outline:chart-pie',
-        children:[
+        type: 'collapsable',
+        icon: 'heroicons_outline:chart-pie',
+        children: [
             {
                 id: 'listar-solictud',
                 title: 'Mis Solicitudes',
-                icon : 'mat_outline:view_list',
+                icon: 'mat_outline:view_list',
                 type: 'basic',
-                link : '/catering/list'
-            }
-        ]
+                link: '/catering/list',
+            },
+        ],
     },
 
     {
-        id   : 'compra-exterior',
+        id: 'compra-exterior',
         title: 'Compra Exterior',
-        type : 'collapsable',
-        icon : 'heroicons_outline:globe-americas',
-        children:[
+        type: 'collapsable',
+        icon: 'heroicons_outline:globe-americas',
+        children: [
             {
                 id: 'crear-compra-exterior',
                 title: 'Crear Compra',
                 type: 'basic',
-                link : '/catering/compra-exterior/crear',
-                icon : 'heroicons_outline:pencil-square'
+                link: '/catering/compra-exterior/crear',
+                icon: 'heroicons_outline:pencil-square',
             },
             {
                 id: 'listar-compras-exterior',
                 title: 'Listado de Compras',
                 type: 'basic',
-                link : '/catering/compra-exterior/listar',
-                icon: 'heroicons_outline:archive-box'
+                link: '/catering/compra-exterior/listar',
+                icon: 'heroicons_outline:archive-box',
             },
             {
                 id: 'historial-compra',
                 title: 'Historial General',
                 type: 'basic',
                 link: '/catering/compra-exterior/historial',
-                icon: 'heroicons_outline:clock'
-            }
-        ]
+                icon: 'heroicons_outline:clock',
+            },
+        ],
     },
-    /*
-    {
-        id   : 'inventario',
-        title: 'Inventario',
-        type : 'collapsable',
-        icon : 'heroicons_outline:archive-box',
-        children:[
-            {
-                id: 'ver-stock',
-                title: 'Stock Actual',
-                type: 'basic',
-                link : '/catering/stock',
-                icon: 'heroicons_outline:clipboard-document-list'
-            }
-        ]
-    }*/
 
     {
-        id   : 'flotas',
+        id: 'flotas',
         title: 'Flotas',
-        type : 'collapsable',
-        icon : 'heroicons_outline:squares-2x2',
-        children:[
-           /* {
-                id: 'aeronaves',
-                title: 'Crear Aeronave',
-                type: 'basic',
-                link : '/catering/crear-aeronave',
-                icon: 'heroicons_outline:clipboard-document-list'
-            }*/
+        type: 'collapsable',
+        icon: 'heroicons_outline:squares-2x2',
+        children: [
             {
                 id: 'Flotas-Inicio',
-                title: 'Flotas',
+                title: 'Programación',
                 type: 'basic',
-                link : '/catering/flotas-inicio',
-                icon: 'heroicons_outline:clipboard-document-list'
-            }
-        ]
+                link: '/catering/flotas-inicio',
+                icon: 'heroicons_outline:clipboard-document-list',
+            },
+        ],
     },
 
     {
-        id   : 'operaciones',
+        id: 'operaciones',
         title: 'Operaciones Vuelo',
-        type : 'collapsable',
-        icon : 'heroicons_outline:paper-airplane',
-        children:[
+        type: 'collapsable',
+        icon: 'heroicons_outline:paper-airplane',
+        children: [
+            // --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL ---
+            // Eliminamos el grupo anidado innecesario y apuntamos directo a lista-configuraciones
             {
-                id: 'grupo-carga',
-                title: 'Configurar Carga',
-                type: 'collapsable',
-                // link : '/catering/configuracion',
-                icon: 'heroicons_outline:cube',
-                children:[
-                    {
-                        id   : 'carga',
-                        title: 'Carga',
-                        type : 'basic',
-                        icon : 'heroicons_outline:clipboard-document-list',
-                        link : '/catering/carga',
-                    },
-                    /*{
-                        id: 'config-carga',
-                        title: 'Configurar Carga',
-                        type: 'basic',
-                        link : '/catering/configuracion',
-                        icon: 'heroicons_outline:cog-6-tooth',
-                    }*/
-                    {
-                        id: 'config-carga',
-                        title: 'Gestionar Plantillas',
-                        type: 'basic',
-                        icon: 'heroicons_outline:document-duplicate',
-                        link : '/catering/configuracion/listado'
-                    },
-                ]
+                id: 'plantillas-carga',
+                title: 'Plantillas de Carga',
+                type: 'basic',
+                icon: 'heroicons_outline:document-duplicate',
+                link: '/catering/configuracion/listado',
             },
+            // -------------------------------------
             {
                 id: 'grupo-abastecimiento',
                 title: 'Abastecimiento',
@@ -161,59 +118,58 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                         title: 'Registrar Nuevo',
                         type: 'basic',
                         link: '/catering/abastecer',
-                        icon: 'heroicons_outline:plus-circle'
+                        icon: 'heroicons_outline:plus-circle',
                     },
                     {
                         id: 'abastecer-historial',
                         title: 'Historial / Control',
                         type: 'basic',
                         link: '/catering/abastecer/historial',
-                        icon: 'heroicons_outline:clock'
-                    }
-                ]
+                        icon: 'heroicons_outline:clock',
+                    },
+                ],
             },
-
-
-        ]
+        ],
     },
     {
         id: 'cierre-vuelo',
         title: 'Cierre / Remanente',
         type: 'basic',
-        link : '/catering/cierre',
-        icon : 'heroicons_outline:clipboard-document-check'
+        link: '/catering/cierre',
+        icon: 'heroicons_outline:clipboard-document-check',
     },
 
-
     {
-        id   : 'almacen',
+        id: 'almacen',
         title: 'Almacen',
-        type : 'collapsable',
-        icon : 'heroicons_outline:home-modern',
-        children:[
+        type: 'collapsable',
+        icon: 'heroicons_outline:home-modern',
+        children: [
+            {
+                id: 'ingreso-mercaderia',
+                title: 'Ingreso / Recepción',
+                type: 'basic',
+                link: '/catering/almacen/ingreso',
+                icon: 'heroicons_outline:arrow-down-tray'
+            },
             {
                 id: 'movimiento',
                 title: 'Listado de Movimientos',
-                //icon : 'mat_outline:Aq Indoor',
                 type: 'basic',
-                link : '/catering/movimientos',
+                link: '/catering/movimientos',
             },
             {
                 id: 'Stockss',
                 title: 'Stock',
-                //icon : 'mat_outline:briefcase',
                 type: 'basic',
-                link : '/catering/stock',
+                link: '/catering/stock',
             },
             {
                 id: 'solicitudes-almacen',
                 title: 'Solicitudes',
-                //icon : 'mat_outline:briefcase',
                 type: 'basic',
-                link : '/catering/listar-solicitudes-almacen',
-            }
-        ]
-    }
+                link: '/catering/listar-solicitudes-almacen',
+            },
+        ],
+    },
 ];
-
-

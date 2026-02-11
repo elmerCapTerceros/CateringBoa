@@ -1,10 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// ... (GENERATOR & DATASOURCE remain the same) ...
+// --------------------------------------------------------
+// CONFIGURACIÓN GENERAL
+// --------------------------------------------------------
 
 generator client {
   provider = "prisma-client-js"
@@ -14,6 +10,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// --------------------------------------------------------
+// 1. USUARIOS Y AUTH
+// --------------------------------------------------------
 
 enum Role {
   admin
@@ -31,11 +31,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Relations
-  Abastecimiento    Abastecimiento[]
-  Solicitud         Solicitud[]
-  SolicitudDotacion SolicitudDotacion[]
-  OrdenesCompra     OrdenCompra[]       @relation("UsuarioCreoOrden") // New
+  // Relaciones
+  abastecimientos Abastecimiento[]
+  solicitudes     Solicitud[]
+  solicitudesDot  SolicitudDotacion[]
+  ordenesCompra   OrdenCompra[]       @relation("UsuarioCreoOrden")
 }
 
 model Customer {
@@ -44,7 +44,7 @@ model Customer {
 }
 
 // --------------------------------------------------------
-// 2. FLEET & ALMACEN
+// 2. FLOTA Y RUTAS
 // --------------------------------------------------------
 
 model Flota {
@@ -62,116 +62,18 @@ model Aeronave {
 
   flota Flota @relation(fields: [flotaId], references: [idFlota])
 
-  cargas         Carga[]
-  rutas          AeronaveHasRuta[]
-  solicitudesDot SolicitudDotacion[]
-  detallesCarga  DetalleCarga[]
-}
-
-model Almacen {
-  idAlmacen     Int    @id @default(autoincrement())
-  nombreAlmacen String @map("nombre_almacer") @db.VarChar(45)
-  tipoAlmacen   String @map("tipo_almacen") @db.VarChar(45)
-  ubicacion     String @db.VarChar(45)
-  codigo        String @db.VarChar(45)
-
-  stocks             Stock[]
-  solicitudesOrigen  Solicitud[]         @relation("AlmacenSolicitante")
-  solicitudesDestino Solicitud[]         @relation("AlmacenSolicitado")
-  solicitudesDot     SolicitudDotacion[]
-
-  // Relations for Purchases
-  ordenesCompra OrdenCompra[]
-}
-
-model Stock {
-  idStock   Int @id @default(autoincrement())
-  almacenId Int @map("Almacen_idAlmacen")
-
-  almacen Almacen @relation(fields: [almacenId], references: [idAlmacen])
-
+  // Relaciones Operativas
   abastecimientos Abastecimiento[]
-  detallesStock   DetalleStock[]
-  // entregas removed from here, logic moved to Recepcion
-}
-
-model Item {
-  idItem        Int     @id @default(autoincrement())
-  nombreItem    String  @map("nombre_item") @db.VarChar(45)
-  tipoItem      String  @map("tipo_item") @db.VarChar(45)
-  categoriaItem String  @map("categoria_item") @db.VarChar(45)
-  unidadMedida  String? @default("Unidad") // Added for frontend display
-
-  // Relaciones
-  abastecimientos   Abastecimiento[]
-  detallesSolicitud DetalleSolicitud[]
-  detallesCarga     DetalleCarga[]
-  detallesStock     DetalleStock[]
-  detallesPlantilla DetallePlantilla[]
-
-  // New Relation for Purchase Details
-  detallesOrden DetalleOrdenCompra[]
-}
-
-// --------------------------------------------------------
-// 3. OPERACIONES (ABASTECIMIENTO, CARGA, SOLICITUDES)
-// --------------------------------------------------------
-// ... (This section remains mostly the same, abbreviated for clarity) ...
-
-model Abastecimiento {
-  idAbastecimiento Int      @default(autoincrement())
-  stockId          Int      @map("Stock_idStock")
-  itemId           Int      @map("Item_idItem")
-  fecha            DateTime @db.Date
-  usuarioId        String   @map("Usuario_idUsuario")
-  clase            String   @db.VarChar(45)
-
-  stock   Stock @relation(fields: [stockId], references: [idStock])
-  item    Item  @relation(fields: [itemId], references: [idItem])
-  usuario User  @relation(fields: [usuarioId], references: [id])
-
-  cargas Carga[]
-
-  @@id([idAbastecimiento, itemId])
-}
-
-model Carga {
-  idCarga              Int @default(autoincrement())
-  aeronaveId           Int @map("Aeronave_idAeronave")
-  abastecimientoId     Int @map("Abastecimiento_idAbastecimiento")
-  abastecimientoItemId Int @map("Abastecimiento_Item_idItem")
-
-  aeronave       Aeronave       @relation(fields: [aeronaveId], references: [idAeronave])
-  abastecimiento Abastecimiento @relation(fields: [abastecimientoId, abastecimientoItemId], references: [idAbastecimiento, itemId])
-
-  configuraciones Configuracion[]
-  detallesCarga   DetalleCarga[]
-
-  @@id([idCarga, aeronaveId])
-}
-
-model Solicitud {
-  idSolicitud          Int      @id @default(autoincrement())
-  usuarioId            String   @map("Usuario_idUsuario")
-  descripcion          String   @db.VarChar(45)
-  fecha                DateTime @db.Date
-  prioridad            String   @db.VarChar(45)
-  estado               String   @map("Estado") @db.VarChar(45)
-  almacenSolicitanteId Int      @map("AlmacenSolicitante_id")
-  almacenSolicitadoId  Int      @map("AlmacenSolicitado_id")
-
-  usuario            User    @relation(fields: [usuarioId], references: [id])
-  almacenSolicitante Almacen @relation("AlmacenSolicitante", fields: [almacenSolicitanteId], references: [idAlmacen])
-  almacenSolicitado  Almacen @relation("AlmacenSolicitado", fields: [almacenSolicitadoId], references: [idAlmacen])
-
-  detalles DetalleSolicitud[]
+  rutas           AeronaveHasRuta[]
+  solicitudesDot  SolicitudDotacion[]
+  cargas          Carga[]
 }
 
 model Ruta {
   idRuta    Int               @id @default(autoincrement())
   origen    String            @db.VarChar(45)
   destino   String            @db.VarChar(45)
-  codigo    String? // Added for frontend form
+  codigo    String?
   aeronaves AeronaveHasRuta[]
 }
 
@@ -186,184 +88,115 @@ model AeronaveHasRuta {
 }
 
 // --------------------------------------------------------
-// 4. MODULO DE COMPRAS (REFACTORIZADO)
+// 3. ALMACÉN E ITEMS (CORE)
 // --------------------------------------------------------
 
-model OrdenCompra {
-  idOrdenCompra  Int       @id @default(autoincrement())
-  codigoOrden    String    @unique // Ej: "OC-2025-001"
-  proveedor      String    @db.VarChar(100)
-  fechaSolicitud DateTime  @default(now()) @db.Date
-  fechaEntrega   DateTime? @db.Date
+model Almacen {
+  idAlmacen     Int    @id @default(autoincrement())
+  nombreAlmacen String @map("nombre_almacer") @db.VarChar(45)
+  tipoAlmacen   String @map("tipo_almacen") @db.VarChar(45)
+  ubicacion     String @db.VarChar(45)
+  codigo        String @db.VarChar(45)
 
-  // Estados: 'Pendiente', 'Parcial', 'Completado', 'Cancelado'
-  estado String @default("Pendiente") @db.VarChar(20)
+  stocks          Stock[]
+  abastecimientos Abastecimiento[]
 
-  // Costos
-  costoTotalEstimado Float @default(0)
-  costoTotalReal     Float @default(0) // Se actualiza al recibir mercadería
-
-  observaciones String? @db.Text
-
-  // Relaciones
-  almacenDestinoId Int
-  almacenDestino   Almacen @relation(fields: [almacenDestinoId], references: [idAlmacen])
-
-  usuarioId String
-  usuario   User   @relation("UsuarioCreoOrden", fields: [usuarioId], references: [id])
-
-  detalles    DetalleOrdenCompra[]
-  recepciones Recepcion[] // Historial de camiones que llegaron
+  solicitudesOrigen  Solicitud[]         @relation("AlmacenSolicitante")
+  solicitudesDestino Solicitud[]         @relation("AlmacenSolicitado")
+  solicitudesDot     SolicitudDotacion[]
+  ordenesCompra      OrdenCompra[]
 }
 
-model DetalleOrdenCompra {
-  idDetalle     Int @id @default(autoincrement())
-  ordenCompraId Int
-  itemId        Int
+model Stock {
+  idStock   Int @id @default(autoincrement())
+  almacenId Int @map("Almacen_idAlmacen")
 
-  cantidadSolicitada Int
-  cantidadRecibida   Int @default(0) // Se incrementa con las recepciones
+  almacen Almacen @relation(fields: [almacenId], references: [idAlmacen])
 
-  costoUnitario Float // Costo pactado con el proveedor
-
-  // Relaciones
-  orden OrdenCompra @relation(fields: [ordenCompraId], references: [idOrdenCompra], onDelete: Cascade)
-  item  Item        @relation(fields: [itemId], references: [idItem])
+  detallesStock DetalleStock[]
 }
 
-// Historial de recepciones (Cuando llega el camión)
-model Recepcion {
-  idRecepcion    Int      @id @default(autoincrement())
-  ordenCompraId  Int
-  fechaRecepcion DateTime @default(now())
-  usuarioRecibio String? // Nombre o ID del usuario que dio click en "Recibir"
-  observaciones  String?
+model Item {
+  idItem        Int     @id @default(autoincrement())
+  nombreItem    String  @map("nombre_item") @db.VarChar(45)
+  tipoItem      String  @map("tipo_item") @db.VarChar(45)
+  categoriaItem String  @map("categoria_item") @db.VarChar(45)
+  unidadMedida  String? @default("Unidad")
 
-  orden OrdenCompra     @relation(fields: [ordenCompraId], references: [idOrdenCompra])
-  items RecepcionItem[]
-}
+  // --- CAMPO CRÍTICO PARA EL DESPACHO ---
+  stockActual Int @default(0)
 
-// Detalle de qué ítems llegaron en una recepción específica
-model RecepcionItem {
-  id               Int @id @default(autoincrement())
-  recepcionId      Int
-  itemId           Int
-  cantidadRecibida Int
-
-  recepcion Recepcion @relation(fields: [recepcionId], references: [idRecepcion], onDelete: Cascade)
-}
-
-// --------------------------------------------------------
-// ... (RESTO DEL ESQUEMA IGUAL: DetalleSolicitud, Carga, etc.)
-// --------------------------------------------------------
-
-model DetalleSolicitud {
-  idDetalleSolicitud Int @default(autoincrement()) @map("idDetalle_solicitud")
-  itemId             Int @map("Item_idItem1")
-  solicitudId        Int @map("Solicitud_idSolicitud")
-  cantidad           Int
-
-  item      Item      @relation(fields: [itemId], references: [idItem])
-  solicitud Solicitud @relation(fields: [solicitudId], references: [idSolicitud])
-
-  @@id([idDetalleSolicitud, itemId, solicitudId])
-}
-
-model DetalleCarga {
-  idDetalleCarga  Int @default(autoincrement()) @map("iddetalle_carga")
-  itemId          Int @map("Item_idItem")
-  cargaId         Int @map("Carga_idCarga")
-  cargaAeronaveId Int @map("Carga_Aeronave_idAeronave")
-  cantidad        Int
-
-  item     Item     @relation(fields: [itemId], references: [idItem])
-  carga    Carga    @relation(fields: [cargaId, cargaAeronaveId], references: [idCarga, aeronaveId])
-  aeronave Aeronave @relation(fields: [cargaAeronaveId], references: [idAeronave])
-
-  controlesConsumo ControlConsumo[]
-  remanentes       Remanente[]
-
-  @@id([idDetalleCarga, itemId, cargaId, cargaAeronaveId])
-}
-
-model ControlConsumo {
-  idControlConsumo       Int    @id @default(autoincrement()) @map("idControl_consumo")
-  estado                 String @db.VarChar(45)
-  detalleCargaId         Int    @map("detalle_carga_iddetalle_carga")
-  detalleCargaItemId     Int    @map("detalle_carga_Item_idItem")
-  detalleCargaCargaId    Int    @map("detalle_carga_Carga_idCarga")
-  detalleCargaAeronaveId Int    @map("detalle_carga_Carga_Aeronave_idAeronave")
-  cantidad               Int
-
-  detalleCarga DetalleCarga @relation(fields: [detalleCargaId, detalleCargaItemId, detalleCargaCargaId, detalleCargaAeronaveId], references: [idDetalleCarga, itemId, cargaId, cargaAeronaveId])
+  // Relaciones Inversas (Necesarias para Prisma)
+  detallesAbastecimiento DetalleAbastecimiento[]
+  detallesPlantilla      DetallePlantilla[]
+  detallesSolicitud      DetalleSolicitud[]
+  detallesCarga          DetalleCarga[]
+  detallesStock          DetalleStock[]
+  detallesOrden          DetalleOrdenCompra[]
+  recepcionItems         RecepcionItem[]
+  detallesDotacion       DetalleDotacion[]
 }
 
 model DetalleStock {
-  idDetalleStock Int @default(autoincrement()) @map("idDetalle_Stock")
-  cantidad       Int
+  idDetalleStock Int @id @default(autoincrement()) @map("idDetalle_Stock")
   stockId        Int @map("Stock_idStock")
   itemId         Int @map("Item_idItem")
+  cantidad       Int
+  // fechaVencimiento DateTime?
 
   stock Stock @relation(fields: [stockId], references: [idStock])
   item  Item  @relation(fields: [itemId], references: [idItem])
-
-  @@id([idDetalleStock, itemId])
 }
 
-model Remanente {
-  idRemanente            Int  @id @default(autoincrement())
-  cantidad               Int?
-  detalleCargaId         Int  @map("detalle_carga_iddetalle_carga")
-  detalleCargaItemId     Int  @map("detalle_carga_Item_idItem")
-  detalleCargaCargaId    Int  @map("detalle_carga_Carga_idCarga")
-  detalleCargaAeronaveId Int  @map("detalle_carga_Carga_Aeronave_idAeronave")
+// --------------------------------------------------------
+// 4. MÓDULO DE ABASTECIMIENTO (DESPACHO)
+// --------------------------------------------------------
+model Abastecimiento {
+  idAbastecimiento Int @id @default(autoincrement())
 
-  detalleCarga DetalleCarga @relation(fields: [detalleCargaId, detalleCargaItemId, detalleCargaCargaId, detalleCargaAeronaveId], references: [idDetalleCarga, itemId, cargaId, cargaAeronaveId])
+  codigoVuelo   String   @db.VarChar(45)
+  fechaDespacho DateTime @default(now())
+  estado        String   @default("DESPACHADO") @db.VarChar(20)
+  observaciones String?  @db.Text
+
+  // Relaciones
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id])
+
+  almacenId Int
+  almacen   Almacen @relation(fields: [almacenId], references: [idAlmacen])
+
+  aeronaveId Int
+  aeronave   Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+
+  detalles DetalleAbastecimiento[]
+
+  // Historial: Un abastecimiento puede generar una Carga (Manifiesto)
+  cargasGeneradas Carga[]
 }
 
-model Configuracion {
-  confiId         Int @id @default(autoincrement()) @map("confi_id")
-  cargaId         Int @map("Carga_idCarga")
-  cargaAeronaveId Int @map("Carga_Aeronave_idAeronave")
+model DetalleAbastecimiento {
+  idDetalle Int @id @default(autoincrement())
 
-  carga Carga @relation(fields: [cargaId, cargaAeronaveId], references: [idCarga, aeronaveId])
+  abastecimientoId Int
+  abastecimiento   Abastecimiento @relation(fields: [abastecimientoId], references: [idAbastecimiento], onDelete: Cascade)
+
+  itemId Int
+  item   Item @relation(fields: [itemId], references: [idItem])
+
+  cantidad Int
 }
 
-model SolicitudDotacion {
-  idSolicitudDotacion Int @id @default(autoincrement()) @map("idSolicitud_Dotacion")
-
-  fecha       DateTime @db.Date
-  estado      String   @map("Estado") @db.VarChar(45)
-  descripcion String   @map("Descripcion") @db.VarChar(45)
-  almacenId   Int      @map("Almacen_idAlmacen")
-  usuarioId   String   @map("Usuario_idUsuario")
-  aeronaveId  Int      @map("Aeronave_idAeronave")
-
-  almacen  Almacen  @relation(fields: [almacenId], references: [idAlmacen])
-  usuario  User     @relation(fields: [usuarioId], references: [id])
-  aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
-
-  detalles DetalleDotacion[]
-}
-
-model DetalleDotacion {
-  idDetalleDotacion   Int               @default(autoincrement()) @map("idDetalle_dotacion")
-  cantidad            Int
-  solicitudDotacionId Int               @map("Solicitud_Dotacion_idSolicitud_Dotacion")
-  solicitud           SolicitudDotacion @relation(fields: [solicitudDotacionId], references: [idSolicitudDotacion])
-
-  @@id([idDetalleDotacion, solicitudDotacionId])
-}
-
-// 6. PLANTILLAS (Para el Módulo Configuración de Carga)
+// --------------------------------------------------------
+// 5. MÓDULO DE PLANTILLAS (CONFIGURACIÓN)
+// --------------------------------------------------------
 
 model Plantilla {
-  id                 Int      @id @default(autoincrement())
-  nombre             String
-  modeloAeronave     String
-  clase              String
-  fechaCreacion      DateTime @default(now())
-  ultimaModificacion DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  nombre            String
+  flotaObjetivo     String   @db.VarChar(100)
+  tipoVuelo         String
+  fechaModificacion DateTime @updatedAt
 
   items DetallePlantilla[]
 }
@@ -376,4 +209,170 @@ model DetallePlantilla {
 
   plantilla Plantilla @relation(fields: [plantillaId], references: [id], onDelete: Cascade)
   item      Item      @relation(fields: [itemId], references: [idItem])
+}
+
+// --------------------------------------------------------
+// 6. COMPRAS
+// --------------------------------------------------------
+
+model OrdenCompra {
+  idOrdenCompra  Int       @id @default(autoincrement())
+  codigoOrden    String    @unique
+  proveedor      String    @db.VarChar(100)
+  fechaSolicitud DateTime  @default(now()) @db.Date
+  fechaEntrega   DateTime? @db.Date
+  estado         String    @default("Pendiente") @db.VarChar(20)
+
+  costoTotalEstimado Float   @default(0)
+  costoTotalReal     Float   @default(0)
+  observaciones      String? @db.Text
+
+  almacenDestinoId Int
+  almacenDestino   Almacen @relation(fields: [almacenDestinoId], references: [idAlmacen])
+
+  usuarioId String
+  usuario   User   @relation("UsuarioCreoOrden", fields: [usuarioId], references: [id])
+
+  detalles    DetalleOrdenCompra[]
+  recepciones Recepcion[]
+}
+
+model DetalleOrdenCompra {
+  idDetalle          Int   @id @default(autoincrement())
+  ordenCompraId      Int
+  itemId             Int
+  cantidadSolicitada Int
+  cantidadRecibida   Int   @default(0)
+  costoUnitario      Float
+
+  orden OrdenCompra @relation(fields: [ordenCompraId], references: [idOrdenCompra], onDelete: Cascade)
+  item  Item        @relation(fields: [itemId], references: [idItem])
+}
+
+model Recepcion {
+  idRecepcion    Int      @id @default(autoincrement())
+  ordenCompraId  Int
+  fechaRecepcion DateTime @default(now())
+  usuarioRecibio String?
+  observaciones  String?
+
+  orden OrdenCompra     @relation(fields: [ordenCompraId], references: [idOrdenCompra])
+  items RecepcionItem[]
+}
+
+model RecepcionItem {
+  id               Int @id @default(autoincrement())
+  recepcionId      Int
+  itemId           Int // Faltaba vincularlo con Item
+  cantidadRecibida Int
+
+  recepcion Recepcion @relation(fields: [recepcionId], references: [idRecepcion], onDelete: Cascade)
+  item      Item      @relation(fields: [itemId], references: [idItem])
+}
+
+// --------------------------------------------------------
+// 7. OPERACIONES (CARGA / SOLICITUDES)
+// --------------------------------------------------------
+
+model Carga {
+  idCarga Int @id @default(autoincrement())
+
+  abastecimientoId Int?
+  abastecimiento   Abastecimiento? @relation(fields: [abastecimientoId], references: [idAbastecimiento])
+
+  aeronaveId Int
+  aeronave   Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+
+  detalles        DetalleCarga[]
+  configuraciones Configuracion[]
+}
+
+model DetalleCarga {
+  idDetalleCarga Int @id @default(autoincrement())
+  cargaId        Int
+  itemId         Int
+  cantidad       Int
+
+  carga Carga @relation(fields: [cargaId], references: [idCarga])
+  item  Item  @relation(fields: [itemId], references: [idItem])
+
+  controlesConsumo ControlConsumo[]
+  remanentes       Remanente[]
+}
+
+model Solicitud {
+  idSolicitud          Int      @id @default(autoincrement())
+  usuarioId            String
+  descripcion          String   @db.VarChar(45)
+  fecha                DateTime @db.Date
+  prioridad            String   @db.VarChar(45)
+  estado               String   @map("Estado") @db.VarChar(45)
+  almacenSolicitanteId Int
+  almacenSolicitadoId  Int
+
+  usuario            User    @relation(fields: [usuarioId], references: [id])
+  almacenSolicitante Almacen @relation("AlmacenSolicitante", fields: [almacenSolicitanteId], references: [idAlmacen])
+  almacenSolicitado  Almacen @relation("AlmacenSolicitado", fields: [almacenSolicitadoId], references: [idAlmacen])
+
+  detalles DetalleSolicitud[]
+}
+
+model DetalleSolicitud {
+  idDetalleSolicitud Int @id @default(autoincrement())
+  itemId             Int
+  solicitudId        Int
+  cantidad           Int
+
+  item      Item      @relation(fields: [itemId], references: [idItem])
+  solicitud Solicitud @relation(fields: [solicitudId], references: [idSolicitud])
+}
+
+model ControlConsumo {
+  idControlConsumo Int    @id @default(autoincrement())
+  estado           String @db.VarChar(45)
+  detalleCargaId   Int
+  cantidad         Int
+
+  detalleCarga DetalleCarga @relation(fields: [detalleCargaId], references: [idDetalleCarga])
+}
+
+model Remanente {
+  idRemanente    Int  @id @default(autoincrement())
+  cantidad       Int?
+  detalleCargaId Int
+
+  detalleCarga DetalleCarga @relation(fields: [detalleCargaId], references: [idDetalleCarga])
+}
+
+model Configuracion {
+  confiId Int @id @default(autoincrement())
+  cargaId Int
+
+  carga Carga @relation(fields: [cargaId], references: [idCarga])
+}
+
+model SolicitudDotacion {
+  idSolicitudDotacion Int      @id @default(autoincrement())
+  fecha               DateTime @db.Date
+  estado              String   @db.VarChar(45)
+  descripcion         String   @db.VarChar(45)
+  almacenId           Int
+  usuarioId           String
+  aeronaveId          Int
+
+  almacen  Almacen  @relation(fields: [almacenId], references: [idAlmacen])
+  usuario  User     @relation(fields: [usuarioId], references: [id])
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+
+  detalles DetalleDotacion[]
+}
+
+model DetalleDotacion {
+  idDetalleDotacion   Int @id @default(autoincrement())
+  cantidad            Int
+  itemId              Int // Faltaba esto
+  solicitudDotacionId Int
+
+  solicitud SolicitudDotacion @relation(fields: [solicitudDotacionId], references: [idSolicitudDotacion])
+  item      Item              @relation(fields: [itemId], references: [idItem])
 }

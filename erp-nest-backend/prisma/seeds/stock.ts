@@ -1,24 +1,16 @@
 import { PrismaClient } from '@prisma/client';
 
 export const seedStock = async (prisma: PrismaClient) => {
-    console.log('📦 Generando Stock Inicial (Inventario)...');
+    console.log('📦 Generando Stock Inicial Controlado...');
 
-    // 1. Buscamos el almacén principal (o el primero que encuentres)
     const almacen = await prisma.almacen.findFirst();
-    if (!almacen) {
-        console.warn('⚠️ No se encontró ningún almacén. Saltando seed de stock.');
-        return;
-    }
+    if (!almacen) return;
 
-    // 2. Buscamos los items que creaste en seedItems
-    const items = await prisma.item.findMany({ take: 50 }); // Tomamos los primeros 50
-    if (items.length === 0) {
-        console.warn('⚠️ No hay items creados. Saltando seed de stock.');
-        return;
-    }
+    // Tomamos TODOS los items que existan (que serán pocos, los del seedItems)
+    const items = await prisma.item.findMany();
+    if (items.length === 0) return;
 
-    // 3. Buscamos o Creamos la Cabecera de Stock para ese almacén
-    // (La tabla Stock suele ser la cabecera, y DetalleStock las filas)
+    // Buscamos o Creamos la Cabecera
     let stockHeader = await prisma.stock.findFirst({
         where: { almacenId: almacen.idAlmacen }
     });
@@ -27,27 +19,40 @@ export const seedStock = async (prisma: PrismaClient) => {
         stockHeader = await prisma.stock.create({
             data: {
                 almacenId: almacen.idAlmacen,
-
+                // Asegúrate de agregar otros campos obligatorios si tu schema los pide
+                // Por ejemplo: fechaActualizacion: new Date()
             }
         });
     }
 
-    // 4. Preparamos los datos del Detalle (Filas de la tabla)
-    console.log(`   - Insertando inventario en: ${almacen.nombreAlmacen}...`);
-
-    const detalleData = items.map(item => ({
-        stockId: stockHeader!.idStock, // El ID de la cabecera
-        itemId: item.idItem,           // El ID del producto
-        cantidad: Math.floor(Math.random() * 200) + 10, // Cantidad aleatoria entre 10 y 210
-    }));
-
-    // 5. Insertamos masivamente
-    // Primero borramos lo anterior de este almacén para evitar duplicados
+    // Limpiamos detalle anterior
     await prisma.detalleStock.deleteMany({ where: { stockId: stockHeader.idStock }});
+
+    console.log(`   - Configurando inventario en: ${almacen.nombreAlmacen}...`);
+
+    // CAMBIO CLAVE: Usamos map para crear el array de datos
+    // Ponemos cantidad: 50 a TODO.
+    const detalleData = items.map(item => ({
+        stockId: stockHeader!.idStock,
+        itemId: item.idItem,
+        cantidad: 50, // <--- FIJO EN 50. Así tu prueba de (50 -> 60 -> 160) funcionará perfecta.
+    }));
 
     await prisma.detalleStock.createMany({
         data: detalleData
     });
 
-    console.log(`✅ Stock generado: ${detalleData.length} productos cargados.`);
+    // OJO: Si tu sistema usa el campo 'stockActual' dentro de la tabla Item para lecturas rápidas,
+    // también deberíamos actualizarlo aquí para que coincida.
+    // Si solo usas la tabla Stock, ignora este bloque.
+    /*
+    for (const item of items) {
+        await prisma.item.update({
+            where: { idItem: item.idItem },
+            data: { stockActual: 50 }
+        });
+    }
+    */
+
+    console.log(`✅ Stock generado: Todos los productos iniciados en 50 unidades.`);
 };

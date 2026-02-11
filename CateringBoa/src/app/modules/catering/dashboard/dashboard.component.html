@@ -3,7 +3,7 @@
     <div class="flex justify-between items-end">
         <div>
             <h2 class="text-3xl font-bold tracking-tight text-slate-800">Panel de Control</h2>
-            <p class="text-secondary">Resumen operativo del día.</p>
+            <p class="text-secondary">Resumen operativo en tiempo real.</p>
         </div>
         <div class="text-right hidden sm:block">
             <div class="text-sm font-bold text-slate-500">{{ 0 | date:'EEEE, d MMMM y' | uppercase }}</div>
@@ -32,16 +32,16 @@
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800 text-lg">Operaciones en Curso</h3>
+                    <h3 class="font-bold text-slate-800 text-lg">Últimos Despachos</h3>
                     <button mat-button color="primary" [routerLink]="['../abastecer']">Ir a Abastecimiento</button>
                 </div>
 
                 <div class="space-y-4">
                     @for (vuelo of vuelosProximos; track vuelo.codigo) {
                         <div class="flex items-center p-4 border rounded-xl hover:bg-gray-50 transition-colors group bg-white cursor-pointer"
-                             [routerLink]="['../abastecer']"> <div class="flex flex-col items-center justify-center w-16 border-r border-gray-100 pr-4 mr-4">
+                             [routerLink]="['../abastecer/historial']"> <div class="flex flex-col items-center justify-center w-16 border-r border-gray-100 pr-4 mr-4">
                             <span class="text-lg font-bold text-slate-700">{{ vuelo.hora }}</span>
-                            <span class="text-[10px] text-gray-400 uppercase">Salida</span>
+                            <span class="text-[10px] text-gray-400 uppercase">Hora</span>
                         </div>
 
                             <div class="flex-1">
@@ -50,7 +50,7 @@
                                     <mat-icon class="icon-size-4 text-gray-400">arrow_forward</mat-icon>
                                     <span class="font-bold text-slate-600">{{ vuelo.destino }}</span>
                                 </div>
-                                <div class="text-xs text-gray-400">Abastecimiento catering</div>
+                                <div class="text-xs text-gray-400">Despacho catering registrado</div>
                             </div>
 
                             <div>
@@ -64,6 +64,9 @@
                                 <mat-icon>chevron_right</mat-icon>
                             </button>
                         </div>
+                    }
+                    @if (vuelosProximos.length === 0) {
+                        <div class="text-center py-8 text-gray-400">No hay vuelos despachados hoy.</div>
                     }
                 </div>
             </div>
@@ -80,15 +83,22 @@
                     @for (item of stockCritico; track item.nombre) {
                         <div class="p-4 rounded-xl bg-red-50 border border-red-100">
                             <div class="flex justify-between items-start mb-2">
-                                <div class="font-bold text-red-900 text-sm">{{ item.nombre }}</div>
-                                <div class="text-xs font-black text-red-600 bg-white px-2 py-0.5 rounded shadow-sm">
+                                <div class="font-bold text-red-900 text-sm truncate pr-2" [title]="item.nombre">
+                                    {{ item.nombre }}
+                                </div>
+                                <div class="text-xs font-black text-red-600 bg-white px-2 py-0.5 rounded shadow-sm shrink-0">
                                     {{ item.stock }} un.
                                 </div>
                             </div>
-                            <div class="w-full bg-red-200 rounded-full h-1.5 mb-1">
+                            <div class="w-full bg-red-200 rounded-full h-1.5 mb-1 overflow-hidden">
                                 <div class="bg-red-500 h-1.5 rounded-full" [style.width.%]="item.percent"></div>
                             </div>
-                            <div class="text-[10px] text-red-400 text-right">Mínimo: {{ item.min }}</div>
+                            <div class="text-[10px] text-red-400 text-right">Umbral: {{ item.min }}</div>
+                        </div>
+                    }
+                    @if (stockCritico.length === 0) {
+                        <div class="col-span-3 text-center py-4 text-green-600 font-medium bg-green-50 rounded-xl">
+                            ✅ Todo el inventario está en niveles óptimos
                         </div>
                     }
                 </div>
@@ -104,7 +114,6 @@
                 <h3 class="font-bold text-lg mb-6 relative z-10">Accesos Rápidos</h3>
 
                 <div class="grid grid-cols-2 gap-3 relative z-10">
-
                     <button [routerLink]="['../abastecer']" class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/5 backdrop-blur-sm group">
                         <mat-icon class="mb-2 text-blue-400 group-hover:scale-110 transition-transform">flight_land</mat-icon>
                         <span class="text-xs font-bold text-center">Abastecer Vuelo</span>
@@ -124,7 +133,6 @@
                         <mat-icon class="mb-2 text-orange-400 group-hover:scale-110 transition-transform">settings</mat-icon>
                         <span class="text-xs font-bold">Plantillas</span>
                     </button>
-
                 </div>
             </div>
 
@@ -135,7 +143,6 @@
                     @for (act of actividades; track act.time) {
                         <div class="flex gap-3 relative">
                             <div class="absolute left-[15px] top-8 bottom-[-20px] w-0.5 bg-gray-100 last:hidden"></div>
-
                             <div class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 shrink-0 z-10">
                                 <mat-icon class="icon-size-4">{{ act.icon }}</mat-icon>
                             </div>

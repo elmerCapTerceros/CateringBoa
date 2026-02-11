@@ -31,6 +31,7 @@ export class StockComponent implements OnInit {
     // Filtros
     searchTerm: string = '';
     filtroCategoria: string = 'Todos';
+    // Estas categorías deberían venir idealmente del backend o ser constantes
     categorias: string[] = ['Todos', 'Alimentos', 'Bebidas', 'Licores', 'Insumos', 'Menaje'];
 
     // DATOS REALES (Inician vacíos esperando al Backend)
@@ -45,7 +46,7 @@ export class StockComponent implements OnInit {
     kpiAlertas: number = 0;
     kpiValorTotal: number = 0;
 
-    constructor(private stockService: StockService) {} // <--- Inyección del Servicio
+    constructor(private stockService: StockService) {}
 
     ngOnInit(): void {
         this.cargarDatosReales();
@@ -67,16 +68,22 @@ export class StockComponent implements OnInit {
     }
 
     aplicarFiltros() {
-        const term = this.searchTerm.toLowerCase();
+        const termino = this.searchTerm.toLowerCase(); // Usamos searchTerm que está vinculado al input
 
         this.inventarioFiltrado = this.inventario.filter(item => {
-            // Validamos que item.nombre exista para evitar errores si viene null
-            const nombre = item.nombre ? item.nombre.toLowerCase() : '';
-            const id = item.id ? item.id.toLowerCase() : '';
+            // 1. Usar nombreItem en lugar de nombre
+            const nombre = item.nombreItem ? item.nombreItem.toLowerCase() : '';
 
-            const matchNombre = nombre.includes(term) || id.includes(term);
-            const matchCat = this.filtroCategoria === 'Todos' || item.categoria === this.filtroCategoria;
-            return matchNombre && matchCat;
+            // 2. Usar idItem en lugar de id (y convertirlo a string porque es número)
+            const id = item.idItem ? item.idItem.toString() : '';
+
+            // 3. Usar categoriaItem en lugar de categoria
+            const categoria = item.categoriaItem || '';
+
+            const coincideTexto = nombre.includes(termino) || id.includes(termino);
+            const coincideCategoria = this.filtroCategoria === 'Todos' || categoria === this.filtroCategoria;
+
+            return coincideTexto && coincideCategoria;
         });
     }
 
@@ -100,7 +107,8 @@ export class StockComponent implements OnInit {
         // Calcular KPIs
         this.kpiTotalItems = this.inventario.length;
         this.kpiAlertas = this.inventario.filter(i => i.estado !== 'Normal').length;
-        this.kpiValorTotal = this.inventario.reduce((acc, i) => acc + (i.stockActual * i.precioUnitario), 0);
+        // Usamos precioUnitario si existe, sino 0
+        this.kpiValorTotal = this.inventario.reduce((acc, i) => acc + (i.stockActual * (i.precioUnitario || 0)), 0);
 
         this.aplicarFiltros();
     }
@@ -116,9 +124,9 @@ export class StockComponent implements OnInit {
 
     getColorBarra(estado: string): string {
         switch (estado) {
-            case 'Normal': return 'primary';
-            case 'Bajo': return 'accent';
-            case 'Crítico': return 'warn';
+            case 'Normal': return 'primary'; // Azul (o el color primario de tu tema)
+            case 'Bajo': return 'accent';  // Amarillo/Naranja
+            case 'Crítico': return 'warn';    // Rojo
             default: return 'primary';
         }
     }

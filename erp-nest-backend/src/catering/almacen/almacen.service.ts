@@ -6,20 +6,30 @@ import {PrismaService} from "../../providers/prisma/prisma.service";
 @Injectable()
 export class AlmacenService {
 
-    constructor(private prisma: PrismaService){
-    }
+  constructor(private prisma: PrismaService){}
+
   async create(createAlmacenDto: CreateAlmacenDto) {
-    try{
-        return await this.prisma.almacen.create({
-            data: {
-                nombreAlmacen: createAlmacenDto.nombreAlmacen,
-                tipoAlmacen: createAlmacenDto.tipoAlmacen,
-                ubicacion: createAlmacenDto.ubicacion,
-                codigo: createAlmacenDto.codigo,
-            },
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // 1. Crear el almacén
+        const almacen = await tx.almacen.create({
+          data: {
+            nombreAlmacen: createAlmacenDto.nombreAlmacen,
+            tipoAlmacen: createAlmacenDto.tipoAlmacen,
+            ubicacion: createAlmacenDto.ubicacion,
+            codigo: createAlmacenDto.codigo,
+          },
         });
-    }catch (error) {
-        throw new InternalServerErrorException('Server error');
+
+        // 2. Crear su Stock contenedor automáticamente
+        await tx.stock.create({
+          data: { almacenId: almacen.idAlmacen },
+        });
+
+        return almacen;
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Server error');
     }
   }
 
@@ -28,23 +38,30 @@ export class AlmacenService {
   }
 
   async findOne(id: number) {
+    const almacen = await this.prisma.almacen.findUnique({
+      where: { idAlmacen: id },
+      include: {
+        stocks: {
+          include: {
+            detallesStock: {
+              include: { item: true }, // ← ver qué items y cantidades tiene
+            },
+          },
+        },
+      },
+    });
 
-          const almacen = await this.prisma.almacen.findUnique({
-              where: { idAlmacen: id },
-          });
+    if (!almacen) {
+      throw new NotFoundException(`Almacen con id ${id} no encontrado`);
+    }
 
-          if (!almacen) {
-              throw new NotFoundException(`Almacen con id ${id} no encontrado`);
-          }
-
-          return almacen;
-
+    return almacen;
   }
 
-    async remove(id: number){
-        await this.findOne(id);
-        return this.prisma.almacen.delete({
-            where: { idAlmacen: id },
-        });
-    }
+  async remove(id: number) {
+    await this.findOne(id);
+    return this.prisma.almacen.delete({
+      where: { idAlmacen: id },
+    });
+  }
 }

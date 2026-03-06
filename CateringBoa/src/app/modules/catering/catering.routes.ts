@@ -7,7 +7,7 @@ import { CompraComponent } from './compra-exterior/compra/compra.component';
 import { ListaComprasComponent } from './compra-exterior/lista-compras/lista-compras.component';
 import { ListarCargaComponent } from './carga/listar-carga/listar-carga.component';
 import { CrearCargaComponent } from './carga/crear-carga/crear-carga.component';
-import {StockComponent} from './stock/stock.component';
+import {StockComponent} from './almacen/Stockss/stock.component';
 import {ConfiguracionCargaComponent } from './configuracion-carga/configuracion-carga.component';
 import {AbastecerVueloComponent} from './abastecer-vuelo/abastecer-vuelo.component';
 import {CierreVueloComponent} from './cierre-vuelo/cierre-vuelo.component';
@@ -20,6 +20,12 @@ import { HistorialComprasComponent } from './compra-exterior/historial-compras/h
 import {ListaConfiguracionesComponent} from './configuracion-carga/lista-configuraciones/lista-configuraciones.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import {CrearFlotaComponent} from './flota/crear-flota/crear-flota.component';
+import {ListarMovimientoComponent} from './movimiento/listar-movimiento/listar-movimiento.component';
+import {CrearMovimientoComponent} from './movimiento/crear-movimiento/crear-movimiento.component';
+import {ListarIngresosComponent} from './almacen/ingreso/listar-ingresos/listar-ingresos.component';
+import {CrearIngresosComponent} from './almacen/ingreso/crear-ingresos/crear-ingresos.component';
+import {ListarTransferenciasComponent} from './almacen/transferencia/listar-transferencias/listar-transferencias.component';
+import {CrearTransferenciaComponent} from './almacen/transferencia/crear-transferencia/crear-transferencia.component';
 
 
 export default [
@@ -65,10 +71,7 @@ export default [
                 path: 'compra-exterior/listar',
                 component: ListaComprasComponent
             },
-            {
-                path: 'stock',
-                component: StockComponent
-            },
+            
             {
                 path: 'configuracion',
                 component: ConfiguracionCargaComponent
@@ -81,7 +84,7 @@ export default [
                 path: 'abastecer/historial',
                 component: HistorialAbastecimientoComponent
             },
-            //rutas de solicitud-almacenes
+            //rutas de Almacenes
             {
                 path: 'listar-solicitudes-almacen',
                 component: ListarSolicitudesAlmacenComponent
@@ -93,6 +96,31 @@ export default [
             {
                 path : 'detalle-soltitud-almacen/:id',
                 component: DetalleSolicitudAlmacenComponent
+            },
+
+            {
+                path : 'listar-ingresos',
+                component: ListarIngresosComponent
+            },
+
+            {
+                path : 'crear-ingreso',
+                component: CrearIngresosComponent
+            },
+
+            {
+                path : 'listar-transferencias',
+                component: ListarTransferenciasComponent
+            },
+            
+            {
+                path : 'crear-transferencia',
+                component: CrearTransferenciaComponent
+            },
+
+            {
+                path: 'stock',
+                component: StockComponent
             },
             //rutas de flotas
             {
@@ -115,6 +143,15 @@ export default [
             {
                 path: 'dashboard',
                 component: DashboardComponent
+            },
+           //ListarMovimientos
+            {
+                path: 'listar-movimientos',
+                component: ListarMovimientoComponent
+            },
+            {
+                path: 'crear-movimiento',
+                component: CrearMovimientoComponent
             }
 
         ]

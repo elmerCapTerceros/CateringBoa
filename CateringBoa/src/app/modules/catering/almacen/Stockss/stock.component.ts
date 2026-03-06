@@ -1,270 +1,104 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatTableModule } from '@angular/material/table';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, MatPaginatorIntl } from '@angular/material/paginator';
-
-interface Almacen {
-    value: string;
-    viewValue: string;
-}
-
-interface Categoria {
-    value: string;
-    viewValue: string;
-}
-
-interface Stock {
-    id: number;
-    almacen: string;
-    categoria: string;
-    item: string;
-    cantidad: number;
-    tipo: 'rotable';
-}
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { AlmacenService, Almacen, AlmacenDetalle, DetalleStock } from '../../almacen/almacen.service';
 
 @Component({
-    selector: 'app-stock',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatFormFieldModule,
-        MatSelectModule,
-        MatInputModule,
-        MatTableModule,
-        MatPaginatorModule,
-        MatIconModule,
-    ],
-    // ✅ Aquí va la configuración del idioma del paginador
-    providers: [
-        {
-            provide: MatPaginatorIntl,
-            useValue: (() => {
-                const customPaginatorIntl = new MatPaginatorIntl();
-                customPaginatorIntl.itemsPerPageLabel = 'Registros por página:';
-                customPaginatorIntl.nextPageLabel = 'Siguiente';
-                customPaginatorIntl.previousPageLabel = 'Anterior';
-                customPaginatorIntl.firstPageLabel = 'Primera';
-                customPaginatorIntl.lastPageLabel = 'Última';
-                customPaginatorIntl.getRangeLabel = (
-                    page: number,
-                    pageSize: number,
-                    length: number
-                ) => {
-                    if (length === 0 || pageSize === 0) {
-                        return `0 de ${length}`;
-                    }
-                    const startIndex = page * pageSize;
-                    const endIndex =
-                        startIndex < length
-                            ? Math.min(startIndex + pageSize, length)
-                            : startIndex + pageSize;
-                    return `${startIndex + 1} – ${endIndex} de ${length}`;
-                };
-                return customPaginatorIntl;
-            })(),
-        },
-    ],
-    templateUrl: './stock.component.html',
-    styleUrls: ['./stock.component.scss'],
+  selector: 'app-stock',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
+  templateUrl: './stock.component.html',
 })
 export class StockComponent implements OnInit {
-    filtroForm: FormGroup;
-    stocks: Stock[] = [];
-    stocksFiltrados: Stock[] = [];
+  almacenes: Almacen[] = [];
+  almacenSeleccionado: AlmacenDetalle | null = null;
+  categoriaSeleccionada = 'Todos';
+  categorias: string[] = ['Todos'];
+  busqueda = '';
+  loading = false;
+  loadingAlmacen = false;
 
-    almacenes: Almacen[] = [
-        { value: '', viewValue: 'Todos' },
-        { value: 'Miami', viewValue: 'Miami' },
-        { value: 'Madrid', viewValue: 'Madrid' },
-        { value: 'Viru Viru', viewValue: 'Viru Viru' },
-    ];
+  constructor(
+    private almacenService: AlmacenService,
+  ) {}
 
-    categorias: Categoria[] = [
-        { value: '', viewValue: 'Todas' },
-        { value: 'Alimentos', viewValue: 'Alimentos' },
-        { value: 'Mantelería', viewValue: 'Mantelería' },
-        { value: 'Audífonos', viewValue: 'Audífonos' },
-    ];
+  ngOnInit(): void {
+    this.loading = true;
+    this.almacenService.getAll().subscribe({
+      next: (data) => {
+        this.almacenes = data;
+        this.loading = false;
+        // Cargar el primer almacén por defecto
+        if (data.length > 0) {
+          this.seleccionarAlmacen(data[0]);
+        }
+      },
+      error: () => this.loading = false
+    });
+  }
 
-    // ✅ Paginador
-    pageSize = 5;
-    currentPage = 0;
-    pageSizeOptions = [5, 10, 20];
+  seleccionarAlmacen(almacen: Almacen): void {
+    this.loadingAlmacen = true;
+    this.categoriaSeleccionada = 'Todos';
+    this.busqueda = '';
 
-    constructor(private fb: FormBuilder) {
-        this.filtroForm = this.fb.group({
-            almacen: [''],
-            categoria: [''],
-        });
-    }
+    this.almacenService.getById(almacen.idAlmacen).subscribe({
+      next: (detalle) => {
+        this.almacenSeleccionado = detalle;
+        this.extraerCategorias(detalle);
+        this.loadingAlmacen = false;
+      },
+      error: () => this.loadingAlmacen = false
+    });
+  }
 
-    ngOnInit(): void {
-        this.stocks = [
-            {
-                id: 1,
-                almacen: 'Madrid',
-                categoria: 'Audífonos',
-                item: 'Frazadas',
-                cantidad: 10,
-                tipo: 'rotable',
-            },
-            {
-                id: 2,
-                almacen: 'Viru Viru',
-                categoria: 'Alimentos',
-                item: 'Cucharas',
-                cantidad: 50,
-                tipo: 'rotable',
-            },
-            {
-                id: 3,
-                almacen: 'Madrid',
-                categoria: 'Alimentos',
-                item: 'Mantel',
-                cantidad: 20,
-                tipo: 'rotable',
-            },
-            {
-                id: 4,
-                almacen: 'Miami',
-                categoria: 'Mantelería',
-                item: 'Frazadas',
-                cantidad: 15,
-                tipo: 'rotable',
-            },
-            {
-                id: 5,
-                almacen: 'Madrid',
-                categoria: 'Mantelería',
-                item: 'Servilletas',
-                cantidad: 30,
-                tipo: 'rotable',
-            },
-            {
-                id: 6,
-                almacen: 'Miami',
-                categoria: 'Alimentos',
-                item: 'Platos',
-                cantidad: 25,
-                tipo: 'rotable',
-            },
-            {
-                id: 7,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 8,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 9,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 10,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 11,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 12,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 13,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 14,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 15,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-            {
-                id: 16,
-                almacen: 'Viru Viru',
-                categoria: 'Audífonos',
-                item: 'Cubiertos',
-                cantidad: 12,
-                tipo: 'rotable',
-            },
-        ];
+  extraerCategorias(almacen: AlmacenDetalle): void {
+    const cats = new Set<string>();
+    almacen.stocks.forEach(stock =>
+      stock.detallesStock.forEach(d => cats.add(d.item.categoriaItem))
+    );
+    this.categorias = ['Todos', ...Array.from(cats)];
+  }
 
-        this.stocksFiltrados = [...this.stocks];
-        this.filtroForm.valueChanges.subscribe(() => this.aplicarFiltros());
-    }
+  seleccionarCategoria(categoria: string): void {
+    this.categoriaSeleccionada = categoria;
+  }
 
-    aplicarFiltros(): void {
-        const { almacen, categoria } = this.filtroForm.value;
-        const filtrados = this.stocks.filter((stock) => {
-            const cumpleAlmacen = !almacen || stock.almacen === almacen;
-            const cumpleCategoria = !categoria || stock.categoria === categoria;
-            return cumpleAlmacen && cumpleCategoria;
-        });
-        this.stocksFiltrados = filtrados;
-        this.currentPage = 0; // Reiniciar paginación
-    }
+  get todosLosDetalles(): DetalleStock[] {
+    if (!this.almacenSeleccionado) return [];
+    return this.almacenSeleccionado.stocks.flatMap(s => s.detallesStock);
+  }
 
-    limpiarFiltros(): void {
-        this.filtroForm.reset({ almacen: '', categoria: '' });
-        this.stocksFiltrados = [...this.stocks];
-        this.currentPage = 0;
-    }
+  get detallesFiltrados(): DetalleStock[] {
+    return this.todosLosDetalles.filter(d => {
+      const cumpleCategoria = this.categoriaSeleccionada === 'Todos' ||
+        d.item.categoriaItem === this.categoriaSeleccionada;
+      const cumpleBusqueda = !this.busqueda ||
+        d.item.nombreItem.toLowerCase().includes(this.busqueda.toLowerCase());
+      return cumpleCategoria && cumpleBusqueda;
+    });
+  }
 
-    get paginatedStocks(): Stock[] {
-        const startIndex = this.currentPage * this.pageSize;
-        const endIndex = startIndex + this.pageSize;
-        return this.stocksFiltrados.slice(startIndex, endIndex);
-    }
+  get totalProductos(): number {
+    return this.todosLosDetalles.length;
+  }
 
-    onPageChange(event: any): void {
-        this.pageSize = event.pageSize;
-        this.currentPage = event.pageIndex;
-    }
+  get alertasStock(): number {
+    return this.todosLosDetalles.filter(d => d.cantidad < 20).length;
+  }
+
+  getEstadoStock(cantidad: number): { label: string; class: string } {
+    if (cantidad === 0) return { label: 'SIN STOCK', class: 'bg-red-100 text-red-700' };
+    if (cantidad < 20) return { label: 'BAJO', class: 'bg-orange-100 text-orange-700' };
+    return { label: 'NORMAL', class: 'bg-green-100 text-green-700' };
+  }
 }

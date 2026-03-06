@@ -66,6 +66,7 @@ model Aeronave {
   rutas          AeronaveHasRuta[]
   solicitudesDot SolicitudDotacion[]
   detallesCarga  DetalleCarga[]
+  movimientos    Movimiento[]
 }
 
 model Almacen {
@@ -79,20 +80,21 @@ model Almacen {
   solicitudesOrigen  Solicitud[]         @relation("AlmacenSolicitante")
   solicitudesDestino Solicitud[]         @relation("AlmacenSolicitado")
   solicitudesDot     SolicitudDotacion[]
-
-  // Relations for Purchases
+  movimientos        Movimiento[]
   ordenesCompra OrdenCompra[]
+  ingresos           Ingreso[] 
+
+  transferenciasOrigen  Transferencia[]  @relation("TransferenciaOrigen")   
+  transferenciasDestino Transferencia[]  @relation("TransferenciaDestino")
 }
 
 model Stock {
   idStock   Int @id @default(autoincrement())
   almacenId Int @map("Almacen_idAlmacen")
-
   almacen Almacen @relation(fields: [almacenId], references: [idAlmacen])
 
   abastecimientos Abastecimiento[]
   detallesStock   DetalleStock[]
-  // entregas removed from here, logic moved to Recepcion
 }
 
 model Item {
@@ -100,18 +102,41 @@ model Item {
   nombreItem    String  @map("nombre_item") @db.VarChar(45)
   tipoItem      String  @map("tipo_item") @db.VarChar(45)
   categoriaItem String  @map("categoria_item") @db.VarChar(45)
-  unidadMedida  String? @default("Unidad") // Added for frontend display
+  unidadMedida  String? @default("Unidad") 
 
   // Relaciones
-  abastecimientos   Abastecimiento[]
-  detallesSolicitud DetalleSolicitud[]
-  detallesCarga     DetalleCarga[]
-  detallesStock     DetalleStock[]
-  detallesPlantilla DetallePlantilla[]
-  detallesDotacion DetalleDotacion[]
+  abastecimientos    Abastecimiento[]
+  detallesSolicitud  DetalleSolicitud[]
+  detallesCarga      DetalleCarga[]
+  detallesStock      DetalleStock[]
+  detallesPlantilla  DetallePlantilla[]
+  detallesDotacion   DetalleDotacion[]
+  detallesOrden      DetalleOrdenCompra[]
+  detallesMovimiento DetalleMovimiento[]
+  detallesIngreso    DetalleIngreso[]
+  detallesTransferencia DetalleTransferencia[]
+}
 
-  // New Relation for Purchase Details
-  detallesOrden DetalleOrdenCompra[]
+//Los ingresos son cuando se ingresa directamente stock a un almacen específico.
+//es distinto al movimiento entre almacenes, pero ambos afectan directamente al stock de cada almacen
+model Ingreso {
+  idIngreso   Int      @id @default(autoincrement())
+  fecha       DateTime @default(now())
+  observacion String?  @db.VarChar(255)
+  almacenId   Int      @map("Almacen_idAlmacen")
+
+  almacen  Almacen          @relation(fields: [almacenId], references: [idAlmacen])
+  detalles DetalleIngreso[]
+}
+
+model DetalleIngreso {
+  idDetalleIngreso Int @id @default(autoincrement())
+  cantidad         Int
+  ingresoId        Int
+  itemId           Int
+
+  ingreso Ingreso @relation(fields: [ingresoId], references: [idIngreso])
+  item    Item    @relation(fields: [itemId], references: [idItem])
 }
 
 // --------------------------------------------------------
@@ -300,7 +325,7 @@ model ControlConsumo {
 }
 
 model DetalleStock {
-  idDetalleStock Int @default(autoincrement()) @map("idDetalle_Stock")
+  idDetalleStock Int @id @default(autoincrement()) @map("idDetalle_Stock")
   cantidad       Int
   stockId        Int @map("Stock_idStock")
   itemId         Int @map("Item_idItem")
@@ -308,7 +333,7 @@ model DetalleStock {
   stock Stock @relation(fields: [stockId], references: [idStock])
   item  Item  @relation(fields: [itemId], references: [idItem])
 
-  @@id([idDetalleStock, itemId])
+  @@unique([stockId, itemId]) // ← clave para el upsert
 }
 
 model Remanente {
@@ -333,18 +358,18 @@ model Configuracion {
 model SolicitudDotacion {
   idSolicitudDotacion Int @id @default(autoincrement()) @map("idSolicitud_Dotacion")
 
-  fecha       DateTime @default(now()) @db.Date
-  fechaRequerida      DateTime @map("FechaRequerida") @db.Date 
-  estado      String   @map("Estado") @db.VarChar(45) @default("Pendiente")
-  descripcion String   @map("Descripcion") @db.VarChar(45)
-  prioridad  String   @map("Prioridad") @db.VarChar(10)
-  almacenId   Int      @map("Almacen_idAlmacen")
-  usuarioId   String   @map("Usuario_idUsuario") @default("admin1234")
-  aeronaveId  Int      @map("Aeronave_idAeronave")
+  fecha          DateTime @default(now()) @db.Date
+  fechaRequerida DateTime @map("FechaRequerida") @db.Date
+  estado         String   @default("Pendiente") @map("Estado") @db.VarChar(45)
+  descripcion    String   @map("Descripcion") @db.VarChar(45)
+  prioridad      String   @map("Prioridad") @db.VarChar(10)
+  almacenId      Int      @map("Almacen_idAlmacen")
+  usuarioId      String   @default("admin1234") @map("Usuario_idUsuario")
+  aeronaveId     Int      @map("Aeronave_idAeronave")
 
-  almacen  Almacen  @relation(fields: [almacenId], references: [idAlmacen])
-  usuario  User     @relation(fields: [usuarioId], references: [id])
-  aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+  almacen  Almacen           @relation(fields: [almacenId], references: [idAlmacen])
+  usuario  User              @relation(fields: [usuarioId], references: [id])
+  aeronave Aeronave          @relation(fields: [aeronaveId], references: [idAeronave])
   detalles DetalleDotacion[]
 }
 
@@ -352,9 +377,10 @@ model DetalleDotacion {
   idDetalleDotacion   Int               @default(autoincrement()) @map("idDetalle_dotacion")
   cantidad            Int
   solicitudDotacionId Int               @map("Solicitud_Dotacion_idSolicitud_Dotacion")
-  itemId              Int @map("Item_idItem")
+  itemId              Int               @map("Item_idItem")
   solicitud           SolicitudDotacion @relation(fields: [solicitudDotacionId], references: [idSolicitudDotacion])
-  item       Item              @relation(fields: [itemId], references: [idItem])
+  item                Item              @relation(fields: [itemId], references: [idItem])
+
   @@unique([solicitudDotacionId, itemId])
 }
 
@@ -379,4 +405,52 @@ model DetallePlantilla {
 
   plantilla Plantilla @relation(fields: [plantillaId], references: [id], onDelete: Cascade)
   item      Item      @relation(fields: [itemId], references: [idItem])
+}
+
+model Movimiento {
+  id             Int      @id @default(autoincrement())
+  tipoMovimiento String   @db.VarChar(45)
+  fecha          DateTime @default(now())
+  descripcion    String   @db.VarChar(45)
+
+  almacenId  Int
+  aeronaveId Int
+
+  almacen  Almacen  @relation(fields: [almacenId], references: [idAlmacen])
+  aeronave Aeronave @relation(fields: [aeronaveId], references: [idAeronave])
+
+  detalles DetalleMovimiento[]
+}
+
+model DetalleMovimiento {
+  id           Int @id @default(autoincrement())
+  movimientoId Int
+  itemId       Int
+  cantidad     Int
+
+  movimiento Movimiento @relation(fields: [movimientoId], references: [id], onDelete: Cascade)
+  item       Item       @relation(fields: [itemId], references: [idItem])
+}
+//Transferencia es para mover los items de un almacen a otro
+model Transferencia {
+  idTransferencia   Int      @id @default(autoincrement())
+  fecha             DateTime @default(now())
+  observacion       String?  @db.VarChar(255)
+  almacenOrigenId   Int
+  almacenDestinoId  Int
+
+  almacenOrigen  Almacen @relation("TransferenciaOrigen", fields: [almacenOrigenId], references: [idAlmacen])
+  almacenDestino Almacen @relation("TransferenciaDestino", fields: [almacenDestinoId], references: [idAlmacen])
+
+  detalles DetalleTransferencia[]
+}
+
+model DetalleTransferencia {
+  idDetalleTransferencia Int @id @default(autoincrement())
+  cantidad               Int
+  transferenciaId        Int
+  itemId                 Int
+
+  transferencia Transferencia @relation(fields: [transferenciaId], references: [idTransferencia])
+  item          Item          @relation(fields: [itemId], references: [idItem])
 }

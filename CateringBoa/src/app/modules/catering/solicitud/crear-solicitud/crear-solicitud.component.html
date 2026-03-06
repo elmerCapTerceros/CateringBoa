@@ -21,7 +21,6 @@
                                 [disabled]="isLoadingCatalogos">
                         <mat-option>Seleccionar</mat-option>
                         @for (almacen of almacenes; track almacen.idAlmacen) {
-                            <!-- 🟢 CORREGIDO: usar idAlmacen, no id -->
                             <mat-option [value]="almacen.idAlmacen">
                                 {{ almacen.codigo || '' }} {{ almacen.nombreAlmacen }}
                                 @if (almacen.ubicacion) {
@@ -44,7 +43,6 @@
                                 [disabled]="isLoadingCatalogos">
                         <mat-option>Seleccionar</mat-option>
                         @for (aeronave of aeronaves; track aeronave.idAeronave) {
-                            <!-- 🟢 CORREGIDO: usar idAeronave, no id -->
                             <mat-option [value]="aeronave.idAeronave">
                                 {{ aeronave.matricula }}
                                 @if (aeronave.tipoAeronave) {
@@ -134,7 +132,6 @@
                                     <mat-select formControlName="itemId" [disabled]="isLoadingCatalogos">
                                         <mat-option>Seleccionar</mat-option>
                                         @for (item of items; track item.idItem) {
-                                            <!-- 🟢 CORREGIDO: usar idItem, no id -->
                                             <mat-option [value]="item.idItem">
                                                 {{ item.nombreItem }}
                                                 <span class="text-gray-500 text-sm ml-2">

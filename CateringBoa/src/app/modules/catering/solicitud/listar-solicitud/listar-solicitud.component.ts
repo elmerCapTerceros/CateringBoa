@@ -13,7 +13,6 @@ import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-//UN SOLO IMPORT - elimina duplicados
 import { SolicitudService, Solicitud } from '../solicitud.service';
 
 interface Almacen {
@@ -50,16 +49,14 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
     solicitudesFiltradas: Solicitud[] = [];
     solicitudesPaginadas: Solicitud[] = [];
 
+    //Almacenes dinámicos - se llenarán desde el backend
     almacenes: Almacen[] = [
-        { value: '', viewValue: 'Todos' },
-        { value: 'Miami', viewValue: 'Miami' },
-        { value: 'Madrid', viewValue: 'Madrid' },
-        { value: 'Viru viru', viewValue: 'Viru viru' }
+        { value: '', viewValue: 'Todos' }
     ];
 
     constructor(
         private fb: FormBuilder,
-        private solicitudService: SolicitudService, 
+        private solicitudService: SolicitudService,
         private router: Router,
         private snackBar: MatSnackBar
     ) {}
@@ -70,17 +67,24 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
             prioridad: ['']
         });
 
-        //Cargar datos
+        // Cargar datos
         this.solicitudService.getList().subscribe();
 
         // Escuchar cambios
         this.solicitudService.solicitudes$.subscribe((data) => {
+            console.log('Datos recibidos:', data);
             this.solicitudes = data;
             this.solicitudesFiltradas = [...data];
+            
+            //Extraer almacenes únicos de las solicitudes
+            this.extraerAlmacenesUnicos(data);
+            
             this.actualizarDatosPaginados();
         });
 
-        this.filtroForm.valueChanges.subscribe(() => {
+        //Escuchar cambios en los filtros
+        this.filtroForm.valueChanges.subscribe((valores) => {
+            console.log('🔍 Filtros aplicados:', valores);
             this.filtrarSolicitudes();
         });
     }
@@ -91,16 +95,50 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
         });
     }
 
+    //Extraer almacenes únicos de las solicitudes
+    extraerAlmacenesUnicos(solicitudes: Solicitud[]): void {
+        const almacenesUnicos = new Set<string>();
+        
+        solicitudes.forEach(sol => {
+            if (sol.almacen) {
+                almacenesUnicos.add(sol.almacen);
+            }
+        });
+
+        this.almacenes = [
+            { value: '', viewValue: 'Todos' },
+            ...Array.from(almacenesUnicos).map(almacen => ({
+                value: almacen,
+                viewValue: almacen
+            }))
+        ];
+
+        console.log('Almacenes disponibles:', this.almacenes);
+    }
+
+    // Filtrar solicitudes - CORREGIDO
     filtrarSolicitudes(): void {
         const { almacen, prioridad } = this.filtroForm.value;
 
+        console.log('Filtrando por:', { almacen, prioridad });
+
         this.solicitudesFiltradas = this.solicitudes.filter(solicitud => {
+            // Filtro de almacén
             const cumpleAlmacen = !almacen || solicitud.almacen === almacen;
+            
+            // Filtro de prioridad
             const cumplePrioridad = !prioridad || solicitud.prioridad === prioridad;
-            return cumpleAlmacen && cumplePrioridad;
+
+            const cumple = cumpleAlmacen && cumplePrioridad;
+            
+            return cumple;
         });
 
-        this.paginator.firstPage();
+        console.log('Resultados filtrados:', this.solicitudesFiltradas.length);
+
+        if (this.paginator) {
+            this.paginator.firstPage();
+        }
         this.actualizarDatosPaginados();
     }
 

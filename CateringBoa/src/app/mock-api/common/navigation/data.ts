@@ -45,6 +45,23 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         ]
     },
 
+
+        {
+        id   : 'movimiento',
+        title: 'Movimientos',
+        type : 'collapsable',
+        icon : 'heroicons_outline:chart-pie',
+        children:[
+            {
+                id: 'listar-movimientos',
+                title: 'Mis movimientos',
+                icon : 'mat_outline:view_list',
+                type: 'basic',
+                link : '/catering/listar-movimientos'
+            }
+        ]
+    },
+
     {
         id   : 'compra-exterior',
         title: 'Compra Exterior',
@@ -191,13 +208,6 @@ export const horizontalNavigation: ErpNavigationItem[] = [
         type : 'collapsable',
         icon : 'heroicons_outline:home-modern',
         children:[
-            /*{
-                id: 'movimiento',
-                title: 'Listado de Movimientos',
-                //icon : 'mat_outline:Aq Indoor',
-                type: 'basic',
-                link : '/catering/movimientos',
-            },*/
             {
                 id: 'Stockss',
                 title: 'Stock',
@@ -211,6 +221,22 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 //icon : 'mat_outline:briefcase',
                 type: 'basic',
                 link : '/catering/listar-solicitudes-almacen',
+            },
+
+            {
+                id: 'ListarTransferencias',
+                title: 'Transferencias',
+                //icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/listar-transferencias',
+            },
+
+            {
+                id: 'ingresos',
+                title: 'Ingresos',
+                //icon : 'mat_outline:briefcase',
+                type: 'basic',
+                link : '/catering/listar-ingresos',
             }
         ]
     }

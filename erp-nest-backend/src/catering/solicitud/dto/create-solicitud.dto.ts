@@ -40,7 +40,7 @@ export class CreateSolicitudDto {
      @IsInt()
     aeronaveId: number;
 
-     @IsArray()
+    @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CreateDetalleDotacionDto)
     detalles: CreateDetalleDotacionDto[];

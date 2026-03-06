@@ -9,6 +9,10 @@ import { ComprasModule } from './core/catering/compras/compras.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SolicitudModule } from './catering/solicitud/solicitud.module';
 import { CatalogoModule } from './catering/catalogo/catalogo.module';
+import { ItemModule } from './catering/item/item.module';
+import { IngresoModule } from './catering/ingreso/ingreso.module';
+import { MovimientoModule } from './catering/movimiento/movimiento.module';
+import { TransferenciaModule } from './catering/transferencia/transferencia.module';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { CatalogoModule } from './catering/catalogo/catalogo.module';
     ComprasModule,
     SolicitudModule,
     CatalogoModule,
+    ItemModule,
+    IngresoModule,
+    MovimientoModule,
+    TransferenciaModule,
     PrismaModule
   ],
   controllers: [AppController],

@@ -2,8 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-
-// ✅ IMPORTS DE ANGULAR MATERIAL (COMPLETOS)
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -28,12 +26,10 @@ import {
 
 @Component({
     selector: 'app-crear-solicitud',
-    standalone: true, // ✅ Si es standalone
-    imports: [ // ✅ TODOS los imports necesarios
+    standalone: true, 
+    imports: [ 
         CommonModule,
         ReactiveFormsModule,
-        
-        // Angular Material
         MatFormFieldModule,
         MatSelectModule,
         MatInputModule,
@@ -93,7 +89,7 @@ export class CrearSolicitudComponent implements OnInit {
                 this.aeronaves = response.aeronaves || [];
                 this.items = response.items || [];
                 
-                console.log('🗂️ Catálogos cargados:', {
+                console.log('Catálogos cargados:', {
                     almacenes: this.almacenes.length,
                     aeronaves: this.aeronaves.length,
                     items: this.items.length
@@ -102,7 +98,7 @@ export class CrearSolicitudComponent implements OnInit {
                 this.isLoadingCatalogos = false;
             },
             error: (error) => {
-                console.error('❌ Error cargando catálogos:', error);
+                console.error('Error cargando catálogos:', error);
                 this.isLoadingCatalogos = false;
                 
                 // Cargar por separado como fallback
@@ -116,7 +112,7 @@ export class CrearSolicitudComponent implements OnInit {
         this.catalogosService.getAlmacenes().subscribe({
             next: (data) => {
                 this.almacenes = data;
-                console.log('📦 Almacenes cargados:', data.length);
+                console.log('Almacenes cargados:', data.length);
             },
             error: (error) => {
                 console.error('Error cargando almacenes:', error);
@@ -127,7 +123,7 @@ export class CrearSolicitudComponent implements OnInit {
         this.catalogosService.getAeronaves().subscribe({
             next: (data) => {
                 this.aeronaves = data;
-                console.log('✈️ Aeronaves cargadas:', data.length);
+                console.log('Aeronaves cargadas:', data.length);
             },
             error: (error) => {
                 console.error('Error cargando aeronaves:', error);
@@ -138,7 +134,7 @@ export class CrearSolicitudComponent implements OnInit {
         this.catalogosService.getItems().subscribe({
             next: (data) => {
                 this.items = data;
-                console.log('📦 Items cargados:', data.length);
+                console.log('Items cargados:', data.length);
             },
             error: (error) => {
                 console.error('Error cargando items:', error);
@@ -192,12 +188,12 @@ export class CrearSolicitudComponent implements OnInit {
                 }))
             };
             
-            console.log('📤 Enviando solicitud:', solicitudDto);
+            console.log('Enviando solicitud:', solicitudDto);
             
             this.solicitudService.create(solicitudDto).subscribe({
                 next: (response) => {
                     this.isLoading = false;
-                    this.snackBar.open('✅ Solicitud creada exitosamente!', 'Cerrar', {
+                    this.snackBar.open('Solicitud creada exitosamente!', 'Cerrar', {
                         duration: 3000
                     });
                     
@@ -211,7 +207,7 @@ export class CrearSolicitudComponent implements OnInit {
                 },
                 error: (error) => {
                     this.isLoading = false;
-                    console.error('❌ Error:', error);
+                    console.error(' Error:', error);
                     
                     let errorMessage = 'Error al crear la solicitud';
                     if (error.error?.message) {

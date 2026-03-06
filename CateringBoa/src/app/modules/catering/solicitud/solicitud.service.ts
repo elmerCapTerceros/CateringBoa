@@ -3,9 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 import { environment } from 'environments/environment';
-
-// Importar interfaces del CatalogosService
-import { Almacen, Aeronave, Item} from '../services/catalogo.service'; // Ajusta la ruta según tu estructura
+import { Almacen, Aeronave, Item} from '../services/catalogo.service'; 
 
 export interface DetalleResponse {
     idDetalleDotacion: number;
@@ -77,16 +75,12 @@ export class SolicitudService {
 
     constructor(private http: HttpClient) {}
 
-    // ============================================
-    // 🔄 MÉTODOS PARA SOLICITUDES
-    // ============================================
-
     // Mapear backend → frontend (USANDO INTERFACES CORRECTAS)
     private mapBackendToFrontend(backend: SolicitudBackendResponse): Solicitud {
         return {
             id: backend.idSolicitudDotacion,
             
-            // 🟢 Usar los campos REALES de tus interfaces
+            //Usar los campos REALES de tus interfaces
             almacen: backend.almacen ? 
                 `${backend.almacen.codigo || ''} ${backend.almacen.nombreAlmacen}`.trim() 
                 : `Almacén ${backend.almacenId}`,
@@ -102,7 +96,7 @@ export class SolicitudService {
             estado: backend.estado as 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada',
             
             items: (backend.detalles || []).map(detalle => ({
-                // 🟢 Usar categoriaItem de tu interfaz Item
+                //Usar categoriaItem de tu interfaz Item
                 categoria: detalle.item?.categoriaItem || 'Sin categoría',
                 nombre: detalle.item?.nombreItem || 'Sin nombre',
                 cantidad: detalle.cantidad
@@ -137,13 +131,13 @@ export class SolicitudService {
         }
     }
 
-    // 📋 GETLIST - Obtener todas las solicitudes
+    //GETLIST - Obtener todas las solicitudes
     getList(): Observable<Solicitud[]> {
-        console.log('🌐 GET solicitudes:', this.apiUrl);
+        console.log('GET solicitudes:', this.apiUrl);
 
         return this.http.get<SolicitudBackendResponse[]>(this.apiUrl).pipe(
             tap(response => {
-                console.log('📥 Respuesta RAW:', response?.length || 0, 'registros');
+                console.log('Respuesta RAW:', response?.length || 0, 'registros');
             }),
             map(response => {
                 const mapped = (response || []).map(item => this.mapBackendToFrontend(item));
@@ -151,11 +145,11 @@ export class SolicitudService {
                 return mapped;
             }),
             tap(solicitudes => {
-                console.log('💾 Actualizando BehaviorSubject:', solicitudes.length);
+                console.log('Actualizando BehaviorSubject:', solicitudes.length);
                 this.solicitudesSubject.next(solicitudes);
             }),
             catchError(error => {
-                console.error('❌ Error en getList():', error);
+                console.error('Error en getList():', error);
                 throw error;
             })
         );
@@ -163,7 +157,7 @@ export class SolicitudService {
 
     // 🆕 CREATE - Crear solicitud
     create(solicitudData: CreateSolicitudDto): Observable<Solicitud> {
-        console.log('📤 CREATE solicitud:', {
+        console.log('CREATE solicitud:', {
             ...solicitudData,
             detalles: solicitudData.detalles
         });
@@ -174,10 +168,10 @@ export class SolicitudService {
                 // Actualizar caché de solicitudes
                 const solicitudesActuales = this.solicitudesSubject.value;
                 this.solicitudesSubject.next([nuevaSolicitud, ...solicitudesActuales]);
-                console.log('✅ Solicitud agregada a BehaviorSubject');
+                console.log('Solicitud agregada a BehaviorSubject');
             }),
             catchError(error => {
-                console.error('❌ Error CREATE:', error);
+                console.error('Error CREATE:', error);
                 if (error.error) {
                     console.error('Detalles del error:', error.error);
                 }
@@ -186,18 +180,18 @@ export class SolicitudService {
         );
     }
 
-    // 🔍 GETBYID - Obtener una solicitud por ID
+    //GETBYID - Obtener una solicitud por ID
     getById(id: number): Observable<Solicitud> {
         return this.http.get<SolicitudBackendResponse>(`${this.apiUrl}/${id}`).pipe(
             map(response => this.mapBackendToFrontend(response)),
             catchError(error => {
-                console.error('❌ Error GET by ID:', error);
+                console.error('Error GET by ID:', error);
                 throw error;
             })
         );
     }
 
-    // ✏️ UPDATE - Actualizar solicitud
+    //UPDATE - Actualizar solicitud
     update(id: number, solicitudData: Partial<CreateSolicitudDto>): Observable<Solicitud> {
         return this.http.patch<SolicitudBackendResponse>(
             `${this.apiUrl}/${id}`,
@@ -210,16 +204,16 @@ export class SolicitudService {
                     s.id === id ? actualizada : s
                 );
                 this.solicitudesSubject.next(solicitudes);
-                console.log('✏️ Solicitud actualizada en caché');
+                console.log('Solicitud actualizada en caché');
             }),
             catchError(error => {
-                console.error('❌ Error UPDATE:', error);
+                console.error('Error UPDATE:', error);
                 throw error;
             })
         );
     }
 
-    // ❌ DELETE - Eliminar solicitud
+    //DELETE - Eliminar solicitud
     delete(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
             tap(() => {
@@ -227,26 +221,26 @@ export class SolicitudService {
                 const filtradas = this.solicitudesSubject.value
                     .filter(s => s.id !== id);
                 this.solicitudesSubject.next(filtradas);
-                console.log('🗑️ Solicitud eliminada de caché');
+                console.log('Solicitud eliminada de caché');
             }),
             catchError(error => {
-                console.error('❌ Error DELETE:', error);
+                console.error('Error DELETE:', error);
                 throw error;
             })
         );
     }
 
-    // 🔄 REFRESH - Refrescar datos
+    //REFRESH - Refrescar datos
     refresh(): void {
         this.getList().subscribe();
     }
 
-    // 🎯 Método para probar conexión
+    // Método para probar conexión
     testConnection(): Observable<any> {
         return this.http.get(this.apiUrl).pipe(
-            tap(() => console.log('✅ Conexión con backend exitosa')),
+            tap(() => console.log('Conexión con backend exitosa')),
             catchError(error => {
-                console.error('❌ Error de conexión:', error);
+                console.error('Error de conexión:', error);
                 throw error;
             })
         );

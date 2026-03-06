@@ -1,4 +1,3 @@
-
 <div class="flex flex-col flex-auto min-w-0">
     <div class="flex-auto p-6 sm:p-10">
         <div class="flex justify-between items-center mb-8">
@@ -10,6 +9,7 @@
                 + Nueva Solicitud
             </button>
         </div>
+        
         <!-- Formulario de Filtros -->
         <form [formGroup]="filtroForm">
             <div class="flex flex-wrap gap-3 mb-6">
@@ -20,21 +20,22 @@
                         <mat-label>Filtrar por almacén:</mat-label>
                         <mat-select formControlName="almacen">
                             @for (almacen of almacenes; track almacen.value) {
-                                <mat-option [value]="almacen.value">{{almacen.viewValue}}</mat-option>
+                                <mat-option [value]="almacen.value">
+                                    {{almacen.viewValue}}
+                                </mat-option>
                             }
                         </mat-select>
                     </mat-form-field>
                 </div>
 
-                <!-- Filtro por Prioridad -->
                 <div>
                     <mat-form-field appearance="outline" class="w-64">
                         <mat-label>Filtrar por prioridad:</mat-label>
                         <mat-select formControlName="prioridad">
                             <mat-option value="">Todas</mat-option>
-                            <mat-option value="1">Alta</mat-option>
-                            <mat-option value="2">Media</mat-option>
-                            <mat-option value="3">Baja</mat-option>
+                            <mat-option value="Alta">Alta</mat-option>
+                            <mat-option value="Media">Media</mat-option>
+                            <mat-option value="Baja">Baja</mat-option>
                         </mat-select>
                     </mat-form-field>
                 </div>
@@ -130,7 +131,7 @@
                         </tr>
                     } @empty {
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                 No se encontraron solicitudes con los filtros seleccionados
                             </td>
                         </tr>
@@ -138,12 +139,13 @@
                 </tbody>
             </table>
         </div>
+        
         <!-- Paginador -->
-        <mat-paginator [length]="solicitudesFiltradas.length"
-                       [pageSize]="5"
-                       [pageSizeOptions]="[5, 10, 25, 100]"
-                       aria-label="Select page">
+        <mat-paginator 
+            [length]="solicitudesFiltradas.length"
+            [pageSize]="5"
+            [pageSizeOptions]="[5, 10, 25, 100]"
+            aria-label="Select page">
         </mat-paginator>
     </div>
 </div>
-

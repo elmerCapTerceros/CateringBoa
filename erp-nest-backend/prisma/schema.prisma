@@ -197,7 +197,7 @@ model Ruta {
   idRuta    Int               @id @default(autoincrement())
   origen    String            @db.VarChar(45)
   destino   String            @db.VarChar(45)
-  codigo    String? // Added for frontend form
+  codigo    String?
   aeronaves AeronaveHasRuta[]
 }
 

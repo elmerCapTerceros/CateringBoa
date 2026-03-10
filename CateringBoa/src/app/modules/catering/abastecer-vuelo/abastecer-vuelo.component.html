@@ -22,17 +22,17 @@
                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm">
             </div>
 
-            @for (vuelo of vuelosFiltrados; track vuelo.id) {
+            @for (vuelo of vuelosFiltrados; track vuelo.codigo) {
                 <div (click)="seleccionarVuelo(vuelo)"
                      class="bg-white border rounded-xl p-5 cursor-pointer transition-all hover:shadow-md relative overflow-hidden group"
-                     [ngClass]="vueloSeleccionado?.id === vuelo.id ? 'border-blue-600 ring-2 ring-blue-100 shadow-md' : 'border-gray-200'">
+                     [ngClass]="vueloSeleccionado === vuelo ? 'border-blue-600 ring-2 ring-blue-100 shadow-md' : 'border-gray-200'">
 
                     <div class="absolute top-4 right-4">
                         <span class="px-2 py-1 rounded text-[10px] font-bold uppercase"
                               [ngClass]="{
-                                  'bg-orange-100 text-orange-700': vuelo.estado === 'Pendiente',
-                                  'bg-blue-100 text-blue-700': vuelo.estado === 'En Proceso',
-                                  'bg-green-100 text-green-700': vuelo.estado === 'Despachado'
+                                  'bg-orange-100 text-orange-700': vuelo.estado === 'PENDIENTE',
+                                  'bg-blue-100 text-blue-700': vuelo.estado === 'EN PROCESO',
+                                  'bg-green-100 text-green-700': vuelo.estado === 'DESPACHADO'
                               }">
                             {{ vuelo.estado }}
                         </span>
@@ -44,11 +44,11 @@
                         <div class="flex items-center text-sm text-gray-500 mt-1">
                             <span class="font-medium text-slate-700">{{ vuelo.ruta }}</span>
                             <span class="mx-2">•</span>
-                            <mat-icon class="icon-size-4 mr-1">schedule</mat-icon> {{ vuelo.horaSalida }}
+                            <mat-icon class="icon-size-4 mr-1">schedule</mat-icon> {{ vuelo.hora }}
                         </div>
                     </div>
 
-                    @if (vueloSeleccionado?.id === vuelo.id) {
+                    @if (vueloSeleccionado === vuelo) {
                         <div class="absolute bottom-0 left-0 w-1 h-full bg-blue-600"></div>
                     }
                 </div>
@@ -74,11 +74,8 @@
                             <p class="text-sm text-gray-500">{{ vueloSeleccionado.ruta }} • {{ vueloSeleccionado.matricula }}</p>
                         </div>
                         <div class="flex gap-2">
-                            <button mat-stroked-button (click)="guardarCambios(false)">
-                                <mat-icon class="mr-2">save</mat-icon> Guardar Borrador
-                            </button>
-                            <button mat-flat-button color="primary" (click)="guardarCambios(true)">
-                                <mat-icon class="mr-2">send</mat-icon> Despachar
+                            <button mat-flat-button color="primary" (click)="confirmarDespacho()">
+                                <mat-icon class="mr-2">send</mat-icon> Despachar Vuelo
                             </button>
                         </div>
                     </div>
@@ -92,12 +89,12 @@
                                     <mat-select [(ngModel)]="plantillaSeleccionadaId">
                                         @for (plan of plantillasDisponibles; track plan.id) {
                                             <mat-option [value]="plan.id">
-                                                {{ plan.nombre }} ({{ plan.totalItems }} ítems)
+                                                {{ plan.nombre }}
                                             </mat-option>
                                         }
                                     </mat-select>
                                 </mat-form-field>
-                                <button mat-flat-button color="accent" class="h-[56px] mb-5" (click)="cargarPlantilla()" [disabled]="!plantillaSeleccionadaId">
+                                <button mat-flat-button color="accent" class="h-[56px] mb-5" (click)="aplicarPlantilla()" [disabled]="!plantillaSeleccionadaId">
                                     Aplicar
                                 </button>
                             </div>
@@ -121,7 +118,7 @@
                                 </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
-                                    @for (item of listaCargaActual; track item.id; let i = $index) {
+                                    @for (item of listaCargaActual; track item.itemId; let i = $index) {
                                         <tr class="hover:bg-blue-50/50 transition-colors group">
                                             <td class="px-6 py-4">
                                                 <div class="font-bold text-slate-700">{{ item.nombre }}</div>
@@ -151,7 +148,7 @@
                                 <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
                                     <mat-icon class="icon-size-10 text-gray-300">inventory</mat-icon>
                                 </div>
-                                <p class="text-lg">No hay ítems cargados.</p>
+                                <p class="text-lg">No hay ítems cargados para este vuelo.</p>
                             </div>
                         }
                     </div>
@@ -186,9 +183,9 @@
         <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
             <div>
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <mat-icon class="text-purple-600">inventory_2</mat-icon> Selección Múltiple
+                    <mat-icon class="text-purple-600">inventory_2</mat-icon> Agregar Extras
                 </h2>
-                <p class="text-xs text-gray-500 mt-1">Busca y selecciona los productos del almacén</p>
+                <p class="text-xs text-gray-500 mt-1">Busca y selecciona productos adicionales</p>
             </div>
             <button mat-icon-button (click)="dialog.closeAll()"><mat-icon>close</mat-icon></button>
         </div>
@@ -199,7 +196,7 @@
                 <input type="text"
                        [(ngModel)]="searchStockTerm"
                        (keyup)="filtrarStock()"
-                       placeholder="Buscar por nombre o categoría..."
+                       placeholder="Buscar por nombre..."
                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50">
             </div>
         </div>
@@ -218,17 +215,16 @@
                         <div class="flex-1">
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-700">{{ item.nombre }}</span>
-                                <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{{ item.categoria }}</span>
                             </div>
                             <div class="text-xs text-gray-400 mt-0.5">
-                                Stock: <span [class]="item.stockActual > 0 ? 'text-green-600 font-bold' : 'text-red-500'">{{ item.stockActual }}</span> {{ item.unidad }}
+                                Disponible: <span class="font-bold text-green-600">{{ item.stockActual }}</span> {{ item.unidad }}
                             </div>
                         </div>
 
                         @if (item.selected) {
                             <div class="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300" (click)="$event.stopPropagation()">
                                 <span class="text-xs font-bold text-purple-700">Cant:</span>
-                                <input type="number" min="1" [max]="item.stockActual"
+                                <input type="number" min="1"
                                        [(ngModel)]="item.cantidadAgregar"
                                        class="w-20 p-2 border border-purple-200 rounded-lg text-center font-bold focus:ring-2 focus:ring-purple-500 outline-none">
                             </div>

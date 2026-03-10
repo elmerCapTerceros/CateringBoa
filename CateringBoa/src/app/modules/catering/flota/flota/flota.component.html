@@ -1,362 +1,324 @@
-<div class="flex flex-col h-[calc(100vh-80px)] bg-gray-50/50 p-4 gap-4 overflow-hidden w-full">
+<div class="flex flex-col w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 p-6 sm:p-10 gap-10 pb-40">
 
-    <div class="flex-none flex justify-between items-end mb-2">
-        <div>
-            <h2 class="text-2xl font-bold tracking-tight text-slate-800">Centro de Control de Vuelo</h2>
-            <p class="text-secondary text-sm">Flujo de configuración de catering paso a paso.</p>
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 to-blue-900 p-8 text-white shadow-lg mb-6">
+        <mat-icon class="absolute right-0 bottom-0 text-white/10 text-[180px] -rotate-12 pointer-events-none">Connecting_airports</mat-icon>
+        <div class="relative z-10">
+            <h2 class="text-4xl font-black tracking-tight mb-2">Programación de Vuelos</h2>
+            <p class="text-blue-100 text-lg max-w-xl leading-relaxed opacity-90">
+                Gestione el ciclo completo de servicio: seleccione la flota, asigne la aeronave, defina la ruta y configure el catering.
+            </p>
         </div>
     </div>
 
-    <div class="flex flex-row gap-4 h-full w-full min-h-0 items-stretch">
+    <section @fadeInUp>
+        <div class="flex items-center gap-3 mb-5">
+            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">1</div>
+            <h3 class="text-xl font-bold text-slate-800">Selección de Flota</h3>
+        </div>
 
-        <div class="w-44 xl:w-56 flex-none flex flex-col h-full relative group">
-            <div class="bg-white rounded-xl border border-gray-200 flex flex-col h-full shadow-sm z-10 relative overflow-hidden">
-                <div class="absolute -right-3 -top-3 w-12 h-12 bg-slate-50 rounded-full flex items-end justify-start pl-2 pb-2 text-4xl font-black text-slate-100 leading-none z-0">1</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+            @for (flota of flotas; track flota.id) {
+                <div (click)="seleccionarFlota(flota)"
+                     class="relative p-6 rounded-3xl border transition-all duration-300 cursor-pointer group overflow-hidden hover:shadow-xl flex flex-col items-center gap-4 bg-white z-0"
+                     [ngClass]="flotaSeleccionada?.id === flota.id ? getThemeColor(flota.colorTheme, 'border') + ' shadow-md scale-[1.02] ring-2 ' + getThemeColor(flota.colorTheme, 'ring') : 'border-gray-200 hover:border-gray-300 hover:scale-[1.01]'">
 
-                <div class="p-3 border-b border-gray-100 bg-gray-50/50 font-bold text-xs uppercase text-gray-500 tracking-wider relative z-10">
-                    Flota
-                </div>
-                <div class="overflow-y-auto p-2 space-y-2 flex-1 relative z-10">
-                    @for (flota of flotas; track flota.id) {
-                        <div (click)="seleccionarFlota(flota)"
-                             class="flex flex-col items-center p-3 rounded-lg cursor-pointer transition-all border text-center gap-2"
-                             [ngClass]="flotaSeleccionada?.id === flota.id ? 'bg-blue-50 border-blue-500 shadow-md ring-1 ring-blue-400' : 'border-gray-100 hover:border-blue-300 hover:bg-white bg-gray-50/50'">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm"
-                                 [ngClass]="flotaSeleccionada?.id === flota.id ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'">
-                                <mat-icon>{{ flota.icon }}</mat-icon>
-                            </div>
-                            <span class="font-bold text-xs text-slate-700">{{ flota.nombre }}</span>
+                    @if (flotaSeleccionada?.id === flota.id) {
+                        <div class="absolute inset-0 bg-gradient-to-br opacity-5 z-[-1]" [ngClass]="getThemeColor(flota.colorTheme, 'gradient')"></div>
+                    }
+
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm group-hover:shadow-md"
+                         [ngClass]="flotaSeleccionada?.id === flota.id ? 'bg-gradient-to-br text-white ' + getThemeColor(flota.colorTheme, 'gradient') : getThemeColor(flota.colorTheme, 'bg') + ' ' + getThemeColor(flota.colorTheme, 'text')">
+                        <mat-icon class="icon-size-8 transform group-hover:scale-110 transition-transform">{{ flota.icon }}</mat-icon>
+                    </div>
+
+                    <div class="text-center">
+                        <div class="font-black text-slate-800 text-xl mb-1">{{ flota.nombre }}</div>
+                        <div class="text-sm font-medium text-gray-500">{{ flota.description }}</div>
+                    </div>
+
+                    @if (flotaSeleccionada?.id === flota.id) {
+                        <div class="absolute -bottom-4 text-white rounded-full p-1 animate-bounce-short z-20 shadow-sm"
+                             [ngClass]="'bg-gradient-to-r ' + getThemeColor(flota.colorTheme, 'gradient')">
+                            <mat-icon>keyboard_arrow_down</mat-icon>
                         </div>
                     }
                 </div>
-            </div>
-
-            <div class="absolute -right-6 top-1/2 -translate-y-1/2 z-20 text-slate-300/50">
-                <mat-icon class="text-[40px] w-[40px] h-[40px]">chevron_right</mat-icon>
-            </div>
+            }
         </div>
+    </section>
 
-        <div class="w-44 xl:w-56 flex-none flex flex-col h-full relative group">
-            <div class="bg-white rounded-xl border border-gray-200 flex flex-col h-full shadow-sm z-10 relative overflow-hidden">
-                <div class="absolute -right-3 -top-3 w-12 h-12 bg-slate-50 rounded-full flex items-end justify-start pl-2 pb-2 text-4xl font-black text-slate-100 leading-none z-0">2</div>
+    @if (flotaSeleccionada) {
+        <section @slideDown class="border-t-2 border-dashed border-gray-200/50 pt-8">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">2</div>
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    Aeronaves Disponibles
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">{{ flotaSeleccionada.nombre }}</span>
+                </h3>
+            </div>
 
-                <div class="p-3 border-b border-gray-100 bg-gray-50/50 font-bold text-xs uppercase text-gray-500 tracking-wider relative z-10">
-                    Aeronave
-                </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                @for (avion of aeronavesVisibles; track avion.id) {
+                    <div (click)="seleccionarAeronave(avion)"
+                         class="relative p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-3 overflow-hidden hover:shadow-lg group"
+                         [ngClass]="aeronaveSeleccionada?.id === avion.id ? 'border-transparent shadow-xl scale-110 z-10 text-white' : 'bg-white border-gray-200 hover:border-indigo-300 hover:scale-105'">
 
-                <div class="overflow-y-auto p-2 space-y-2 flex-1 relative z-10">
-                    @if (!flotaSeleccionada) {
-                        <div class="h-full flex flex-col items-center justify-center text-gray-300 gap-2">
-                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
-                                <mat-icon class="icon-size-5 opacity-50">west</mat-icon>
-                            </div>
-                            <span class="text-[10px] uppercase font-bold tracking-wide">Seleccione Flota</span>
-                        </div>
-                    } @else {
-                        @for (avion of aeronavesVisibles; track avion.id) {
-                            <div (click)="seleccionarAeronave(avion)"
-                                 class="flex justify-between items-center p-3 rounded-lg cursor-pointer border transition-all"
-                                 [ngClass]="aeronaveSeleccionada?.id === avion.id ? 'bg-slate-800 text-white border-slate-800 shadow-md transform scale-[1.02]' : 'bg-white border-gray-100 hover:border-blue-300 hover:bg-blue-50'">
-                                <span class="font-bold text-sm">{{ avion.matricula }}</span>
-                                <div class="w-2.5 h-2.5 rounded-full ring-2 ring-white/20"
-                                     [ngClass]="avion.estado === 'En Vuelo' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-400'"
-                                     [matTooltip]="avion.estado"></div>
-                            </div>
+                        @if (aeronaveSeleccionada?.id === avion.id) {
+                            <div class="absolute inset-0 bg-gradient-to-br from-slate-800 to-indigo-900 z-[-1]"></div>
+                            <mat-icon class="absolute -right-4 -bottom-4 text-white opacity-10 icon-size-10 rotate-12">flight</mat-icon>
                         }
-                    }
-                </div>
-            </div>
 
-            <div class="absolute -right-6 top-1/2 -translate-y-1/2 z-20 text-slate-300/50">
-                <mat-icon class="text-[40px] w-[40px] h-[40px]">chevron_right</mat-icon>
-            </div>
-        </div>
+                        <div class="text-2xl font-black tracking-tighter" [class.text-slate-800]="aeronaveSeleccionada?.id !== avion.id">{{ avion.matricula }}</div>
 
-        <div class="w-72 xl:w-80 flex-none flex flex-col h-full relative">
-            <div class="bg-white rounded-xl border border-gray-200 flex flex-col h-full shadow-sm z-10 relative overflow-hidden">
-                <div class="absolute -right-3 -top-3 w-12 h-12 bg-slate-50 rounded-full flex items-end justify-start pl-2 pb-2 text-4xl font-black text-slate-100 leading-none z-0">3</div>
-
-                <div class="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center relative z-10">
-                    <span class="font-bold text-xs uppercase text-gray-500 tracking-wider">Rutas</span>
-                    <button mat-icon-button class="scale-75 w-7 h-7 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
-                            [disabled]="!aeronaveSeleccionada" (click)="abrirModalRuta()">
-                        <mat-icon class="icon-size-5">add</mat-icon>
-                    </button>
-                </div>
-
-                <div class="overflow-y-auto p-3 space-y-3 flex-1 bg-slate-50/30 relative z-10">
-                    @if (!aeronaveSeleccionada) {
-                        <div class="h-full flex flex-col items-center justify-center text-gray-300 gap-2">
-                            <mat-icon class="icon-size-8 opacity-20">connecting_airports</mat-icon>
-                            <span class="text-[10px] uppercase font-bold tracking-wide">Esperando Avión</span>
+                        <div class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+                             [ngClass]="{
+                                'bg-emerald-100 text-emerald-700': avion.estado === 'En Vuelo' && aeronaveSeleccionada?.id !== avion.id,
+                                'bg-gray-100 text-gray-600': avion.estado !== 'En Vuelo' && aeronaveSeleccionada?.id !== avion.id,
+                                'bg-white/20 text-white backdrop-blur-sm': aeronaveSeleccionada?.id === avion.id
+                             }">
+                            @if (avion.estado === 'En Vuelo') { <span class="relative flex h-2 w-2"> <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span> <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span> </span> }
+                            {{ avion.estado }}
                         </div>
-                    } @else {
-                        @for (ruta of rutasDisponibles; track ruta.id) {
-                            <div class="bg-white border rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md group hover:border-blue-300"
-                                 [ngClass]="ruta.activa ? 'border-gray-200' : 'opacity-60 grayscale'">
+                    </div>
+                }
+            </div>
+        </section>
+    }
 
-                                <div class="p-2 px-3 border-b border-gray-50 flex justify-between items-center bg-white">
-                                    <div class="flex flex-col">
-                                        <div class="font-bold text-sm text-slate-800">{{ ruta.nombre }}</div>
-                                        <div class="text-[10px] text-gray-500 font-mono">{{ ruta.fecha | date:'dd MMM' }}</div>
-                                    </div>
-                                    <mat-slide-toggle color="primary" class="scale-75" [checked]="ruta.activa" (change)="toggleRutaActiva(ruta)"></mat-slide-toggle>
-                                </div>
+    @if (aeronaveSeleccionada) {
+        <section @slideDown class="border-t-2 border-dashed border-gray-200/50 pt-8">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-r from-teal-500 to-emerald-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">3</div>
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        Rutas Programadas <span class="text-indigo-600 font-mono font-black text-lg bg-indigo-50 px-2 rounded">{{ aeronaveSeleccionada.matricula }}</span>
+                    </h3>
+                </div>
+                <button mat-flat-button color="primary" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md hover:shadow-lg transition-all" (click)="abrirModalRuta()">
+                    <mat-icon class="mr-2 animate-bounce-short">add_road</mat-icon> Nueva Ruta
+                </button>
+            </div>
 
-                                @if (ruta.activa) {
-                                    <div class="divide-y divide-gray-50 bg-white">
-                                        @for (tramo of ruta.tramos; track tramo.id) {
-                                            <div (click)="seleccionarTramo(tramo, true)"
-                                                 class="p-2 px-3 flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-all border-l-4"
-                                                 [ngClass]="tramoSeleccionado?.id === tramo.id ? 'border-l-blue-600 bg-blue-50' : 'border-l-transparent'">
-
-                                                <div class="flex items-center gap-2">
-                                                    <div class="font-black text-xs text-slate-600">{{ tramo.vuelo }}</div>
-                                                    <div class="flex items-center text-xs text-gray-500 gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
-                                                        <span>{{ tramo.origen }}</span>
-                                                        <mat-icon class="icon-size-3 text-gray-400">arrow_right_alt</mat-icon>
-                                                        <span>{{ tramo.destino }}</span>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                @if (rutasDisponibles.length > 0) {
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50/50 text-xs uppercase text-gray-500 font-bold border-b border-gray-100 tracking-wider">
+                            <tr>
+                                <th class="p-5 w-20 text-center">Estado</th>
+                                <th class="p-5">Vuelo / Fecha</th>
+                                <th class="p-5">Seleccionar Tramo (Leg)</th>
+                                <th class="p-5 text-right">Opciones</th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50 text-sm">
+                                @for (ruta of rutasDisponibles; track ruta.id) {
+                                    <tr class="hover:bg-slate-50 transition-all" [class.bg-slate-50]="!ruta.activa">
+                                        <td class="p-5 text-center">
+                                            <mat-slide-toggle color="primary" [checked]="ruta.activa" (change)="toggleRutaActiva(ruta, $event)"
+                                                              class="scale-90" [matTooltip]="ruta.activa ? 'Desactivar Ruta' : 'Activar Ruta'"></mat-slide-toggle>
+                                        </td>
+                                        <td class="p-5" [class.opacity-50]="!ruta.activa">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xs shadow-sm border border-indigo-100">
+                                                    {{ ruta.codigo | slice:0:2 }}
+                                                </div>
+                                                <div>
+                                                    <div class="font-black text-slate-800 text-base">{{ ruta.codigo }}</div>
+                                                    <div class="text-xs font-medium text-gray-500 flex items-center gap-1">
+                                                        <mat-icon class="icon-size-3">calendar_today</mat-icon>
+                                                        {{ ruta.fecha | date:'EEEE dd, MMM yyyy' }}
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-5" [class.opacity-50]="!ruta.activa">
+                                            <div class="flex gap-3 flex-wrap">
+                                                @for (tramo of ruta.tramos; track tramo.id) {
+                                                    <button (click)="seleccionarTramo(tramo, ruta)"
+                                                            [disabled]="!ruta.activa"
+                                                            class="group relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 overflow-hidden"
+                                                            [ngClass]="tramoSeleccionado?.id === tramo.id ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-lg ring-2 ring-blue-200 scale-105' : 'bg-white border-gray-200 hover:border-blue-400 hover:shadow-md text-gray-700 enabled:hover:scale-105'">
 
-                                                @if (tramoSeleccionado?.id === tramo.id) {
-                                                    <mat-icon class="icon-size-4 text-blue-600 animate-in fade-in slide-in-from-left-1">chevron_right</mat-icon>
+                                                        @if (tramoSeleccionado?.id === tramo.id) {
+                                                            <div class="absolute inset-0 bg-white/10 animate-pulse"></div>
+                                                        }
+
+                                                        <div class="font-black font-mono">{{ tramo.origen }}</div>
+                                                        <mat-icon class="icon-size-4 transition-transform group-hover:translate-x-1"
+                                                                  [ngClass]="tramoSeleccionado?.id === tramo.id ? 'text-white' : 'text-blue-500'">arrow_forward</mat-icon>
+                                                        <div class="font-black font-mono">{{ tramo.destino }}</div>
+
+                                                        <div class="text-[10px] font-bold opacity-70 ml-2 pl-2 border-l border-current">{{ tramo.horaSalida }}</div>
+                                                    </button>
                                                 }
                                             </div>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-
-            <div class="absolute -right-6 top-1/2 -translate-y-1/2 z-20 text-slate-300/50">
-                <mat-icon class="text-[40px] w-[40px] h-[40px]">chevron_right</mat-icon>
-            </div>
-        </div>
-
-        <div class="flex-1 flex flex-col h-full min-w-0">
-            <div class="bg-white rounded-xl border border-gray-200 flex flex-col h-full shadow-lg overflow-hidden relative">
-
-                @if (tramoSeleccionado) {
-                    <div class="p-6 bg-slate-800 text-white flex justify-between items-center relative overflow-hidden flex-none">
-                        <mat-icon class="absolute -right-6 -bottom-6 text-white opacity-5 text-[180px] w-[180px] h-[180px] pointer-events-none">inventory_2</mat-icon>
-                        <div class="absolute top-0 right-0 p-4 text-[100px] font-bold text-white opacity-[0.03] leading-none pointer-events-none">4</div>
-
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">4</span>
-                                <div class="text-[10px] opacity-70 uppercase tracking-widest font-bold">Configuración de Carga</div>
-                            </div>
-                            <div class="text-3xl font-bold">{{ tramoSeleccionado.vuelo }}</div>
-                            <div class="flex items-center gap-3 text-sm opacity-90 mt-2">
-                                <div class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
-                                    <span class="font-mono font-bold">{{ tramoSeleccionado.origen }}</span>
-                                    <mat-icon class="icon-size-4">flight_takeoff</mat-icon>
-                                    <span class="font-mono font-bold">{{ tramoSeleccionado.destino }}</span>
-                                </div>
-                                <div class="text-xs opacity-70">{{ nuevaRutaCabecera.fecha | date:'fullDate' }}</div>
-                            </div>
-                        </div>
-
-                        <div class="text-right relative z-10 bg-white/5 p-3 rounded-xl border border-white/10 backdrop-blur-sm">
-                            <div class="text-4xl font-bold leading-none tracking-tight">{{ conteoSeleccionados }}</div>
-                            <div class="text-[10px] uppercase opacity-70">Items Seleccionados</div>
-                        </div>
-                    </div>
-
-                    <div class="p-3 px-5 bg-blue-50/50 border-b border-blue-100 flex justify-between items-center flex-none">
-                        <mat-checkbox color="primary" [checked]="todosSeleccionados" (change)="toggleSeleccionarTodo($event.checked)">
-                            <span class="text-xs font-bold text-slate-700 pl-2">Seleccionar Todo</span>
-                        </mat-checkbox>
-                        <div class="text-[10px] font-bold text-blue-600 uppercase tracking-wide bg-blue-100 px-3 py-1 rounded-full">
-                            Catálogo Disponible
-                        </div>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto p-0 bg-white">
-                        <table class="w-full text-sm">
-                            <tbody class="divide-y divide-gray-50">
-                                @for (item of tramoSeleccionado.itemsCatering; track item.nombre) {
-                                    <tr class="transition-all group duration-200 cursor-pointer"
-                                        [class.bg-blue-50]="item.check"
-                                        [class.hover:bg-gray-50]="!item.check"
-                                        (click)="item.check = !item.check">
-
-                                        <td class="p-4 pl-6 w-10">
-                                            <mat-checkbox color="primary" [(ngModel)]="item.check" (click)="$event.stopPropagation()"></mat-checkbox>
                                         </td>
-
-                                        <td class="p-4">
-                                            <div class="font-bold text-slate-700 text-base group-hover:text-blue-700 transition-colors">{{ item.nombre }}</div>
-                                            <div class="text-xs text-gray-400">Standard Catering • {{ item.unidad }}</div>
-                                        </td>
-
-                                        <td class="p-4 text-right pr-6" (click)="$event.stopPropagation()">
-                                            <div class="flex items-center justify-end gap-2 transition-all duration-300"
-                                                 [class.opacity-30]="!item.check"
-                                                 [class.grayscale]="!item.check"
-                                                 [class.pointer-events-none]="!item.check">
-
-                                                <div class="relative flex items-center">
-                                                    <button class="w-8 h-8 rounded-l-lg border border-gray-300 bg-gray-50 hover:bg-gray-200 font-bold text-gray-600"
-                                                            (click)="item.cantidad = item.cantidad > 0 ? item.cantidad - 1 : 0"> - </button>
-
-                                                    <input type="number" [(ngModel)]="item.cantidad"
-                                                           class="w-16 text-center border-y border-gray-300 text-sm font-bold focus:ring-0 py-1.5 bg-white h-8 appearance-none">
-
-                                                    <button class="w-8 h-8 rounded-r-lg border border-gray-300 bg-gray-50 hover:bg-gray-200 font-bold text-gray-600"
-                                                            (click)="item.cantidad = item.cantidad + 1"> + </button>
-                                                </div>
-                                            </div>
+                                        <td class="p-5 text-right">
+                                            <button mat-icon-button color="warn" class="hover:bg-red-50 rounded-xl transition-colors" (click)="confirmarEliminarRuta($event, ruta.id)">
+                                                <mat-icon>delete_outline</mat-icon>
+                                            </button>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center flex-none">
-                        <div class="text-xs text-gray-400 pl-2">
-                            <mat-icon class="icon-size-3 inline align-middle mr-1">info</mat-icon>
-                            Los cambios se guardan en borrador.
-                        </div>
-                        <div class="flex gap-3">
-                            <button mat-stroked-button color="warn" class="px-4" (click)="cancelarAbastecimiento()">Cancelar</button>
-                            <button mat-raised-button color="primary" class="bg-green-600 text-white px-8 shadow-md hover:shadow-lg hover:bg-green-700 transition-all" (click)="guardarAbastecimiento()">
-                                <mat-icon class="mr-2">check_circle</mat-icon> Confirmar Carga
-                            </button>
-                        </div>
-                    </div>
-
                 } @else {
-                    <div class="h-full flex flex-col items-center justify-center text-gray-300 p-10 text-center bg-slate-50 relative overflow-hidden">
-                        <mat-icon class="absolute text-gray-100 text-[350px] w-[350px] h-[350px] -right-20 -bottom-20 pointer-events-none rotate-12">flight_takeoff</mat-icon>
-                        <div class="relative z-10 backdrop-blur-sm bg-white/50 p-8 rounded-3xl border border-white/60 shadow-sm">
-                            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-md mx-auto ring-4 ring-gray-50">
-                                <span class="text-4xl font-bold text-gray-300">4</span>
-                            </div>
-                            <h4 class="text-2xl font-bold text-slate-400">Abastecimiento</h4>
-                            <p class="text-sm mt-3 max-w-[250px] mx-auto text-gray-400 leading-relaxed">
-                                Seleccione una ruta en el panel anterior para visualizar y editar la lista de carga.
-                            </p>
+                    <div class="p-12 text-center flex flex-col items-center justify-center gap-3 text-gray-400 bg-gray-50/50">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                            <mat-icon class="icon-size-8 opacity-30">add_road</mat-icon>
                         </div>
+                        <p class="font-medium">No hay rutas programadas para esta aeronave.</p>
+                        <button mat-stroked-button color="primary" (click)="abrirModalRuta()">Crear la primera ruta</button>
                     </div>
                 }
             </div>
-        </div>
+        </section>
+    }
 
-    </div>
-    <ng-template #modalCrearRuta>
-        <div class="flex flex-col h-[500px] w-full max-w-[90vw] bg-white rounded-xl overflow-hidden">
+    @if (tramoSeleccionado) {
+        <section id="seccion-catering" @slideDown class="mt-8 relative z-10">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 blur-2xl opacity-20 -z-10 transform translate-y-4 scale-95 rounded-[3rem]"></div>
 
-            <div class="p-5 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-800">Nueva Ruta Comercial</h2>
-                    <p class="text-xs text-gray-500">Defina el código, fecha y tramos del vuelo.</p>
+            <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-white ring-1 ring-gray-100">
+
+                <div class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 p-8 sm:p-10 text-white relative overflow-hidden">
+                    <mat-icon class="absolute -right-10 -bottom-12 text-white opacity-[0.07] text-[250px] rotate-12 pointer-events-none">inventory_2</mat-icon>
+                    <div class="absolute top-10 right-20 w-2 h-2 bg-blue-400 rounded-full animate-ping opacity-50"></div>
+                    <div class="absolute bottom-10 left-20 w-3 h-3 bg-cyan-400 rounded-full animate-pulse opacity-30"></div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                        <div>
+                            <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-1.5 rounded-full text-xs font-bold mb-4 backdrop-blur-md border border-white/20 shadow-sm animate-in fade-in slide-in-from-left-4">
+                                <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-400 shadow-sm animate-pulse"></span>
+                                CONFIGURACIÓN ACTIVA
+                            </div>
+                            <h3 class="text-4xl font-black tracking-tight flex items-center gap-3 mb-2">
+                                {{ tramoSeleccionado.origen }}
+                                <mat-icon class="opacity-60 icon-size-10">flight_takeoff</mat-icon>
+                                {{ tramoSeleccionado.destino }}
+                            </h3>
+                            <div class="text-blue-200 font-medium flex items-center gap-2">
+                                <mat-icon class="icon-size-5">schedule</mat-icon>
+                                Salida: {{ tramoSeleccionado.horaSalida }} • Vuelo {{ tramoSeleccionado.vuelo }}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6 bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-md shadow-lg animate-in fade-in slide-in-from-right-4">
+                            <div class="text-right">
+                                <div class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-200 leading-none drop-shadow-sm">
+                                    {{ conteoSeleccionados }}
+                                </div>
+                                <div class="text-xs font-bold text-blue-200 uppercase tracking-widest">Items Seleccionados</div>
+                            </div>
+                            <div>
+                                <button mat-raised-button class="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-green-500/30 py-3 px-8 rounded-xl text-lg font-bold transform hover:scale-105 transition-all" (click)="guardarAbastecimiento()">
+                                    <mat-icon class="mr-2 animate-bounce-short">check_circle</mat-icon> Confirmar Carga
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button mat-icon-button mat-dialog-close>
-                    <mat-icon>close</mat-icon>
-                </button>
-            </div>
 
-            <div class="flex-1 overflow-y-auto p-6">
+                <div class="p-8 sm:p-10 bg-gradient-to-b from-white to-slate-50/50">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h4 class="text-xl font-bold text-slate-800 mb-1">Catálogo de Productos</h4>
+                            <p class="text-sm text-gray-500">Seleccione los productos y defina las cantidades.</p>
+                        </div>
 
-                <div class="grid grid-cols-12 gap-4 mb-6">
-                    <mat-form-field appearance="outline" class="col-span-4">
-                        <mat-label>Código Vuelo</mat-label>
-                        <input matInput [(ngModel)]="nuevaRutaCabecera.codigo" placeholder="Ej: OB-760" class="font-bold uppercase">
-                        <mat-icon matSuffix>flight</mat-icon>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="col-span-8">
-                        <mat-label>Nombre Descriptivo</mat-label>
-                        <input matInput [(ngModel)]="nuevaRutaCabecera.nombre" placeholder="Ej: Vuelo Regular VVI-MIA">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="col-span-12">
-                        <mat-label>Fecha de Operación</mat-label>
-                        <input matInput [matDatepicker]="picker" [(ngModel)]="nuevaRutaCabecera.fecha">
-                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-datepicker #picker></mat-datepicker>
-                    </mat-form-field>
-                </div>
-
-                <div class="bg-slate-50 rounded-xl border border-gray-200 p-4">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="text-sm font-bold text-slate-700 flex items-center gap-2">
-                            <mat-icon class="icon-size-4 text-blue-600">alt_route</mat-icon> Itinerario / Escalas
-                        </h4>
-                        <button mat-stroked-button color="primary" class="text-xs h-8 bg-white" (click)="agregarTramoAlFormulario()">
-                            <mat-icon class="icon-size-4 mr-1">add</mat-icon> Agregar Tramo
-                        </button>
+                        <div class="bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+                            <mat-checkbox color="primary" [checked]="todosSeleccionados" (change)="toggleSeleccionarTodo($event.checked)">
+                                <span class="font-bold text-slate-700 pl-1">Seleccionar Todo</span>
+                            </mat-checkbox>
+                        </div>
                     </div>
 
-                    <div class="space-y-3">
-                        @for (tramo of nuevosTramos; track $index) {
-                            <div class="flex gap-2 items-center animate-in fade-in slide-in-from-left-2 duration-300">
-                                <div class="relative w-20">
-                                    <input class="w-full p-2 pl-3 text-xs border border-gray-300 rounded-lg uppercase font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
-                                           placeholder="ORG" [(ngModel)]="tramo.origen" maxlength="3">
-                                    <span class="absolute -top-2 left-2 bg-slate-50 text-[9px] px-1 text-gray-400 font-bold">DE</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        @for (item of tramoSeleccionado.itemsCatering; track item.nombre) {
+                            <div class="group relative rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 cursor-pointer overflow-hidden border-2"
+                                 [ngClass]="item.check ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50/30 shadow-md scale-[1.02] z-10' : 'border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm hover:scale-[1.01]'"
+                                 (click)="item.check = !item.check">
+
+                                <div class="flex items-start gap-3">
+                                    <mat-checkbox color="primary" [(ngModel)]="item.check" (click)="$event.stopPropagation()" class="mt-1"></mat-checkbox>
+                                    <div>
+                                        <div class="font-bold text-slate-800 text-sm leading-tight transition-colors" [class.text-blue-700]="item.check">{{ item.nombre }}</div>
+                                        <div class="text-xs font-medium text-gray-400 mt-1 bg-gray-100 px-2 py-0.5 rounded-full w-fit">{{ item.unidad }}</div>
+                                    </div>
                                 </div>
 
-                                <mat-icon class="text-gray-300">arrow_forward</mat-icon>
-
-                                <div class="relative w-20">
-                                    <input class="w-full p-2 pl-3 text-xs border border-gray-300 rounded-lg uppercase font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
-                                           placeholder="DST" [(ngModel)]="tramo.destino" maxlength="3">
-                                    <span class="absolute -top-2 left-2 bg-slate-50 text-[9px] px-1 text-gray-400 font-bold">A</span>
-                                </div>
-
-                                <div class="relative w-28">
-                                    <input class="w-full p-2 text-xs border border-gray-300 rounded-lg uppercase font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
-                                           placeholder="N° Vuelo" [(ngModel)]="tramo.vuelo">
-                                </div>
-
-                                <div class="relative w-24">
-                                    <input class="w-full p-2 text-xs border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none"
-                                           type="time" [(ngModel)]="tramo.hora">
-                                </div>
-
-                                <button mat-icon-button color="warn" (click)="eliminarTramoDelFormulario($index)"
-                                        [disabled]="nuevosTramos.length === 1" class="hover:bg-red-50 rounded-full">
-                                    <mat-icon class="icon-size-5">close</mat-icon>
-                                </button>
+                                @if (item.check) {
+                                    <div class="mt-auto pt-3 border-t border-blue-200/50 animate-in slide-in-from-bottom-2 fade-in duration-300 flex items-center justify-between" (click)="$event.stopPropagation()">
+                                        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Cantidad:</span>
+                                        <div class="flex items-center bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden">
+                                            <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold" (click)="item.cantidad = item.cantidad > 0 ? item.cantidad - 1 : 0; $event.stopPropagation()">-</button>
+                                            <input type="number" [(ngModel)]="item.cantidad" class="w-12 h-8 text-center text-sm font-black border-x border-blue-100 focus:outline-none text-slate-800" (click)="$event.stopPropagation()">
+                                            <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold" (click)="item.cantidad = item.cantidad + 1; $event.stopPropagation()">+</button>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
                 </div>
             </div>
-
-            <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                <button mat-stroked-button mat-dialog-close>Cancelar</button>
-                <button mat-flat-button color="primary" class="bg-slate-800 text-white px-6" (click)="guardarRuta()">
-                    <mat-icon class="mr-2">save</mat-icon> Programar Ruta
-                </button>
-            </div>
-        </div>
-    </ng-template>
-
-    <ng-template #dialogConfirmar>
-        <div class="p-8 text-center max-w-sm mx-auto">
-            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-short">
-                <mat-icon class="text-red-500 text-3xl">delete_forever</mat-icon>
-            </div>
-
-            <h3 class="text-xl font-bold text-slate-800 mb-2">¿Eliminar esta Ruta?</h3>
-            <p class="text-sm text-gray-500 mb-6 leading-relaxed">
-                Se perderá toda la configuración de catering asociada a este vuelo. Esta acción no se puede deshacer.
-            </p>
-
-            <div class="flex justify-center gap-3">
-                <button mat-stroked-button mat-dialog-close class="w-24">Cancelar</button>
-                <button mat-flat-button color="warn" class="bg-red-600 text-white w-24" (click)="ejecutarEliminacionRuta()">
-                    Eliminar
-                </button>
-            </div>
-        </div>
-    </ng-template>
+        </section>
+    }
 </div>
+
+<ng-template #modalCrearRuta>
+    <div class="flex flex-col h-[500px] w-full max-w-[90vw] bg-white rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
+            <div><h2 class="text-xl font-bold text-slate-800">Nueva Ruta</h2></div>
+            <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="grid grid-cols-12 gap-4 mb-6">
+                <mat-form-field appearance="outline" class="col-span-4">
+                    <mat-label>Código</mat-label>
+                    <input matInput [(ngModel)]="nuevaRutaCabecera.codigo" placeholder="Ej: OB-760" class="uppercase font-bold">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="col-span-8">
+                    <mat-label>Nombre</mat-label>
+                    <input matInput [(ngModel)]="nuevaRutaCabecera.nombre">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="col-span-12">
+                    <mat-label>Fecha</mat-label>
+                    <input matInput [matDatepicker]="picker" [(ngModel)]="nuevaRutaCabecera.fecha">
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-gray-200">
+                <div class="flex justify-between mb-2"><h4 class="font-bold">Tramos</h4> <button mat-button color="primary" (click)="agregarTramoAlFormulario()">+ Agregar</button></div>
+                @for (tramo of nuevosTramos; track $index) {
+                    <div class="flex gap-2 mb-2 items-center">
+                        <input class="w-16 p-2 border rounded text-center uppercase font-bold text-sm" placeholder="ORG" [(ngModel)]="tramo.origen" maxlength="3">
+                        <mat-icon class="text-gray-400 icon-size-4">arrow_forward</mat-icon>
+                        <input class="w-16 p-2 border rounded text-center uppercase font-bold text-sm" placeholder="DST" [(ngModel)]="tramo.destino" maxlength="3">
+                        <input class="w-24 p-2 border rounded text-center text-sm" placeholder="Vuelo" [(ngModel)]="tramo.vuelo">
+                        <input class="w-20 p-2 border rounded text-center text-sm" type="time" [(ngModel)]="tramo.hora">
+                        <button mat-icon-button color="warn" (click)="eliminarTramoDelFormulario($index)"><mat-icon>close</mat-icon></button>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="p-4 bg-gray-50 flex justify-end gap-2 border-t">
+            <button mat-button mat-dialog-close>Cancelar</button>
+            <button mat-raised-button color="primary" (click)="guardarRuta()">Guardar</button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #dialogConfirmar>
+    <div class="p-6 text-center">
+        <h3 class="font-bold text-lg mb-2">¿Eliminar Ruta?</h3>
+        <p class="text-sm text-gray-500 mb-4">Esta acción no se puede deshacer.</p>
+        <div class="flex justify-center gap-2">
+            <button mat-stroked-button mat-dialog-close>Cancelar</button>
+            <button mat-flat-button color="warn" (click)="ejecutarEliminacionRuta()">Eliminar</button>
+        </div>
+    </div>
+</ng-template>

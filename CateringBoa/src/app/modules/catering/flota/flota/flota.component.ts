@@ -2,13 +2,11 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-// Material Modules
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatNativeDateModule } from '@angular/material/core'; // <--- Nuevo
-import { MatDatepickerModule } from '@angular/material/datepicker'; // <--- Nuevo
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,114 +14,63 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
-interface Flota {
-    id: string;
-    nombre: string;
-    icon: string;
-    description?: string;
-}
-interface Aeronave {
-    id: number;
-    matricula: string;
-    flotaId: string;
-    estado: string;
-}
-
-// Actualizamos Ruta para tener fecha
-interface RutaProgramada {
-    id: number;
-    nombre: string;
-    codigo: string;
-    fecha: Date; // <--- Agregado
-    activa: boolean;
-    tramos: TramoRuta[];
-    resumenRuta: string;
-}
-
-interface TramoRuta {
-    id: number;
-    origen: string;
-    destino: string;
-    vuelo: string;
-    horaSalida: string;
-    itemsCatering: ItemCatering[];
-}
-interface ItemCatering {
-    nombre: string;
-    cantidad: number;
-    check: boolean;
-    unidad: string;
-}
-
-// Formulario
-interface NuevoTramoForm {
-    origen: string;
-    destino: string;
-    vuelo: string;
-    hora: string;
-}
+// Interface actualizada con colorTheme
+interface Flota { id: string; nombre: string; icon: string; description?: string; colorTheme: string; }
+interface Aeronave { id: number; matricula: string; flotaId: string; estado: string; }
+interface RutaProgramada { id: number; nombre: string; codigo: string; fecha: Date; activa: boolean; tramos: TramoRuta[]; resumenRuta: string; }
+interface TramoRuta { id: number; origen: string; destino: string; vuelo: string; horaSalida: string; itemsCatering: ItemCatering[]; }
+interface ItemCatering { nombre: string; cantidad: number; check: boolean; unidad: string; }
+interface NuevoTramoForm { origen: string; destino: string; vuelo: string; hora: string; }
 
 @Component({
     selector: 'app-flota',
     standalone: true,
     imports: [
-        CommonModule,
-        MatIconModule,
-        MatButtonModule,
-        MatCardModule,
-        MatCheckboxModule,
-        MatSlideToggleModule,
-        FormsModule,
-        MatSnackBarModule,
-        MatDialogModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatTooltipModule,
-        MatDatepickerModule,
-        MatNativeDateModule, // <--- Importante
+        CommonModule, MatIconModule, MatButtonModule, MatCardModule,
+        MatCheckboxModule, MatSlideToggleModule, FormsModule, MatSnackBarModule,
+        MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule,
+        MatDatepickerModule, MatNativeDateModule
     ],
     templateUrl: './flota.component.html',
     animations: [
-        trigger('fadeIn', [
+        trigger('slideDown', [
             transition(':enter', [
-                style({ opacity: 0, transform: 'translateY(10px)' }),
-                animate(
-                    '300ms ease-out',
-                    style({ opacity: 1, transform: 'translateY(0)' })
-                ),
+                style({ height: 0, opacity: 0, overflow: 'hidden', transform: 'translateY(-20px)' }),
+                animate('400ms cubic-bezier(0.25, 0.8, 0.25, 1)', style({ height: '*', opacity: 1, transform: 'translateY(0)' }))
             ]),
+            transition(':leave', [
+                style({ height: '*', opacity: 1, overflow: 'hidden' }),
+                animate('300ms ease-in', style({ height: 0, opacity: 0 }))
+            ])
         ]),
-    ],
+        trigger('fadeInUp', [
+            transition(':enter', [
+                style({ opacity: 0, transform: 'translateY(20px)' }),
+                animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+            ])
+        ])
+    ]
 })
 export class FlotaComponent implements OnInit {
     @ViewChild('modalCrearRuta') modalCrearRuta!: TemplateRef<any>;
     @ViewChild('dialogConfirmar') dialogConfirmar!: TemplateRef<any>;
 
-    // Formulario (Con Fecha)
-    nuevaRutaCabecera = { nombre: '', codigo: '', fecha: new Date() };
-    nuevosTramos: NuevoTramoForm[] = [];
-
-    idRutaAEliminar: number | null = null;
-
-    // Datos Maestros
-    flotas: Flota[] = [];
     flotaSeleccionada: Flota | null = null;
+    aeronaveSeleccionada: Aeronave | null = null;
+    rutaSeleccionada: RutaProgramada | null = null;
+    tramoSeleccionado: TramoRuta | null = null;
+
+    flotas: Flota[] = [];
     todasLasAeronaves: Aeronave[] = [];
     aeronavesVisibles: Aeronave[] = [];
-    aeronaveSeleccionada: Aeronave | null = null;
-
-    // Gestión
     rutasDisponibles: RutaProgramada[] = [];
-    rutaSeleccionada: RutaProgramada | null = null;
-    tramoSeleccionado: TramoRuta | null = null; // <--- Esto activa el panel de abastecimiento
 
-    constructor(
-        private snackBar: MatSnackBar,
-        protected dialog: MatDialog
-    ) {}
+    nuevaRutaCabecera = { nombre: '', codigo: '', fecha: new Date() };
+    nuevosTramos: NuevoTramoForm[] = [];
+    idRutaAEliminar: number | null = null;
+
+    constructor(private snackBar: MatSnackBar, protected dialog: MatDialog) {}
 
     ngOnInit(): void {
         this.cargarDatosMaestros();
@@ -131,240 +78,124 @@ export class FlotaComponent implements OnInit {
 
     cargarDatosMaestros() {
         this.flotas = [
-            {
-                id: 'B737',
-                nombre: 'Boeing 737-800',
-                icon: 'flight_takeoff',
-                description: 'Corto Alcance',
-            },
-            {
-                id: 'A330',
-                nombre: 'Airbus A330',
-                icon: 'flight_takeoff',
-                description: 'Largo Alcance',
-            },
+            // Agregamos colorTheme
+            { id: 'B737', nombre: 'Boeing 737', icon: 'flight', description: 'Corto Alcance', colorTheme: 'blue' },
+            { id: 'A330', nombre: 'Airbus A330', icon: 'flight_takeoff', description: 'Largo Alcance', colorTheme: 'indigo' },
         ];
         this.todasLasAeronaves = [
-            {
-                id: 1,
-                matricula: 'CP-3030',
-                flotaId: 'A330',
-                estado: 'En Vuelo',
-            },
-            {
-                id: 2,
-                matricula: 'CP-2923',
-                flotaId: 'B737',
-                estado: 'En Tierra',
-            },
+            { id: 1, matricula: 'CP-3030', flotaId: 'A330', estado: 'En Vuelo' },
+            { id: 2, matricula: 'CP-2923', flotaId: 'B737', estado: 'En Tierra' },
+            { id: 3, matricula: 'CP-3100', flotaId: 'B737', estado: 'Mantenimiento' },
+            { id: 4, matricula: 'CP-1111', flotaId: 'A330', estado: 'En Tierra' },
         ];
     }
 
     seleccionarFlota(flota: Flota) {
         this.flotaSeleccionada = flota;
-        this.resetNiveles(2);
-        this.aeronavesVisibles = this.todasLasAeronaves.filter(
-            (a) => a.flotaId === flota.id
-        );
+        this.aeronavesVisibles = this.todasLasAeronaves.filter(a => a.flotaId === flota.id);
+        this.aeronaveSeleccionada = null;
+        this.rutasDisponibles = [];
+        this.tramoSeleccionado = null;
     }
 
     seleccionarAeronave(avion: Aeronave) {
         this.aeronaveSeleccionada = avion;
-        this.resetNiveles(3);
+        this.tramoSeleccionado = null;
         this.cargarRutasDelAvion(avion.matricula);
     }
 
-    // --- RUTAS (CRUD) ---
+    seleccionarTramo(tramo: TramoRuta, rutaPadre: RutaProgramada) {
+        if (!rutaPadre.activa) {
+            this.snackBar.open('⚠️ Active la ruta para editar el catering', 'Cerrar', { duration: 3000 });
+            return;
+        }
+        this.rutaSeleccionada = rutaPadre;
+        this.tramoSeleccionado = tramo;
+
+        setTimeout(() => {
+            document.getElementById('seccion-catering')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 200);
+    }
+
+    cargarRutasDelAvion(matricula: string) {
+        this.rutasDisponibles = [
+            {
+                id: 1, nombre: 'Regular VVI-MIA', codigo: 'OB-760', fecha: new Date(), activa: true, resumenRuta: '',
+                tramos: [{ id: 101, origen: 'VVI', destino: 'MIA', vuelo: 'OB-760', horaSalida: '08:00', itemsCatering: this.getItemsMock() }]
+            },
+            {
+                id: 2, nombre: 'Charter LPB-MAD', codigo: 'OB-990', fecha: new Date(), activa: true, resumenRuta: '',
+                tramos: [
+                    { id: 102, origen: 'LPB', destino: 'VVI', vuelo: 'OB-990', horaSalida: '14:00', itemsCatering: this.getItemsMock() },
+                    { id: 103, origen: 'VVI', destino: 'MAD', vuelo: 'OB-990', horaSalida: '16:00', itemsCatering: this.getItemsMock() }
+                ]
+            }
+        ];
+    }
+
+    getItemsMock(): ItemCatering[] {
+        return [
+            { nombre: 'Cena Pollo Premium', cantidad: 150, check: true, unidad: 'Bandeja' },
+            { nombre: 'Opción Vegetariana', cantidad: 50, check: false, unidad: 'Bandeja' },
+            { nombre: 'Coca Cola', cantidad: 20, check: false, unidad: 'Botella' },
+            { nombre: 'Jugo de Naranja', cantidad: 25, check: true, unidad: 'Tetrapack' },
+            { nombre: 'Hielo', cantidad: 5, check: false, unidad: 'Bolsa 5kg' },
+            { nombre: 'Agua Mineral', cantidad: 100, check: true, unidad: 'Botella 500ml' },
+            { nombre: 'Kit Café Start', cantidad: 10, check: false, unidad: 'Caja' },
+            { nombre: 'Snack Mix Salado', cantidad: 200, check: true, unidad: 'Bolsa' },
+        ];
+    }
+
+    get conteoSeleccionados() { return this.tramoSeleccionado?.itemsCatering.filter(i => i.check).length || 0; }
+    get todosSeleccionados() { return this.tramoSeleccionado?.itemsCatering.every(i => i.check) || false; }
+
+    toggleSeleccionarTodo(checked: boolean) {
+        this.tramoSeleccionado?.itemsCatering.forEach(i => i.check = checked);
+    }
+
+    guardarAbastecimiento() {
+        this.snackBar.open('🚀 Carga confirmada y enviada a almacén', 'Cerrar', { duration: 3000, panelClass: ['bg-green-600', 'text-white', 'font-bold'] });
+        this.tramoSeleccionado = null;
+    }
+
+    // CRUD Rutas (sin cambios significativos)
     abrirModalRuta() {
         this.nuevaRutaCabecera = { nombre: '', codigo: '', fecha: new Date() };
         this.nuevosTramos = [{ origen: '', destino: '', vuelo: '', hora: '' }];
         this.dialog.open(this.modalCrearRuta, { width: '700px' });
     }
-
-    agregarTramoAlFormulario() {
-        const ultimo = this.nuevosTramos[this.nuevosTramos.length - 1];
-        this.nuevosTramos.push({
-            origen: ultimo ? ultimo.destino : '',
-            destino: '',
-            vuelo: ultimo ? ultimo.vuelo : '',
-            hora: '',
-        });
-    }
-
-    eliminarTramoDelFormulario(index: number) {
-        if (this.nuevosTramos.length > 1) this.nuevosTramos.splice(index, 1);
-    }
+    agregarTramoAlFormulario() { this.nuevosTramos.push({ origen: '', destino: '', vuelo: '', hora: '' }); }
+    eliminarTramoDelFormulario(i: number) { this.nuevosTramos.splice(i, 1); }
 
     guardarRuta() {
-        if (!this.nuevaRutaCabecera.nombre) return;
-
-        const tramosReales: TramoRuta[] = this.nuevosTramos.map((t, index) => ({
-            id: Date.now() + index,
-            origen: t.origen.toUpperCase(),
-            destino: t.destino.toUpperCase(),
-            vuelo: t.vuelo.toUpperCase(),
-            horaSalida: t.hora || '00:00',
-            itemsCatering: this.getItemsMock(index),
+        const nuevos: TramoRuta[] = this.nuevosTramos.map((t, i) => ({
+            id: Date.now()+i, origen: t.origen.toUpperCase(), destino: t.destino.toUpperCase(),
+            vuelo: t.vuelo, horaSalida: t.hora, itemsCatering: this.getItemsMock()
         }));
-
-        const nuevaRuta: RutaProgramada = {
-            id: Date.now(),
-            nombre: this.nuevaRutaCabecera.nombre,
-            codigo: this.nuevaRutaCabecera.codigo.toUpperCase(),
-            fecha: this.nuevaRutaCabecera.fecha, // <--- Guardamos fecha
-            activa: true,
-            tramos: tramosReales,
-            resumenRuta: this.generarResumenRuta(tramosReales),
-        };
-
-        this.rutasDisponibles.unshift(nuevaRuta);
-        this.seleccionarRuta(nuevaRuta);
-        this.dialog.closeAll();
-        this.mostrarNotificacion('Ruta programada exitosamente');
-    }
-
-    confirmarEliminarRuta(e: Event, id: number) {
-        e.stopPropagation();
-        this.idRutaAEliminar = id;
-        this.dialog.open(this.dialogConfirmar, { width: '350px' });
-    }
-
-    ejecutarEliminacionRuta() {
-        if (!this.idRutaAEliminar) return;
-        this.rutasDisponibles = this.rutasDisponibles.filter(
-            (r) => r.id !== this.idRutaAEliminar
-        );
-        if (this.rutaSeleccionada?.id === this.idRutaAEliminar) {
-            this.rutaSeleccionada = null;
-            this.tramoSeleccionado = null;
-        }
-        this.mostrarNotificacion('Ruta eliminada');
-        this.dialog.closeAll();
-    }
-
-    seleccionarRuta(ruta: RutaProgramada) {
-        this.rutaSeleccionada = ruta;
-        this.tramoSeleccionado = null;
-    }
-
-    toggleRutaActiva(ruta: RutaProgramada) {
-        ruta.activa = !ruta.activa;
-    }
-
-    // --- ABASTECIMIENTO (LOGICA) ---
-    seleccionarTramo(tramo: TramoRuta, rutaActiva: boolean) {
-        if (!rutaActiva) {
-            this.mostrarNotificacion(
-                'Active la ruta para gestionar su carga',
-                'bg-slate-700'
-            );
-            return;
-        }
-        this.tramoSeleccionado = tramo;
-    }
-
-    // Getters para el panel de abastecimiento
-    get conteoSeleccionados() {
-        return (
-            this.tramoSeleccionado?.itemsCatering.filter((i) => i.check)
-                .length || 0
-        );
-    }
-    get totalItemsDistintos() {
-        return this.tramoSeleccionado?.itemsCatering.length || 0;
-    }
-    get todosSeleccionados() {
-        return (
-            this.tramoSeleccionado?.itemsCatering.every((i) => i.check) || false
-        );
-    }
-
-    toggleSeleccionarTodo(val: boolean) {
-        this.tramoSeleccionado?.itemsCatering.forEach((i) => (i.check = val));
-    }
-
-    guardarAbastecimiento() {
-        this.mostrarNotificacion(
-            'Configuración de carga guardada',
-            'bg-green-600'
-        );
-        // Aquí llamarías al servicio para guardar los items del tramo
-        this.tramoSeleccionado = null; // Cerrar panel al guardar
-    }
-
-    cancelarAbastecimiento() {
-        this.tramoSeleccionado = null;
-    }
-
-    // Helpers
-    mostrarNotificacion(mensaje: string, clase: string = 'bg-blue-600') {
-        this.snackBar.open(mensaje, 'Cerrar', {
-            duration: 3000,
-            panelClass: [clase, 'text-white'],
+        this.rutasDisponibles.push({
+            id: Date.now(), nombre: this.nuevaRutaCabecera.nombre, codigo: this.nuevaRutaCabecera.codigo,
+            fecha: this.nuevaRutaCabecera.fecha, activa: true, resumenRuta: '', tramos: nuevos
         });
+        this.dialog.closeAll();
+        this.snackBar.open('Ruta programada correctamente', 'ok', {duration: 2000});
+    }
+    toggleRutaActiva(ruta: RutaProgramada, event: any) { event.stopPropagation(); }
+    confirmarEliminarRuta(e: Event, id: number) {
+        e.stopPropagation(); this.idRutaAEliminar = id;
+        this.dialog.open(this.dialogConfirmar, {width: '300px'});
+    }
+    ejecutarEliminacionRuta() {
+        this.rutasDisponibles = this.rutasDisponibles.filter(r => r.id !== this.idRutaAEliminar);
+        this.dialog.closeAll();
     }
 
-    resetNiveles(desdeNivel: number) {
-        if (desdeNivel <= 2) {
-            this.aeronaveSeleccionada = null;
-            this.aeronavesVisibles = [];
-        }
-        if (desdeNivel <= 3) {
-            this.rutasDisponibles = [];
-            this.rutaSeleccionada = null;
-        }
-        if (desdeNivel <= 4) {
-            this.tramoSeleccionado = null;
-        }
-    }
-
-    cargarRutasDelAvion(matricula: string) {
-        // Mock con fechas
-        this.rutasDisponibles = [
-            {
-                id: 1,
-                nombre: 'Vuelo Regular VVI-MIA',
-                codigo: 'OB-760',
-                fecha: new Date(),
-                activa: true,
-                tramos: [
-                    {
-                        id: 101,
-                        origen: 'VVI',
-                        destino: 'MIA',
-                        vuelo: 'OB-760',
-                        horaSalida: '08:00',
-                        itemsCatering: this.getItemsMock(1),
-                    },
-                ],
-                resumenRuta: 'VVI ➔ MIA',
-            },
-        ];
-    }
-
-    generarResumenRuta(tramos: TramoRuta[]): string {
-        if (!tramos.length) return '';
-        let r = tramos[0].origen;
-        tramos.forEach((t) => (r += ` ➔ ${t.destino}`));
-        return r;
-    }
-
-    getItemsMock(seed: number): ItemCatering[] {
-        return [
-            {
-                nombre: 'Cena Pollo',
-                cantidad: 150,
-                check: true,
-                unidad: 'Bandeja',
-            },
-            {
-                nombre: 'Coca Cola',
-                cantidad: 20,
-                check: false,
-                unidad: 'Botella',
-            },
-            { nombre: 'Hielo', cantidad: 5, check: false, unidad: 'Bolsa' },
-            { nombre: 'Café', cantidad: 2, check: false, unidad: 'Termo' },
-        ];
+    // Helper para colores dinámicos en el HTML
+    getThemeColor(theme: string | undefined, type: 'bg' | 'text' | 'ring' | 'border' | 'gradient'): string {
+        const t = theme || 'blue';
+        const colors: any = {
+            blue: { bg: 'bg-blue-50', text: 'text-blue-600', ring: 'ring-blue-500', border: 'border-blue-500', gradient: 'from-blue-600 to-cyan-500' },
+            indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', ring: 'ring-indigo-500', border: 'border-indigo-500', gradient: 'from-indigo-600 to-purple-500' },
+        };
+        return colors[t][type];
     }
 }

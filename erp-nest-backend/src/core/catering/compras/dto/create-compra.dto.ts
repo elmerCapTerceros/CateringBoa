@@ -1,12 +1,12 @@
-import { IsString, IsNumber, IsArray, ValidateNested, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsInt, IsArray, ValidateNested, IsDateString, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class DetalleItemDto {
-    @IsNumber()
+class DetalleCompraDto {
+    @IsInt()
     itemId: number;
 
-    @IsNumber()
-    cantidadSolicitada: number;
+    @IsInt()
+    cantidad: number;
 
     @IsNumber()
     costoUnitario: number;
@@ -17,10 +17,13 @@ export class CreateCompraDto {
     proveedor: string;
 
     @IsString()
-    @IsOptional()
-    codigoOrden?: string; // Opcional, si no lo mandas lo generamos en el backend
+    codigoOrden: string; // Ej: OC-2026-001
 
-    @IsNumber()
+    @IsDateString()
+    @IsOptional()
+    fechaEntrega?: string;
+
+    @IsInt()
     almacenDestinoId: number;
 
     @IsString()
@@ -28,6 +31,6 @@ export class CreateCompraDto {
 
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => DetalleItemDto)
-    detalles: DetalleItemDto[];
+    @Type(() => DetalleCompraDto)
+    items: DetalleCompraDto[];
 }

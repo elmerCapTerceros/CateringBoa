@@ -12,7 +12,7 @@ export const seedAlmacenes = async (prisma: PrismaClient) => {
         },
         {
             nombreAlmacen: 'Planta de El Alto (LPB)',
-            tipoAlmacen: 'Principal', 
+            tipoAlmacen: 'Principal',
             ubicacion: 'Aeropuerto El Alto, La Paz',
             codigo: 'CAT-LPB-01',
         },
@@ -22,8 +22,8 @@ export const seedAlmacenes = async (prisma: PrismaClient) => {
             ubicacion: 'Aeropuerto J. Wilstermann, Cochabamba',
             codigo: 'CAT-CBB-01',
         },
-        
-    
+
+
         {
             nombreAlmacen: 'Cámara de Congelados VVI',
             tipoAlmacen: 'Refrigerado',
@@ -42,7 +42,7 @@ export const seedAlmacenes = async (prisma: PrismaClient) => {
             ubicacion: 'Cochabamba',
             codigo: 'UTN-CBB-01',
         },
-        
+
         {
             nombreAlmacen: 'Almacén de Limpieza y Desechables',
             tipoAlmacen: 'Secundario',
@@ -57,5 +57,5 @@ export const seedAlmacenes = async (prisma: PrismaClient) => {
     });
 
     console.log('Almacenes creados');
-   
+
 };

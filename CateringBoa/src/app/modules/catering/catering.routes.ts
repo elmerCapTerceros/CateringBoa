@@ -4,7 +4,7 @@ import { CompraComponent } from './compra-exterior/compra/compra.component';
 import { ListaComprasComponent } from './compra-exterior/lista-compras/lista-compras.component';
 import { CrearCargaComponent } from './carga/crear-carga/crear-carga.component';
 import {StockComponent} from './almacen/Stockss/stock.component';
-import {ConfiguracionCargaComponent } from './configuracion-carga/configuracion-carga.component';
+//import {ConfiguracionCargaComponent } from './configuracion-carga/configuracion-carga.component';
 import {ListarSolicitudesAlmacenComponent} from './almacen/listar-solicitudes-almacen/listar-solicitudes-almacen.component';
 import {CrearSolicitudAlmacenComponent} from './almacen/crear-solicitud-almacen/crear-solicitud-almacen.component';
 import {DetalleSolicitudAlmacenComponent} from './almacen/detalle-solicitud-almacen/detalle-solicitud-almacen.component';
@@ -51,10 +51,10 @@ export default [
                 component: ListaComprasComponent
             },
 
-            {
+            /*{
                 path: 'configuracion',
                 component: ConfiguracionCargaComponent
-            },
+            },*/
             {
                 path: 'stock',
                 component: StockComponent,

@@ -17,6 +17,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AbastecimientoService } from '../services/abastecimiento.service';
 import { PlantillasService } from '../services/plantillas.service';
 import { StockService } from '../services/stock.service';
+import { FlotaApi, FlotasService } from '../services/flotas.service';
 
 // --- INTERFACES ADAPTADAS ---
 interface ItemCarga {
@@ -89,8 +90,13 @@ export class AbastecerVueloComponent implements OnInit {
             matricula: 'CP-2923',
         },
     ];
+    vuelosBase: any[] = [];
     vuelosFiltrados: any[] = [];
     vueloSeleccionado: any = null;
+
+    flotas: FlotaApi[] = [];
+    flotaSeleccionada: FlotaApi | null = null;
+    aeronaveIdSeleccionada: number | null = null;
 
     // Plantillas (Desde Backend)
     plantillasDisponibles: any[] = [];
@@ -108,12 +114,15 @@ export class AbastecerVueloComponent implements OnInit {
         protected dialog: MatDialog,
         private plantillasService: PlantillasService,
         private abastecimientoService: AbastecimientoService,
-        private stockService: StockService
+        private stockService: StockService,
+        private flotasService: FlotasService
     ) {}
 
     ngOnInit(): void {
-        this.vuelosFiltrados = this.vuelosDelDia;
+        this.vuelosBase = [...this.vuelosDelDia];
+        this.vuelosFiltrados = [...this.vuelosDelDia];
         this.cargarPlantillasBackend(); // Cargar al inicio
+        this.cargarFlotasBackend();
     }
 
     // --- CARGA DE DATOS REALES ---
@@ -136,7 +145,7 @@ export class AbastecerVueloComponent implements OnInit {
                     unidad: item.unidadMedida || 'Unidad',
                     selected: false,
                     cantidadAgregar: 1,
-                    stockActual: 999, // Temporal si endpoint /items no trae stock
+                    stockActual: item.stockActual ?? 0,
                 }));
                 this.stockFiltrado = [...this.stockCompleto];
             },
@@ -145,20 +154,57 @@ export class AbastecerVueloComponent implements OnInit {
         });
     }
 
+    cargarFlotasBackend() {
+        this.flotasService.getFlotas().subscribe({
+            next: (data) => {
+                this.flotas = data;
+            },
+            error: () =>
+                this.snackBar.open('Error cargando flotas', 'Cerrar'),
+        });
+    }
+
+    seleccionarFlota(flota: FlotaApi) {
+        this.flotaSeleccionada = flota;
+        this.aeronaveIdSeleccionada = null;
+        this.vueloSeleccionado = null;
+        this.listaCargaActual = [];
+        this.plantillaSeleccionadaId = null;
+        this.filtrarVuelos();
+    }
+
     // --- LÓGICA VUELOS ---
     seleccionarVuelo(vuelo: any) {
         this.vueloSeleccionado = vuelo;
+        this.aeronaveIdSeleccionada = this.encontrarAeronaveId(vuelo.matricula);
         this.listaCargaActual = [];
         this.plantillaSeleccionadaId = null;
     }
 
     filtrarVuelos() {
         const term = this.searchVueloTerm.toLowerCase();
-        this.vuelosFiltrados = this.vuelosDelDia.filter(
-            (v) =>
+        const matriculasFlota = this.flotaSeleccionada
+            ? new Set(this.flotaSeleccionada.aeronaves?.map((a) => a.matricula))
+            : null;
+        this.vuelosFiltrados = this.vuelosBase.filter((v) => {
+            const cumpleTexto =
                 v.codigo.toLowerCase().includes(term) ||
-                v.ruta.toLowerCase().includes(term)
-        );
+                v.ruta.toLowerCase().includes(term);
+            const cumpleFlota = matriculasFlota
+                ? matriculasFlota.has(v.matricula)
+                : true;
+            return cumpleTexto && cumpleFlota;
+        });
+    }
+
+    private encontrarAeronaveId(matricula: string): number | null {
+        for (const flota of this.flotas) {
+            const encontrada = flota.aeronaves?.find(
+                (a) => a.matricula === matricula
+            );
+            if (encontrada) return encontrada.idAeronave;
+        }
+        return null;
     }
 
     // --- LÓGICA PLANTILLAS ---
@@ -167,7 +213,7 @@ export class AbastecerVueloComponent implements OnInit {
 
         // Buscar plantilla en la lista que ya trajimos del backend
         const plantilla = this.plantillasDisponibles.find(
-            (p) => p.id === this.plantillaSeleccionadaId
+            (p) => (p.id ?? p.idPlantilla) === this.plantillaSeleccionadaId
         );
 
         if (plantilla) {
@@ -250,12 +296,18 @@ export class AbastecerVueloComponent implements OnInit {
 
     // --- GUARDAR DESPACHO (BACKEND) ---
     confirmarDespacho() {
-        if (!this.vueloSeleccionado || this.listaCargaActual.length === 0)
+        if (!this.vueloSeleccionado || this.listaCargaActual.length === 0) {
+            this.snackBar.open('Seleccione un vuelo e items', 'Cerrar');
             return;
+        }
+        if (!this.aeronaveIdSeleccionada) {
+            this.snackBar.open('No se encontro aeronave para el vuelo', 'Cerrar');
+            return;
+        }
 
         const payload = {
             codigoVuelo: this.vueloSeleccionado.codigo,
-            aeronaveId: 1, // ID Hardcodeado (Temporal)
+            aeronaveId: this.aeronaveIdSeleccionada,
             almacenId: 1, // ID Almacén Principal (Hardcodeado Temporal)
             usuarioId: '4abbd038-a4f5-4189-8319-bbe0845f2483',
             observaciones: 'Despacho regular',

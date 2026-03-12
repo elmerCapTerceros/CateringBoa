@@ -10,6 +10,7 @@ import { StockModule } from './core/catering/stock/stock.module';
 import { PlantillasModule } from './core/catering/plantillas/plantillas.module';
 import { ItemsModule } from './core/catering/items/items.module';
 import { AbastecimientoModule } from './core/catering/abastecimiento/abastecimiento.module';
+import { FlotasModule } from './core/catering/flotas/flotas.module';
 
 
 
@@ -25,6 +26,7 @@ import { AbastecimientoModule } from './core/catering/abastecimiento/abastecimie
     PlantillasModule,
     ItemsModule,
     AbastecimientoModule,
+    FlotasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

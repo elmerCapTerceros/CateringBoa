@@ -117,7 +117,7 @@ export class ListaConfiguracionesComponent implements OnInit {
                     selected: false,
                     cantidadAgregar: 1
                 }));
-                this.productosFiltrados = [...this.productosBase];
+                this.actualizarProductosFiltrados();
                 console.log("Productos cargados:", this.productosBase.length);
             },
             error: (err) => {
@@ -198,15 +198,12 @@ export class ListaConfiguracionesComponent implements OnInit {
     abrirSelectorProductos() {
         this.searchTermProductos = '';
         // Reseteamos selección sobre la base real
-        this.productosFiltrados = this.productosBase.map(p => ({ ...p, selected: false, cantidadAgregar: 1 }));
+        this.actualizarProductosFiltrados();
         this.selectorDialogRef = this.dialog.open(this.modalSelectorProductos, { width: '600px', maxHeight: '80vh' });
     }
 
     filtrarProductos() {
-        const term = this.searchTermProductos.toLowerCase();
-        this.productosFiltrados = this.productosBase
-            .map(p => ({ ...p, selected: false, cantidadAgregar: 1 }))
-            .filter(p => p.nombre.toLowerCase().includes(term));
+        this.actualizarProductosFiltrados(this.searchTermProductos);
     }
 
     toggleSeleccion(item: ItemStockSelection) {
@@ -232,11 +229,39 @@ export class ListaConfiguracionesComponent implements OnInit {
         });
 
         if (this.selectorDialogRef) this.selectorDialogRef.close();
+        this.actualizarProductosFiltrados(this.searchTermProductos);
         this.mostrarSnack(`${seleccionados.length} productos agregados`);
     }
 
     eliminarItemDePlantilla(index: number) {
         this.plantillaEnEdicion.items.splice(index, 1);
+        this.actualizarProductosFiltrados(this.searchTermProductos);
+    }
+
+    private actualizarProductosFiltrados(filtro: string = '') {
+        const term = filtro.toLowerCase();
+        const idsUsados = new Set(this.plantillaEnEdicion.items.map(i => i.itemId));
+        this.productosFiltrados = this.productosBase
+            .filter(p => !idsUsados.has(p.id))
+            .filter(p => p.nombre.toLowerCase().includes(term))
+            .map(p => ({ ...p, selected: false, cantidadAgregar: 1 }));
+    }
+
+    getTipoVueloClass(tipo: string) {
+        switch (tipo) {
+            case 'Americano':
+                return 'bg-amber-100 text-amber-800';
+            case 'Europeo':
+                return 'bg-blue-100 text-blue-800';
+            case 'Sudamericano':
+                return 'bg-emerald-100 text-emerald-800';
+            case 'Norteamericano':
+                return 'bg-sky-100 text-sky-800';
+            case 'Nacional':
+                return 'bg-slate-100 text-slate-700';
+            default:
+                return 'bg-gray-100 text-gray-600';
+        }
     }
 
     private inicializarPlantilla(): PlantillaCarga {

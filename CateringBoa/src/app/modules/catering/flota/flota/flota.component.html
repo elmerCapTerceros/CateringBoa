@@ -106,16 +106,16 @@
                             <thead class="bg-gray-50/50 text-xs uppercase text-gray-500 font-bold border-b border-gray-100 tracking-wider">
                             <tr>
                                 <th class="p-5 w-20 text-center">Estado</th>
-                                <th class="p-5">Vuelo / Fecha</th>
-                                <th class="p-5">Seleccionar Tramo (Leg)</th>
+                                <th class="p-5">Vuelo / Fechas</th>
+                                <th class="p-5">Seleccionar Tramo (Abastecimiento)</th>
                                 <th class="p-5 text-right">Opciones</th>
                             </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 text-sm">
                                 @for (ruta of rutasDisponibles; track ruta.id) {
-                                    <tr class="hover:bg-slate-50 transition-all" [class.bg-slate-50]="!ruta.activa">
+                                    <tr class="hover:bg-slate-50 transition-all" [class.bg-slate-50]="!ruta.activa" [class.line-through]="!ruta.activa">
                                         <td class="p-5 text-center">
-                                            <mat-slide-toggle color="primary" [checked]="ruta.activa" (change)="toggleRutaActiva(ruta, $event)"
+                                            <mat-slide-toggle color="primary" [(ngModel)]="ruta.activa" (ngModelChange)="onRutaActivaChange(ruta, $event)"
                                                               class="scale-90" [matTooltip]="ruta.activa ? 'Desactivar Ruta' : 'Activar Ruta'"></mat-slide-toggle>
                                         </td>
                                         <td class="p-5" [class.opacity-50]="!ruta.activa">
@@ -124,10 +124,10 @@
                                                     {{ ruta.codigo | slice:0:2 }}
                                                 </div>
                                                 <div>
-                                                    <div class="font-black text-slate-800 text-base">{{ ruta.codigo }}</div>
-                                                    <div class="text-xs font-medium text-gray-500 flex items-center gap-1">
-                                                        <mat-icon class="icon-size-3">calendar_today</mat-icon>
-                                                        {{ ruta.fecha | date:'EEEE dd, MMM yyyy' }}
+                                                    <div class="font-black text-slate-800 text-base" [class.line-through]="!ruta.activa">{{ ruta.codigo }}</div>
+                                                    <div class="text-xs font-medium text-gray-500 flex items-center gap-1" [class.line-through]="!ruta.activa">
+                                                        <mat-icon class="icon-size-3">date_range</mat-icon>
+                                                        {{ ruta.fechaInicio | date:'dd/MM/yyyy' }} - {{ ruta.fechaFin | date:'dd/MM/yyyy' }}
                                                     </div>
                                                 </div>
                                             </div>
@@ -284,11 +284,17 @@
                     <mat-label>Nombre</mat-label>
                     <input matInput [(ngModel)]="nuevaRutaCabecera.nombre">
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="col-span-12">
-                    <mat-label>Fecha</mat-label>
-                    <input matInput [matDatepicker]="picker" [(ngModel)]="nuevaRutaCabecera.fecha">
-                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                    <mat-datepicker #picker></mat-datepicker>
+                <mat-form-field appearance="outline" class="col-span-6">
+                    <mat-label>Fecha Inicio</mat-label>
+                    <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="nuevaRutaCabecera.fechaInicio">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerInicio></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="col-span-6">
+                    <mat-label>Fecha Fin</mat-label>
+                    <input matInput [matDatepicker]="pickerFin" [(ngModel)]="nuevaRutaCabecera.fechaFin">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFin></mat-datepicker>
                 </mat-form-field>
             </div>
             <div class="bg-slate-50 p-4 rounded-xl border border-gray-200">

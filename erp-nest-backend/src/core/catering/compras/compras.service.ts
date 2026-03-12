@@ -12,16 +12,28 @@ export class ComprasService {
         // Calculamos el costo total estimado
         const costoTotal = dto.items.reduce((acc, item) => acc + (item.cantidad * item.costoUnitario), 0);
 
+        const usuarioExistente = await this.prisma.user.findUnique({
+            where: { id: dto.usuarioId }
+        });
+
+        const usuario = usuarioExistente ?? await this.prisma.user.findFirst({
+            orderBy: { createdAt: 'asc' }
+        });
+
+        if (!usuario) {
+            throw new BadRequestException('No existe un usuario valido para crear la orden');
+        }
+
         return this.prisma.ordenCompra.create({
             data: {
                 codigoOrden: dto.codigoOrden,
                 proveedor: dto.proveedor,
                 fechaSolicitud: new Date(),
                 fechaEntrega: dto.fechaEntrega ? new Date(dto.fechaEntrega) : null,
-                estado: 'PENDIENTE',
+                estado: 'Pendiente',
                 costoTotalEstimado: costoTotal,
                 almacenDestino: { connect: { idAlmacen: dto.almacenDestinoId } },
-                usuario: { connect: { id: dto.usuarioId } },
+                usuario: { connect: { id: usuario.id } },
                 detalles: {
                     create: dto.items.map(i => ({
                         item: { connect: { idItem: i.itemId } },
@@ -44,7 +56,7 @@ export class ComprasService {
             });
 
             if (!orden) throw new NotFoundException('Orden de compra no encontrada');
-            if (orden.estado === 'COMPLETADA') throw new BadRequestException('Esta orden ya fue recepcionada');
+            if (orden.estado === 'Completado') throw new BadRequestException('Esta orden ya fue recepcionada');
 
             // B. Crear el registro de Recepción
             const recepcion = await tx.recepcion.create({
@@ -61,14 +73,31 @@ export class ComprasService {
                 }
             });
 
-            // C. ACTUALIZAR STOCK (Loop crítico)
+            // C. ACTUALIZAR DETALLES Y STOCK
+            const detallesMap = new Map(orden.detalles.map(det => [det.itemId, det]));
+
             for (const itemRecibido of dto.items) {
-                // 1. Actualizar cantidad recibida en el detalle de la orden
-                // (Opcional, si quieres llevar la cuenta parcial)
+                const detalle = detallesMap.get(itemRecibido.itemId);
+                if (!detalle) {
+                    throw new BadRequestException('El item no pertenece a la orden');
+                }
 
-                // 2. SUMAR AL INVENTARIO
+                const nuevaCantidad = detalle.cantidadRecibida + itemRecibido.cantidadRecibida;
+                if (nuevaCantidad > detalle.cantidadSolicitada) {
+                    throw new BadRequestException('Cantidad recibida supera lo solicitado');
+                }
+
+                await tx.detalleOrdenCompra.update({
+                    where: { idDetalle: detalle.idDetalle },
+                    data: { cantidadRecibida: nuevaCantidad }
+                });
+
+                detallesMap.set(itemRecibido.itemId, {
+                    ...detalle,
+                    cantidadRecibida: nuevaCantidad
+                });
+
                 const itemActual = await tx.item.findUnique({ where: { idItem: itemRecibido.itemId } });
-
                 if (itemActual) {
                     await tx.item.update({
                         where: { idItem: itemRecibido.itemId },
@@ -79,10 +108,25 @@ export class ComprasService {
                 }
             }
 
-            // D. Actualizar estado de la Orden a COMPLETADA
+            // D. Calcular estado y costo real
+            const detallesActualizados = Array.from(detallesMap.values());
+            const costoTotalReal = detallesActualizados.reduce(
+                (acc, det) => acc + (det.cantidadRecibida * det.costoUnitario),
+                0
+            );
+
+            const allCompletos = detallesActualizados.every(
+                (det) => det.cantidadRecibida >= det.cantidadSolicitada
+            );
+            const anyRecibido = detallesActualizados.some(
+                (det) => det.cantidadRecibida > 0
+            );
+
+            const estado = allCompletos ? 'Completado' : (anyRecibido ? 'Parcial' : 'Pendiente');
+
             await tx.ordenCompra.update({
                 where: { idOrdenCompra: dto.ordenCompraId },
-                data: { estado: 'COMPLETADA' }
+                data: { estado, costoTotalReal }
             });
 
             return recepcion;
@@ -93,7 +137,10 @@ export class ComprasService {
     async findAll() {
         return this.prisma.ordenCompra.findMany({
             orderBy: { fechaSolicitud: 'desc' },
-            include: { detalles: { include: { item: true } } }
+            include: {
+                almacenDestino: true,
+                detalles: { include: { item: true } }
+            }
         });
     }
 }

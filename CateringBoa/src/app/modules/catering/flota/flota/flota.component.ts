@@ -14,13 +14,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FlotasService, FlotaApi, AeronaveApi } from '../../services/flotas.service';
+import { AbastecimientoService } from '../../services/abastecimiento.service';
+import { Item, StockService } from '../../services/stock.service';
 
 // Interface actualizada con colorTheme
 interface Flota { id: string; nombre: string; icon: string; description?: string; colorTheme: string; }
 interface Aeronave { id: number; matricula: string; flotaId: string; estado: string; }
-interface RutaProgramada { id: number; nombre: string; codigo: string; fecha: Date; activa: boolean; tramos: TramoRuta[]; resumenRuta: string; }
+interface RutaProgramada { id: number; nombre: string; codigo: string; fechaInicio: Date; fechaFin: Date; activa: boolean; tramos: TramoRuta[]; resumenRuta: string; }
 interface TramoRuta { id: number; origen: string; destino: string; vuelo: string; horaSalida: string; itemsCatering: ItemCatering[]; }
-interface ItemCatering { nombre: string; cantidad: number; check: boolean; unidad: string; }
+interface ItemCatering { itemId: number | null; nombre: string; cantidad: number; check: boolean; unidad: string; }
 interface NuevoTramoForm { origen: string; destino: string; vuelo: string; hora: string; }
 
 @Component({
@@ -66,19 +69,69 @@ export class FlotaComponent implements OnInit {
     aeronavesVisibles: Aeronave[] = [];
     rutasDisponibles: RutaProgramada[] = [];
 
-    nuevaRutaCabecera = { nombre: '', codigo: '', fecha: new Date() };
+    nuevaRutaCabecera = { nombre: '', codigo: '', fechaInicio: new Date(), fechaFin: new Date() };
     nuevosTramos: NuevoTramoForm[] = [];
     idRutaAEliminar: number | null = null;
+    itemsCatalogo: Item[] = [];
+    itemsPorNombre: Map<string, Item> = new Map();
 
-    constructor(private snackBar: MatSnackBar, protected dialog: MatDialog) {}
+    constructor(
+        private snackBar: MatSnackBar,
+        protected dialog: MatDialog,
+        private flotasService: FlotasService,
+        private abastecimientoService: AbastecimientoService,
+        private stockService: StockService
+    ) {}
 
     ngOnInit(): void {
         this.cargarDatosMaestros();
+        this.cargarItemsCatalogo();
     }
 
     cargarDatosMaestros() {
+        this.flotasService.getFlotas().subscribe({
+            next: (data) => {
+                if (!data || data.length === 0) {
+                    this.cargarMockFlotas();
+                    return;
+                }
+
+                const colorThemes = ['blue', 'indigo'];
+                this.flotas = data.map((f: FlotaApi, idx: number) => ({
+                    id: String(f.idFlota),
+                    nombre: f.nombreFlota,
+                    description: f.descripcion || 'Sin descripcion',
+                    icon: idx % 2 === 0 ? 'flight' : 'flight_takeoff',
+                    colorTheme: colorThemes[idx % colorThemes.length]
+                }));
+
+                this.todasLasAeronaves = data.flatMap((f: FlotaApi) =>
+                    (f.aeronaves || []).map((a: AeronaveApi) => ({
+                        id: a.idAeronave,
+                        matricula: a.matricula,
+                        flotaId: String(f.idFlota),
+                        estado: 'En Tierra'
+                    }))
+                );
+            },
+            error: () => this.cargarMockFlotas()
+        });
+    }
+
+    cargarItemsCatalogo() {
+        this.stockService.getItems().subscribe({
+            next: (data) => {
+                this.itemsCatalogo = data || [];
+                this.itemsPorNombre = new Map(
+                    this.itemsCatalogo.map((i) => [i.nombreItem.toLowerCase(), i])
+                );
+            },
+            error: () => this.snackBar.open('Error cargando catalogo de items', 'Cerrar')
+        });
+    }
+
+    private cargarMockFlotas() {
         this.flotas = [
-            // Agregamos colorTheme
             { id: 'B737', nombre: 'Boeing 737', icon: 'flight', description: 'Corto Alcance', colorTheme: 'blue' },
             { id: 'A330', nombre: 'Airbus A330', icon: 'flight_takeoff', description: 'Largo Alcance', colorTheme: 'indigo' },
         ];
@@ -120,11 +173,23 @@ export class FlotaComponent implements OnInit {
     cargarRutasDelAvion(matricula: string) {
         this.rutasDisponibles = [
             {
-                id: 1, nombre: 'Regular VVI-MIA', codigo: 'OB-760', fecha: new Date(), activa: true, resumenRuta: '',
+                id: 1,
+                nombre: 'Regular VVI-MIA',
+                codigo: 'OB-760',
+                fechaInicio: new Date(),
+                fechaFin: new Date(),
+                activa: true,
+                resumenRuta: '',
                 tramos: [{ id: 101, origen: 'VVI', destino: 'MIA', vuelo: 'OB-760', horaSalida: '08:00', itemsCatering: this.getItemsMock() }]
             },
             {
-                id: 2, nombre: 'Charter LPB-MAD', codigo: 'OB-990', fecha: new Date(), activa: true, resumenRuta: '',
+                id: 2,
+                nombre: 'Charter LPB-MAD',
+                codigo: 'OB-990',
+                fechaInicio: new Date(),
+                fechaFin: new Date(),
+                activa: true,
+                resumenRuta: '',
                 tramos: [
                     { id: 102, origen: 'LPB', destino: 'VVI', vuelo: 'OB-990', horaSalida: '14:00', itemsCatering: this.getItemsMock() },
                     { id: 103, origen: 'VVI', destino: 'MAD', vuelo: 'OB-990', horaSalida: '16:00', itemsCatering: this.getItemsMock() }
@@ -134,7 +199,7 @@ export class FlotaComponent implements OnInit {
     }
 
     getItemsMock(): ItemCatering[] {
-        return [
+        const base = [
             { nombre: 'Cena Pollo Premium', cantidad: 150, check: true, unidad: 'Bandeja' },
             { nombre: 'Opción Vegetariana', cantidad: 50, check: false, unidad: 'Bandeja' },
             { nombre: 'Coca Cola', cantidad: 20, check: false, unidad: 'Botella' },
@@ -144,6 +209,17 @@ export class FlotaComponent implements OnInit {
             { nombre: 'Kit Café Start', cantidad: 10, check: false, unidad: 'Caja' },
             { nombre: 'Snack Mix Salado', cantidad: 200, check: true, unidad: 'Bolsa' },
         ];
+
+        return base.map((b) => {
+            const match = this.itemsPorNombre.get(b.nombre.toLowerCase());
+            return {
+                itemId: match?.idItem ?? null,
+                nombre: b.nombre,
+                cantidad: b.cantidad,
+                check: b.check,
+                unidad: b.unidad
+            };
+        });
     }
 
     get conteoSeleccionados() { return this.tramoSeleccionado?.itemsCatering.filter(i => i.check).length || 0; }
@@ -154,13 +230,54 @@ export class FlotaComponent implements OnInit {
     }
 
     guardarAbastecimiento() {
-        this.snackBar.open('🚀 Carga confirmada y enviada a almacén', 'Cerrar', { duration: 3000, panelClass: ['bg-green-600', 'text-white', 'font-bold'] });
-        this.tramoSeleccionado = null;
+        if (!this.aeronaveSeleccionada) {
+            this.snackBar.open('Seleccione una aeronave', 'Cerrar');
+            return;
+        }
+        if (!this.tramoSeleccionado) {
+            this.snackBar.open('Seleccione un tramo', 'Cerrar');
+            return;
+        }
+
+        const itemsValidos = this.tramoSeleccionado.itemsCatering
+            .filter((i) => i.check)
+            .filter((i) => i.itemId && i.cantidad > 0);
+
+        if (itemsValidos.length === 0) {
+            this.snackBar.open('No hay items validos para despachar', 'Cerrar');
+            return;
+        }
+
+        const payload = {
+            codigoVuelo: this.tramoSeleccionado.vuelo,
+            aeronaveId: this.aeronaveSeleccionada.id,
+            almacenId: 1,
+            usuarioId: '4abbd038-a4f5-4189-8319-bbe0845f2483',
+            observaciones: `Ruta: ${this.tramoSeleccionado.origen}-${this.tramoSeleccionado.destino}`,
+            items: itemsValidos.map((i) => ({
+                itemId: i.itemId,
+                cantidad: i.cantidad
+            }))
+        };
+
+        this.abastecimientoService.despacharVuelo(payload).subscribe({
+            next: () => {
+                this.snackBar.open('🚀 Carga confirmada y enviada a almacén', 'Cerrar', {
+                    duration: 3000,
+                    panelClass: ['bg-green-600', 'text-white', 'font-bold']
+                });
+                this.tramoSeleccionado = null;
+            },
+            error: (err) => {
+                const msg = err.error?.message || 'Error desconocido';
+                this.snackBar.open(`❌ Error: ${msg}`, 'Cerrar', { duration: 4000 });
+            }
+        });
     }
 
     // CRUD Rutas (sin cambios significativos)
     abrirModalRuta() {
-        this.nuevaRutaCabecera = { nombre: '', codigo: '', fecha: new Date() };
+        this.nuevaRutaCabecera = { nombre: '', codigo: '', fechaInicio: new Date(), fechaFin: new Date() };
         this.nuevosTramos = [{ origen: '', destino: '', vuelo: '', hora: '' }];
         this.dialog.open(this.modalCrearRuta, { width: '700px' });
     }
@@ -173,13 +290,21 @@ export class FlotaComponent implements OnInit {
             vuelo: t.vuelo, horaSalida: t.hora, itemsCatering: this.getItemsMock()
         }));
         this.rutasDisponibles.push({
-            id: Date.now(), nombre: this.nuevaRutaCabecera.nombre, codigo: this.nuevaRutaCabecera.codigo,
-            fecha: this.nuevaRutaCabecera.fecha, activa: true, resumenRuta: '', tramos: nuevos
+            id: Date.now(),
+            nombre: this.nuevaRutaCabecera.nombre,
+            codigo: this.nuevaRutaCabecera.codigo,
+            fechaInicio: this.nuevaRutaCabecera.fechaInicio,
+            fechaFin: this.nuevaRutaCabecera.fechaFin,
+            activa: true,
+            resumenRuta: '',
+            tramos: nuevos
         });
         this.dialog.closeAll();
         this.snackBar.open('Ruta programada correctamente', 'ok', {duration: 2000});
     }
-    toggleRutaActiva(ruta: RutaProgramada, event: any) { event.stopPropagation(); }
+    onRutaActivaChange(ruta: RutaProgramada, checked: boolean) {
+        ruta.activa = !!checked;
+    }
     confirmarEliminarRuta(e: Event, id: number) {
         e.stopPropagation(); this.idRutaAEliminar = id;
         this.dialog.open(this.dialogConfirmar, {width: '300px'});

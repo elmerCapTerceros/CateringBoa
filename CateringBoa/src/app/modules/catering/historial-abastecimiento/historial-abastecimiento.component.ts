@@ -83,7 +83,7 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
                     id: registro.idAbastecimiento,
                     codigoVuelo: registro.codigoVuelo,
                     fecha: new Date(registro.fechaDespacho),
-                    ruta: 'VVI > INT', // Dato Hardcodeado (si no viene del backend)
+                    ruta: this.extraerRuta(registro.observaciones),
                     matricula: registro.aeronave?.matricula || 'N/A',
                     totalItems: registro.detalles.length,
                     responsable: registro.usuario?.name || 'Desconocido',
@@ -155,5 +155,12 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
             case 'BORRADOR': return 'bg-orange-100 text-orange-700';
             default: return 'bg-gray-100 text-gray-700';
         }
+    }
+
+    private extraerRuta(observaciones?: string): string {
+        if (!observaciones) return 'N/A';
+        const match = observaciones.match(/Ruta:\s*([A-Z]{3})-([A-Z]{3})/i);
+        if (match) return `${match[1].toUpperCase()} > ${match[2].toUpperCase()}`;
+        return observaciones;
     }
 }

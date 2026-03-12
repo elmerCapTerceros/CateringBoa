@@ -41,8 +41,21 @@ export class AbastecimientoService {
       }
 
       // 3. Crear el registro de Abastecimiento (Cabecera)
-      // Aseguramos que usuarioId tenga un valor (puedes ajustar el default)
-      const usuarioId = dto.usuarioId || 'admin-temp';
+      let usuarioId = dto.usuarioId || '';
+      if (usuarioId) {
+        const usuarioExiste = await tx.user.findUnique({ where: { id: usuarioId } });
+        if (!usuarioExiste) {
+          usuarioId = '';
+        }
+      }
+
+      if (!usuarioId) {
+        const usuarioFallback = await tx.user.findFirst({ orderBy: { createdAt: 'asc' } });
+        if (!usuarioFallback) {
+          throw new BadRequestException('No existe un usuario valido para crear el despacho');
+        }
+        usuarioId = usuarioFallback.id;
+      }
 
       const nuevoDespacho = await tx.abastecimiento.create({
         data: {
@@ -50,7 +63,7 @@ export class AbastecimientoService {
           fechaDespacho: new Date(),
           estado: 'DESPACHADO',
           observaciones: dto.observaciones,
-          usuario: { connect: { id: usuarioId } }, // Conectamos con la tabla User
+          usuario: { connect: { id: usuarioId } },
           almacen: { connect: { idAlmacen: dto.almacenId } },
           aeronave: { connect: { idAeronave: dto.aeronaveId } },
 

@@ -11,6 +11,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
+import {
+    CompraExterior,
+    CompraExteriorService,
+    ProveedorExterior
+} from '../compra-exterior.service';
 
 interface DetalleItem {
     nombre: string;
@@ -42,79 +47,36 @@ export class HistorialComprasComponent implements OnInit {
 
     filterForm: FormGroup;
 
-    datosOriginales: OrdenHistorica[] = [
-        {
-            id: 'OC-2024-880',
-            proveedor: 'Amazon Inc.',
-            fecha: new Date('2024-12-10'),
-            totalCosto: 1500.00,
-            estado: 'Completado',
-            items: [
-                { nombre: 'Hielo Bolsa', cantidad: 200, costo: 500 },
-                { nombre: 'Vasos Térmicos', cantidad: 1000, costo: 1000 }
-            ]
-        },
-        {
-            id: 'OC-2025-001',
-            proveedor: 'Catering Services',
-            fecha: new Date('2025-01-15'),
-            totalCosto: 320.50,
-            estado: 'Completado',
-            items: [
-                { nombre: 'Servilletas', cantidad: 500, costo: 320.50 }
-            ]
-        },
-        {
-            id: 'OC-2025-005',
-            proveedor: 'Frutas Santa Cruz',
-            fecha: new Date('2025-05-20'), // Fecha reciente
-            totalCosto: 80.00,
-            estado: 'Parcial',
-            items: [
-                { nombre: 'Limón Granel', cantidad: 50, costo: 80.00 }
-            ]
-        }
-    ];
-
-
     listaVisible: OrdenHistorica[] = [];
+    proveedores: ProveedorExterior[] = [];
 
-    constructor(private fb: FormBuilder) {}
+    constructor(
+        private fb: FormBuilder,
+        private compraExteriorService: CompraExteriorService,
+    ) {}
 
     ngOnInit(): void {
         this.filterForm = this.fb.group({
             fechaInicio: [null],
             fechaFin: [null],
-            proveedor: ['']
+            proveedorId: [null]
         });
 
-        // Inicializar lista
-        this.listaVisible = this.datosOriginales;
+        this.loadProveedores();
+        this.loadHistorial();
     }
 
     aplicarFiltros(): void {
-        const { fechaInicio, fechaFin, proveedor } = this.filterForm.value;
-
-        this.listaVisible = this.datosOriginales.filter(orden => {
-            let cumpleFecha = true;
-            let cumpleProveedor = true;
-
-            // Filtro de Fecha
-            if (fechaInicio && orden.fecha < fechaInicio) cumpleFecha = false;
-            if (fechaFin && orden.fecha > fechaFin) cumpleFecha = false;
-
-            // Filtro de Proveedor (Texto)
-            if (proveedor && !orden.proveedor.toLowerCase().includes(proveedor.toLowerCase())) {
-                cumpleProveedor = false;
-            }
-
-            return cumpleFecha && cumpleProveedor;
-        });
+        this.loadHistorial();
     }
 
     limpiarFiltros(): void {
-        this.filterForm.reset();
-        this.listaVisible = this.datosOriginales;
+        this.filterForm.reset({
+            fechaInicio: null,
+            fechaFin: null,
+            proveedorId: null,
+        });
+        this.loadHistorial();
     }
 
     toggleDetalle(orden: OrdenHistorica): void {
@@ -123,6 +85,69 @@ export class HistorialComprasComponent implements OnInit {
 
     // Exportar a Excel (Simulado)
     exportarReporte(): void {
-        alert("Generando reporte Excel de " + this.listaVisible.length + " órdenes...");
+        const params = this.buildQueryParams();
+
+        this.compraExteriorService.downloadHistorialPdf(params).subscribe((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'historial-compras.pdf';
+            link.click();
+            window.URL.revokeObjectURL(url);
+        });
+    }
+
+    private loadProveedores(): void {
+        this.compraExteriorService.getProveedores().subscribe({
+            next: (data) => {
+                this.proveedores = data;
+            }
+        });
+    }
+
+    private loadHistorial(): void {
+        const params = this.buildQueryParams();
+
+        this.compraExteriorService.getHistorial(params).subscribe({
+            next: (data) => {
+                this.listaVisible = data.map((compra) => this.mapCompra(compra));
+            }
+        });
+    }
+
+    private buildQueryParams() {
+        const { fechaInicio, fechaFin, proveedorId } = this.filterForm.value;
+
+        return {
+            startDate: fechaInicio ? new Date(fechaInicio).toISOString() : undefined,
+            endDate: fechaFin ? new Date(fechaFin).toISOString() : undefined,
+            proveedorId: proveedorId ?? undefined,
+        };
+    }
+
+    private mapCompra(compra: CompraExterior): OrdenHistorica {
+        const totalCosto = compra.subtotal ?? (compra.costoUnitario || 0) * compra.cantidad;
+
+        const estado: OrdenHistorica['estado'] = compra.completada
+            ? 'Completado'
+            : compra.totalEntregado > 0
+                ? 'Parcial'
+                : 'Parcial';
+
+        return {
+            id: `OC-${compra.idComprasExteriores}`,
+            proveedor: compra.proveedor?.nombre ?? 'Proveedor',
+            fecha: new Date(compra.fecha),
+            totalCosto,
+            estado,
+            items: [
+                {
+                    nombre: compra.item?.nombreItem ?? 'Item',
+                    cantidad: compra.cantidad,
+                    costo: totalCosto,
+                },
+            ],
+            expandido: false,
+        };
     }
 }

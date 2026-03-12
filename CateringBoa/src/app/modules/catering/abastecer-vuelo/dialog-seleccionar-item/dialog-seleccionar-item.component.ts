@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { CateringDataService, ItemCatalogo } from '../../catering-data.service';
 
 // Interfaz local para manejar el estado visual
 interface ItemSeleccionable {
@@ -39,24 +40,33 @@ export class DialogSeleccionarItemComponent implements OnInit {
     // Lista transformada para la UI
     itemsUI: ItemSeleccionable[] = [];
 
-    // Datos crudos del Stock
-    rawStock = [
-        { id: 8, nombre: 'Hielo Bolsa 5kg', unidad: 'Bolsa' },
-        { id: 9, nombre: 'Limón Granel', unidad: 'Kg' },
-        { id: 10, nombre: 'Vaso Plástico', unidad: 'Paquete' },
-        { id: 11, nombre: 'Servilletas Extra', unidad: 'Paquete' },
-        { id: 12, nombre: 'Agua 2L', unidad: 'Botella' },
-        { id: 13, nombre: 'Café Grano', unidad: 'Kg' }
-    ];
+    rawStock: ItemCatalogo[] = [];
 
     terminoBusqueda: string = '';
 
     constructor(
-        public dialogRef: MatDialogRef<DialogSeleccionarItemComponent>
+        public dialogRef: MatDialogRef<DialogSeleccionarItemComponent>,
+        private cateringDataService: CateringDataService
     ) {}
 
     ngOnInit(): void {
-        // Inicializamos la lista UI: nadie seleccionado, cantidad 1
+        this.cateringDataService.getItems().subscribe({
+            next: (items) => {
+                this.rawStock = items;
+                this.buildItemsUI();
+            },
+            error: () => {
+                this.rawStock = [
+                    { idItem: 8, nombreItem: 'Hielo Bolsa 5kg', tipoItem: 'Bolsa', categoriaItem: 'Bebidas' },
+                    { idItem: 9, nombreItem: 'Limon Granel', tipoItem: 'Kg', categoriaItem: 'Alimentos' },
+                    { idItem: 10, nombreItem: 'Vaso Plastico', tipoItem: 'Paquete', categoriaItem: 'Desechables' },
+                ];
+                this.buildItemsUI();
+            }
+        });
+    }
+
+    private buildItemsUI(): void {
         this.itemsUI = this.rawStock.map(item => ({
             data: item,
             selected: false,
@@ -86,7 +96,7 @@ export class DialogSeleccionarItemComponent implements OnInit {
         }
         const termino = this.terminoBusqueda.toLowerCase();
         return this.itemsUI.filter(item =>
-            item.data.nombre.toLowerCase().includes(termino)
+            item.data.nombreItem.toLowerCase().includes(termino)
         );
     }
 
@@ -95,8 +105,10 @@ export class DialogSeleccionarItemComponent implements OnInit {
         const seleccionados = this.itemsUI
             .filter(i => i.selected)
             .map(i => ({
-                ...i.data,      // id, nombre, unidad...
-                cantidad: i.cantidad // La cantidad que puso el usuario
+                id: i.data.idItem,
+                nombre: i.data.nombreItem,
+                unidad: i.data.tipoItem,
+                cantidad: i.cantidad
             }));
 
         this.dialogRef.close(seleccionados);

@@ -18,6 +18,13 @@ enum Role {
   user
 }
 
+enum TipoVuelo {
+  americano
+  europa
+  sudamericano
+  norteamericano
+}
+
 model User {
   id                String              @id @default(uuid())
   name              String
@@ -178,11 +185,25 @@ model AeronaveHasRuta {
 model ComprasExteriores {
   idComprasExteriores Int      @id @default(autoincrement()) @map("idCompras_exteriores")
   itemId              Int      @map("Item_idItem")
+  proveedorId         Int      @map("Proveedor_idProveedor")
   cantidad            Int      @map("Cantidad")
+  costoUnitario       Decimal  @map("costo_unitario") @db.Decimal(12, 2)
+  almacenDestino      String   @map("almacen_destino") @db.VarChar(80)
+  observaciones       String?  @db.VarChar(255)
   fecha               DateTime @map("date") @db.Date
 
-  item     Item      @relation(fields: [itemId], references: [idItem])
-  entregas Entrega[]
+  item      Item      @relation(fields: [itemId], references: [idItem])
+  proveedor Proveedor @relation(fields: [proveedorId], references: [idProveedor])
+  entregas  Entrega[]
+}
+
+model Proveedor {
+  idProveedor Int      @id @default(autoincrement())
+  nombre      String   @db.VarChar(120)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  comprasExteriores ComprasExteriores[]
 }
 
 model Entrega {
@@ -231,6 +252,7 @@ model DetalleCarga {
 model ControlConsumo {
   idControlConsumo       Int    @id @default(autoincrement()) @map("idControl_consumo")
   estado                 String @db.VarChar(45)
+  fecha                  DateTime @db.Date
   detalleCargaId         Int    @map("detalle_carga_iddetalle_carga")
   detalleCargaItemId     Int    @map("detalle_carga_Item_idItem")
   detalleCargaCargaId    Int    @map("detalle_carga_Carga_idCarga")
@@ -304,6 +326,7 @@ model DetalleDotacion {
 model Plantilla {
   id                 Int      @id @default(autoincrement())
   nombre             String
+  tipoVuelo          TipoVuelo @default(sudamericano)
   modeloAeronave     String // Ej: "Boeing 737-300"
   clase              String // Ej: "Económica"
   fechaCreacion      DateTime @default(now())

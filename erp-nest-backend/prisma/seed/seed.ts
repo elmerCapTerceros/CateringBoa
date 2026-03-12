@@ -27,6 +27,52 @@ async function main() {
     });
 
     console.log(newUsers);
+
+    const proveedoresCount = await prisma.proveedor.count();
+    if (proveedoresCount === 0) {
+      await prisma.proveedor.createMany({
+        data: [
+          { nombre: 'Amazon Inc.' },
+          { nombre: 'Catering Services' },
+          { nombre: 'Frutas Santa Cruz' },
+          { nombre: 'Hielos Andes S.R.L.' },
+          { nombre: 'Plásticos BoA' },
+        ],
+      });
+    }
+
+    const itemsCount = await prisma.item.count();
+    if (itemsCount === 0) {
+      await prisma.item.createMany({
+        data: [
+          {
+            nombreItem: 'Hielo Bolsa 5kg',
+            tipoItem: 'Consumible',
+            categoriaItem: 'Bebidas',
+          },
+          {
+            nombreItem: 'Agua Mineral 2L',
+            tipoItem: 'Consumible',
+            categoriaItem: 'Bebidas',
+          },
+          {
+            nombreItem: 'Servilletas',
+            tipoItem: 'Consumible',
+            categoriaItem: 'Desechables',
+          },
+          {
+            nombreItem: 'Vasos Plastico',
+            tipoItem: 'Consumible',
+            categoriaItem: 'Desechables',
+          },
+          {
+            nombreItem: 'Cajas Termicas',
+            tipoItem: 'Inventario',
+            categoriaItem: 'Logistica',
+          },
+        ],
+      });
+    }
 }
 
 main()

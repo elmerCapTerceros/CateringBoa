@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePlantillaDto } from './dto/create-plantilla.dto';
 import { UpdatePlantillaDto } from './dto/update-plantilla.dto';
 import { PrismaService } from '../../providers/prisma/prisma.service';
-import {}
+
 @Injectable()
 export class PlantillasService {
     constructor(private prisma: PrismaService) {}
@@ -28,12 +28,23 @@ export class PlantillasService {
     }
 
     // 2. LISTAR TODAS
-    findAll() {
+    findAll(tipoVuelo?: string) {
+        const where: { tipoVuelo?: string } = {};
+
+        if (tipoVuelo) {
+            const allowed = ['americano', 'europa', 'sudamericano', 'norteamericano'];
+            if (!allowed.includes(tipoVuelo)) {
+                throw new BadRequestException('Tipo de vuelo no válido.');
+            }
+            where.tipoVuelo = tipoVuelo;
+        }
+
         return this.prisma.plantilla.findMany({
+            where,
             include: {
                 items: { include: { item: true } }
             },
-            orderBy: { ultimaModificacion: 'desc' }, // Las más recientes primero
+            orderBy: { ultimaModificacion: 'desc' },
         });
     }
 

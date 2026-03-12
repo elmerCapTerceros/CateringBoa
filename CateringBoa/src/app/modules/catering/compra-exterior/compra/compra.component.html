@@ -1,16 +1,18 @@
-<div class="w-full flex-auto p-6 sm:p-10 bg-gray-50 min-h-screen">
-
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold tracking-tight text-blue-900">Nueva Compra Exterior</h2>
-        <p class="text-gray-500">Generar orden de compra y envío a Viru Viru.</p>
+<div class="purchase-shell">
+    <div class="page-title">
+        <h2>Nueva Compra Exterior</h2>
+        <p>Generar orden de compra y envio a bases internacionales/nacionales.</p>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
-        <form [formGroup]="compraForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+    <div class="purchase-card">
+        <form [formGroup]="compraForm" class="form-row">
             <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Proveedor</mat-label>
-                <input matInput formControlName="proveedor" placeholder="Ej. Amazon Inc.">
+                <mat-select formControlName="proveedorId">
+                    @for (proveedor of proveedores; track proveedor.idProveedor) {
+                        <mat-option [value]="proveedor.idProveedor">{{ proveedor.nombre }}</mat-option>
+                    }
+                </mat-select>
                 <mat-icon matSuffix>store</mat-icon>
             </mat-form-field>
 
@@ -21,8 +23,8 @@
                 <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="w-full bg-gray-50 rounded text-gray-500">
-                <mat-label>Almacén Destino</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Almacen Destino</mat-label>
                 <mat-select formControlName="almacenDestino">
                     @for (almacen of almacenes; track almacen) {
                         <mat-option [value]="almacen">{{ almacen }}</mat-option>
@@ -32,51 +34,68 @@
             </mat-form-field>
         </form>
 
-        <div class="flex justify-between items-center mt-6 border-t pt-6">
-            <h3 class="font-bold text-gray-700">Detalle de Productos</h3>
-            <button mat-raised-button color="primary" style="background-color: #0B1E47;" (click)="abrirSeleccionLote()">
+        <mat-form-field appearance="outline" class="w-full textarea-box">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput rows="3" formControlName="observaciones" placeholder="Notas para compras exteriores"></textarea>
+        </mat-form-field>
+
+        <div class="divider"></div>
+
+        <div class="detail-header">
+            <h3>Detalle de Productos</h3>
+            <button mat-stroked-button class="ghost-button" (click)="abrirSeleccionLote()">
                 <mat-icon>playlist_add</mat-icon>
                 Seleccionar en Lote
             </button>
         </div>
 
-        <div class="mt-4 border border-gray-200 rounded-lg overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-3 text-left font-bold text-gray-600">Ítem</th>
-                    <th class="p-3 text-left font-bold text-gray-600">Unidad</th>
-                    <th class="p-3 text-center font-bold text-gray-600">Cantidad Solicitada</th>
-                    <th class="p-3 text-right font-bold text-gray-600">Acción</th>
-                </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @for (item of listaItemsCompra; track $index) {
-                        <tr class="hover:bg-blue-50">
-                            <td class="p-3 text-gray-800 font-medium">{{ item.nombre }}</td>
-                            <td class="p-3 text-gray-500 text-sm">{{ item.unidad }}</td>
-                            <td class="p-3 text-center font-bold">{{ item.cantidadSolicitada }}</td>
-                            <td class="p-3 text-right">
-                                <button mat-icon-button color="warn" (click)="eliminarItem($index)">
-                                    <mat-icon>delete</mat-icon>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                    @if (listaItemsCompra.length === 0) {
-                        <tr>
-                            <td colspan="4" class="p-8 text-center text-gray-400">
-                                No hay ítems en la orden. Presiona el botón para agregar.
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="detail-table">
+            <div class="table-head">
+                <span>Item</span>
+                <span>Unidad</span>
+                <span class="text-center">Cantidad Solicitada</span>
+                <span class="text-center">Costo ($)</span>
+                <span class="text-right">Subtotal</span>
+                <span class="text-right">Accion</span>
+            </div>
+            <div class="table-body">
+                @for (item of listaItemsCompra; track $index) {
+                    <div class="table-row">
+                        <span class="item-name">{{ item.nombre }}</span>
+                        <span class="item-unit">{{ item.unidad }}</span>
+                        <span class="text-center">{{ item.cantidadSolicitada }}</span>
+                        <span class="text-center">
+                            <input
+                                class="cost-input"
+                                type="number"
+                                min="0"
+                                [(ngModel)]="item.costoUnitario"
+                                [ngModelOptions]="{standalone: true}"
+                            >
+                        </span>
+                        <span class="text-right">{{ (item.cantidadSolicitada * (item.costoUnitario || 0)) | currency }}</span>
+                        <span class="text-right">
+                            <button mat-icon-button color="warn" (click)="eliminarItem($index)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </span>
+                    </div>
+                }
+                @if (listaItemsCompra.length === 0) {
+                    <div class="empty-row">
+                        No hay items en la orden. Presiona el boton para agregar.
+                    </div>
+                }
+            </div>
         </div>
 
-        <div class="mt-6 flex justify-end">
-            <button mat-raised-button color="primary" class="px-8 py-2 text-lg" (click)="guardarCompra()">
-                Generar Orden
+        <div class="footer-row">
+            <div class="total-box">
+                <span>Total</span>
+                <strong>{{ totalCosto | currency }}</strong>
+            </div>
+            <button mat-raised-button class="primary-button" (click)="guardarCompra()" [disabled]="isSaving">
+                {{ isSaving ? 'Registrando...' : 'Generar Orden' }}
             </button>
         </div>
     </div>

@@ -17,6 +17,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { DialogSeleccionarItemComponent } from './dialog-seleccionar-item/dialog-seleccionar-item.component';
+import { CateringDataService, PlantillaCarga } from '../catering-data.service';
 
 
 // Interfaces
@@ -75,23 +76,7 @@ export class AbastecerVueloComponent implements OnInit {
         { codigo: 'VVI', nombre: 'Viru Viru' }
     ];
 
-    plantillasCarga = [
-        {
-            id: 10, nombre: 'Estándar Nacional (B737)',
-            items: [
-                { id: 8, nombre: 'Hielo Bolsa 5kg', unidad: 'Bolsa', cantidad: 2 },
-                { id: 10, nombre: 'Vaso Plástico', unidad: 'Paquete', cantidad: 5 }
-            ]
-        },
-        {
-            id: 11, nombre: 'Internacional Full (A330)',
-            items: [
-                { id: 8, nombre: 'Hielo Bolsa 5kg', unidad: 'Bolsa', cantidad: 10 },
-                { id: 12, nombre: 'Agua 2L', unidad: 'Botella', cantidad: 50 },
-                { id: 11, nombre: 'Servilletas Extra', unidad: 'Paquete', cantidad: 20 }
-            ]
-        }
-    ];
+    plantillasCarga: PlantillaCarga[] = [];
 
     // Historial inicial con datos falsos de items
     historialAbastecimientos: HistorialRegistro[] = [
@@ -110,7 +95,8 @@ export class AbastecerVueloComponent implements OnInit {
         private fb: FormBuilder,
         private dialog: MatDialog,
         private snackBar: MatSnackBar,
-        private router: Router
+        private router: Router,
+        private cateringDataService: CateringDataService
     ) {}
 
     ngOnInit(): void {
@@ -121,8 +107,21 @@ export class AbastecerVueloComponent implements OnInit {
             plantillaId: ['']
         });
 
+        this.loadPlantillas();
+
         this.abastecimientoForm.get('plantillaId')?.valueChanges.subscribe(id => {
             this.cargarPlantilla(id);
+        });
+    }
+
+    private loadPlantillas(): void {
+        this.cateringDataService.getPlantillas().subscribe({
+            next: (data) => {
+                this.plantillasCarga = data;
+            },
+            error: () => {
+                this.snackBar.open('No se pudieron cargar plantillas.', 'Cerrar', { duration: 3000 });
+            }
         });
     }
 
@@ -133,12 +132,12 @@ export class AbastecerVueloComponent implements OnInit {
     cargarPlantilla(idPlantilla: number): void {
         const plantilla = this.plantillasCarga.find(p => p.id === idPlantilla);
         if (plantilla) {
-            this.listaCarga = plantilla.items.map(item => ({
-                id: item.id,
-                nombre: item.nombre,
+            this.listaCarga = (plantilla.items || []).map(item => ({
+                id: item.itemId,
+                nombre: item.item?.nombreItem ?? 'Item',
                 cantidad: item.cantidad,
-                codigo: 'ITM-' + item.id,
-                tipo: item.unidad,
+                codigo: 'ITM-' + item.itemId,
+                tipo: item.item?.tipoItem ?? 'Unidad',
                 esExtra: false
             }));
             this.snackBar.open(`📋 Plantilla "${plantilla.nombre}" cargada.`, 'OK', { duration: 2000 });

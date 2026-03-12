@@ -6,6 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './providers/prisma/prisma.module';
 import { UserModule } from './core/user/user.module';
 import { PlantillasModule } from './catering/plantillas/plantillas.module';
+import { ComprasExterioresModule } from './catering/compras-exteriores/compras-exteriores.module';
+import { ConsumosModule } from './catering/consumos/consumos.module';
+import { ItemsModule } from './catering/items/items.module';
 
 @Module({
   imports: [
@@ -13,7 +16,10 @@ import { PlantillasModule } from './catering/plantillas/plantillas.module';
     AuthModule,
     PrismaModule,
     UserModule,
-    PlantillasModule
+    PlantillasModule,
+    ComprasExterioresModule,
+    ConsumosModule,
+    ItemsModule
   ],
   controllers: [AppController],
   providers: [AppService],

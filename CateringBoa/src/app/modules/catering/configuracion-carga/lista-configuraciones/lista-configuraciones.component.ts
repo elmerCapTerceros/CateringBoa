@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CateringDataService, PlantillaCarga } from '../../catering-data.service';
 
 interface ConfigPlantilla {
     id: number;
     nombre: string;
     aeronave: string; // Modelo
     clase: string;
+    tipoVuelo: string;
     totalItems: number;
     ultimaModificacion: string;
 }
@@ -20,16 +22,19 @@ interface ConfigPlantilla {
     imports: [CommonModule, MatButtonModule, MatIconModule, MatSnackBarModule],
     templateUrl: './lista-configuraciones.component.html'
 })
-export class ListaConfiguracionesComponent {
+export class ListaConfiguracionesComponent implements OnInit {
 
-    // Datos Mock
-    configuraciones: ConfigPlantilla[] = [
-        { id: 10, nombre: 'Estándar Nacional (B737)', aeronave: 'Boeing 737-300', clase: 'Económica', totalItems: 25, ultimaModificacion: '20/05/2025' },
-        { id: 11, nombre: 'Internacional Full (A330)', aeronave: 'Airbus A330', clase: 'Business', totalItems: 40, ultimaModificacion: '18/05/2025' },
-        { id: 12, nombre: 'Vuelo Corto (Express)', aeronave: 'Boeing 737-700', clase: 'Económica', totalItems: 10, ultimaModificacion: '15/05/2025' }
-    ];
+    configuraciones: ConfigPlantilla[] = [];
 
-    constructor(private router: Router, private snackBar: MatSnackBar) {}
+    constructor(
+        private router: Router,
+        private snackBar: MatSnackBar,
+        private cateringDataService: CateringDataService
+    ) {}
+
+    ngOnInit(): void {
+        this.loadPlantillas();
+    }
 
     irACrearNueva(): void {
         this.router.navigate(['/catering/configuracion/crear']);
@@ -42,8 +47,38 @@ export class ListaConfiguracionesComponent {
 
     eliminar(id: number): void {
         if(confirm('¿Estás seguro de eliminar esta plantilla de carga?')) {
-            this.configuraciones = this.configuraciones.filter(c => c.id !== id);
-            this.snackBar.open('Plantilla eliminada correctamente', 'Cerrar', { duration: 3000 });
+            this.cateringDataService.deletePlantilla(id).subscribe({
+                next: () => {
+                    this.configuraciones = this.configuraciones.filter(c => c.id !== id);
+                    this.snackBar.open('Plantilla eliminada correctamente', 'Cerrar', { duration: 3000 });
+                },
+                error: () => {
+                    this.snackBar.open('Error al eliminar plantilla', 'Cerrar', { duration: 3000 });
+                }
+            });
         }
+    }
+
+    private loadPlantillas(): void {
+        this.cateringDataService.getPlantillas().subscribe({
+            next: (data) => {
+                this.configuraciones = data.map((plantilla) => this.mapPlantilla(plantilla));
+            },
+            error: () => {
+                this.snackBar.open('No se pudieron cargar las plantillas', 'Cerrar', { duration: 3000 });
+            }
+        });
+    }
+
+    private mapPlantilla(plantilla: PlantillaCarga): ConfigPlantilla {
+        return {
+            id: plantilla.id,
+            nombre: plantilla.nombre,
+            aeronave: plantilla.modeloAeronave,
+            clase: plantilla.clase,
+            tipoVuelo: plantilla.tipoVuelo,
+            totalItems: plantilla.items?.length ?? 0,
+            ultimaModificacion: new Date(plantilla.ultimaModificacion).toLocaleDateString(),
+        };
     }
 }

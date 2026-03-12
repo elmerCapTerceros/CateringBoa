@@ -26,6 +26,15 @@
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Tipo de Vuelo</mat-label>
+                        <mat-select formControlName="tipoVuelo">
+                            @for (tipo of tiposVuelo; track tipo) {
+                                <mat-option [value]="tipo">{{ tipo }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="w-full">
                         <mat-label>Modelo de Aeronave</mat-label>
                         <mat-select formControlName="aeronave">
                             @for (avion of aeronaves; track avion.id) {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PlantillasService } from './plantillas.service';
 import { CreatePlantillaDto } from './dto/create-plantilla.dto';
 import { UpdatePlantillaDto } from './dto/update-plantilla.dto';
@@ -13,8 +13,8 @@ export class PlantillasController {
   }
 
   @Get()
-  findAll() {
-    return this.plantillasService.findAll();
+  findAll(@Query('tipoVuelo') tipoVuelo?: string) {
+    return this.plantillasService.findAll(tipoVuelo);
   }
 
   @Get(':id')

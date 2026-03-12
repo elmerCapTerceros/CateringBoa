@@ -1,30 +1,36 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chips'; // Nuevo: Para los estados visuales
+import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
+import {
+    CompraExterior,
+    CompraExteriorService,
+    EntregaCompraExterior
+} from '../compra-exterior.service';
 
-// 1. Interface para el DETALLE (El producto individual)
-interface DetalleItem {
-    nombre: string;
-    cantidadSolicitada: number;
-    cantidadRecibida: number;
-    unidad: string;
-}
-
-// 2. Interface para la CABECERA (La Orden de Compra)
-interface OrdenCompra {
-    id: string; // Ej: OC-2025-001
+interface OrdenCompraView {
+    id: number;
     proveedor: string;
     fecha: string;
-    destino: string; // Ej: Viru Viru
-    totalItems: number;
+    destino: string;
     estado: 'Pendiente' | 'Parcial' | 'Completado';
-    progreso: number; // Porcentaje general 0-100
-    detalle: DetalleItem[]; // Lista de productos dentro de la orden
-    expandido?: boolean; // Control visual para abrir/cerrar
+    progreso: number;
+    cantidad: number;
+    totalEntregado: number;
+    restante: number;
+    itemNombre: string;
+    itemCategoria: string;
+    entregas: EntregaCompraExterior[];
+    expandido?: boolean;
 }
 
 @Component({
@@ -36,60 +42,43 @@ interface OrdenCompra {
         MatIconModule,
         MatProgressBarModule,
         MatTooltipModule,
-        MatChipsModule
+        MatChipsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        FormsModule,
+        MatSnackBarModule,
+        RouterLink
     ],
     templateUrl: './lista-compras.component.html',
     styleUrl: './lista-compras.component.scss'
 })
-export class ListaComprasComponent {
+export class ListaComprasComponent implements OnInit {
+    ordenes: OrdenCompraView[] = [];
+    isLoading = false;
 
-    // Datos Mock: Ahora agrupados por Órdenes
-    ordenes: OrdenCompra[] = [
-        {
-            id: 'OC-2025-001',
-            proveedor: 'Hielos Andes S.R.L.',
-            fecha: '20/05/2025',
-            destino: 'Viru Viru',
-            totalItems: 2,
-            estado: 'Parcial',
-            progreso: 50,
-            detalle: [
-                { nombre: 'Hielo Bolsa 5kg', unidad: 'Bolsa', cantidadSolicitada: 100, cantidadRecibida: 100 }, // Completo
-                { nombre: 'Agua Mineral 2L', unidad: 'Botella', cantidadSolicitada: 200, cantidadRecibida: 0 }   // Pendiente
-            ]
-        },
-        {
-            id: 'OC-2025-002',
-            proveedor: 'Plásticos BoA',
-            fecha: '18/05/2025',
-            destino: 'Viru Viru',
-            totalItems: 1,
-            estado: 'Pendiente',
-            progreso: 0,
-            detalle: [
-                { nombre: 'Vaso Plástico', unidad: 'Paquete', cantidadSolicitada: 1000, cantidadRecibida: 0 }
-            ]
-        },
-        {
-            id: 'OC-2025-003',
-            proveedor: 'Catering Services Int.',
-            fecha: '15/05/2025',
-            destino: 'Miami',
-            totalItems: 3,
-            estado: 'Completado',
-            progreso: 100,
-            detalle: [
-                { nombre: 'Servilletas Extra', unidad: 'Caja', cantidadSolicitada: 50, cantidadRecibida: 50 },
-                { nombre: 'Cajas Térmicas', unidad: 'Unidad', cantidadSolicitada: 10, cantidadRecibida: 10 },
-                { nombre: 'Cubiertos Desechables', unidad: 'Paquete', cantidadSolicitada: 200, cantidadRecibida: 200 }
-            ]
-        }
+    stockDestinos = [
+        { id: 1, label: 'Viru Viru - Principal' },
+        { id: 2, label: 'Miami' },
+        { id: 3, label: 'Madrid' }
     ];
 
-    constructor() {}
+    entregaDraft: Record<
+        number,
+        { cantidad: number | null; stockId: number | null; tipoEntrega: string }
+    > = {};
+
+    constructor(
+        private compraExteriorService: CompraExteriorService,
+        private snackBar: MatSnackBar
+    ) {}
+
+    ngOnInit(): void {
+        this.loadCompras();
+    }
 
     // Función para expandir/contraer la fila
-    toggleDetalle(orden: OrdenCompra): void {
+    toggleDetalle(orden: OrdenCompraView): void {
         orden.expandido = !orden.expandido;
     }
 
@@ -103,53 +92,93 @@ export class ListaComprasComponent {
         }
     }
 
-    /**
-     * Lógica para registrar entregas PARCIALES dentro de una orden.
-     * Actualiza el ítem y recalcula el progreso de la orden padre.
-     */
-    registrarEntrega(item: DetalleItem, orden: OrdenCompra): void {
-        const faltante = item.cantidadSolicitada - item.cantidadRecibida;
+    registrarEntrega(orden: OrdenCompraView): void {
+        const draft = this.entregaDraft[orden.id];
 
-        // Usamos prompt por simplicidad (idealmente sería un Dialog pequeño)
-        const input = prompt(`Recibiendo: ${item.nombre}\nFaltan: ${faltante}\n¿Cantidad recibida hoy?`, `${faltante}`);
-
-        if (input) {
-            const cantidad = parseInt(input);
-            if (cantidad > 0 && cantidad <= faltante) {
-                // 1. Actualizar el ítem
-                item.cantidadRecibida += cantidad;
-
-                // 2. Recalcular el progreso general de la Orden
-                this.actualizarEstadoOrden(orden);
-            } else {
-                alert("Cantidad inválida.");
-            }
+        if (!draft || !draft.cantidad || !draft.stockId) {
+            this.snackBar.open('Complete cantidad y destino antes de registrar.', 'Cerrar', {
+                duration: 3000,
+            });
+            return;
         }
+
+        const fecha = new Date().toISOString();
+
+        this.compraExteriorService
+            .registrarEntrega(orden.id, {
+                tipoEntrega: draft.tipoEntrega ?? 'parcial',
+                fecha,
+                cantidad: draft.cantidad,
+                stockId: draft.stockId,
+            })
+            .subscribe({
+                next: () => {
+                    this.snackBar.open('Entrega registrada con exito.', 'Cerrar', {
+                        duration: 3000,
+                    });
+                    this.entregaDraft[orden.id] = {
+                        cantidad: null,
+                        stockId: draft.stockId,
+                        tipoEntrega: draft.tipoEntrega,
+                    };
+                    this.loadCompras();
+                },
+                error: () => {
+                    this.snackBar.open('Error al registrar la entrega.', 'Cerrar', {
+                        duration: 3000,
+                    });
+                },
+            });
     }
 
-    /**
-     * Recalcula el % de avance y el estado de la Orden completa
-     * basándose en sus hijos.
-     */
-    private actualizarEstadoOrden(orden: OrdenCompra): void {
-        let totalSolicitado = 0;
-        let totalRecibido = 0;
-
-        orden.detalle.forEach(i => {
-            totalSolicitado += i.cantidadSolicitada;
-            totalRecibido += i.cantidadRecibida;
+    private loadCompras(): void {
+        this.isLoading = true;
+        this.compraExteriorService.getCompras().subscribe({
+            next: (data) => {
+                this.ordenes = data.map((compra) => this.mapCompra(compra));
+                this.isLoading = false;
+            },
+            error: () => {
+                this.isLoading = false;
+                this.snackBar.open('No se pudo cargar compras exteriores.', 'Cerrar', {
+                    duration: 3000,
+                });
+            },
         });
+    }
 
-        // Calcular porcentaje
-        orden.progreso = (totalRecibido / totalSolicitado) * 100;
-
-        // Actualizar etiqueta de estado
-        if (totalRecibido === 0) {
-            orden.estado = 'Pendiente';
-        } else if (totalRecibido >= totalSolicitado) {
-            orden.estado = 'Completado';
-        } else {
-            orden.estado = 'Parcial';
+    private mapCompra(compra: CompraExterior): OrdenCompraView {
+        if (!this.entregaDraft[compra.idComprasExteriores]) {
+            this.entregaDraft[compra.idComprasExteriores] = {
+                cantidad: null,
+                stockId: null,
+                tipoEntrega: 'parcial',
+            };
         }
+
+        const progreso = compra.cantidad
+            ? Math.min(100, Math.round((compra.totalEntregado / compra.cantidad) * 100))
+            : 0;
+
+        const estado = compra.completada
+            ? 'Completado'
+            : compra.totalEntregado > 0
+                ? 'Parcial'
+                : 'Pendiente';
+
+        return {
+            id: compra.idComprasExteriores,
+            proveedor: compra.proveedor?.nombre ?? 'Proveedor',
+            fecha: compra.fecha,
+            destino: compra.almacenDestino ?? compra.entregas?.[0]?.stock?.almacen?.nombreAlmacen ?? 'Destino',
+            estado,
+            progreso,
+            cantidad: compra.cantidad,
+            totalEntregado: compra.totalEntregado,
+            restante: compra.restante,
+            itemNombre: compra.item?.nombreItem ?? 'Item',
+            itemCategoria: compra.item?.categoriaItem ?? 'Categoria',
+            entregas: compra.entregas ?? [],
+        };
     }
 }

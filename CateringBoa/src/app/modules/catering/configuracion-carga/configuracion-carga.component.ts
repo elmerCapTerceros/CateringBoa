@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 
 import { DialogSeleccionarItemComponent } from '../abastecer-vuelo/dialog-seleccionar-item/dialog-seleccionar-item.component';
+import { CateringDataService } from '../catering-data.service';
 
 interface ItemConfigurado {
     itemId: number;
@@ -44,17 +45,20 @@ export class ConfiguracionCargaComponent implements OnInit {
     ];
 
     clases = ['Económica', 'Business', 'Primera'];
+    tiposVuelo = ['americano', 'europa', 'sudamericano', 'norteamericano'];
 
     constructor(
         private fb: FormBuilder,
         private dialog: MatDialog,
         private snackBar: MatSnackBar,
-        private router: Router // <--- INYECCIÓN DEL ROUTER
+        private router: Router,
+        private cateringDataService: CateringDataService
     ) {}
 
     ngOnInit(): void {
         this.configForm = this.fb.group({
             nombreConfig: ['', Validators.required],
+            tipoVuelo: ['sudamericano', Validators.required],
             aeronave: ['', Validators.required],
             clase: ['Económica', Validators.required]
         });
@@ -98,14 +102,38 @@ export class ConfiguracionCargaComponent implements OnInit {
     }
 
     guardarConfiguracion(): void {
-        if (this.configForm.valid && this.itemsAgregados.length > 0) {
-            console.log('Guardando Config:', { cabecera: this.configForm.value, items: this.itemsAgregados });
-            this.mostrarNotificacion('✅ Plantilla Guardada');
-            this.itemsAgregados = [];
-            this.configForm.reset({ clase: 'Económica' });
-        } else {
+        if (!this.configForm.valid || this.itemsAgregados.length === 0) {
             this.mostrarNotificacion('⚠️ Complete el formulario y agregue ítems.');
+            return;
         }
+
+        const formValue = this.configForm.value;
+        const aeronave = this.aeronaves.find((avion) => avion.id === formValue.aeronave);
+
+        if (!aeronave) {
+            this.mostrarNotificacion('⚠️ Seleccione una aeronave válida.');
+            return;
+        }
+
+        this.cateringDataService.createPlantilla({
+            nombre: formValue.nombreConfig,
+            tipoVuelo: formValue.tipoVuelo,
+            modeloAeronave: aeronave.modelo,
+            clase: formValue.clase,
+            items: this.itemsAgregados.map((item) => ({
+                itemId: item.itemId,
+                cantidad: item.cantidad,
+            })),
+        }).subscribe({
+            next: () => {
+                this.mostrarNotificacion('✅ Plantilla Guardada');
+                this.itemsAgregados = [];
+                this.configForm.reset({ clase: 'Económica', tipoVuelo: 'sudamericano' });
+            },
+            error: () => {
+                this.mostrarNotificacion('❌ Error al guardar plantilla.');
+            }
+        });
     }
 
     private mostrarNotificacion(mensaje: string) {

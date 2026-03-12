@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
+import { IsString, IsInt, IsArray, ValidateNested, IsNotEmpty, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class DetalleItemDto {
@@ -16,6 +16,10 @@ export class CreatePlantillaDto {
     @IsString()
     @IsNotEmpty()
     nombre: string;
+
+    @IsString()
+    @IsIn(['americano', 'europa', 'sudamericano', 'norteamericano'])
+    tipoVuelo: string;
 
     @IsString()
     @IsNotEmpty()

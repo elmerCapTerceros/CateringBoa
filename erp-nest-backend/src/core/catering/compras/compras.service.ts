@@ -7,9 +7,9 @@ import { RecepcionarCompraDto } from './dto/recepcionar-compra.dto';
 export class ComprasService {
     constructor(private prisma: PrismaService) {}
 
-    // 1. CREAR ORDEN DE COMPRA (Estado: Pendiente)
+    
     async crearOrden(dto: CreateCompraDto) {
-        // Calculamos el costo total estimado
+        
         const costoTotal = dto.items.reduce((acc, item) => acc + (item.cantidad * item.costoUnitario), 0);
 
         return this.prisma.ordenCompra.create({

@@ -49,7 +49,6 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
     solicitudesFiltradas: Solicitud[] = [];
     solicitudesPaginadas: Solicitud[] = [];
 
-    //Almacenes dinámicos - se llenarán desde el backend
     almacenes: Almacen[] = [
         { value: '', viewValue: 'Todos' }
     ];
@@ -67,24 +66,16 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
             prioridad: ['']
         });
 
-        // Cargar datos
         this.solicitudService.getList().subscribe();
 
-        // Escuchar cambios
         this.solicitudService.solicitudes$.subscribe((data) => {
-            console.log('Datos recibidos:', data);
             this.solicitudes = data;
             this.solicitudesFiltradas = [...data];
-            
-            //Extraer almacenes únicos de las solicitudes
             this.extraerAlmacenesUnicos(data);
-            
             this.actualizarDatosPaginados();
         });
 
-        //Escuchar cambios en los filtros
-        this.filtroForm.valueChanges.subscribe((valores) => {
-            console.log('🔍 Filtros aplicados:', valores);
+        this.filtroForm.valueChanges.subscribe(() => {
             this.filtrarSolicitudes();
         });
     }
@@ -95,10 +86,9 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
         });
     }
 
-    //Extraer almacenes únicos de las solicitudes
     extraerAlmacenesUnicos(solicitudes: Solicitud[]): void {
         const almacenesUnicos = new Set<string>();
-        
+
         solicitudes.forEach(sol => {
             if (sol.almacen) {
                 almacenesUnicos.add(sol.almacen);
@@ -112,29 +102,16 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
                 viewValue: almacen
             }))
         ];
-
-        console.log('Almacenes disponibles:', this.almacenes);
     }
 
-    // Filtrar solicitudes - CORREGIDO
     filtrarSolicitudes(): void {
         const { almacen, prioridad } = this.filtroForm.value;
 
-        console.log('Filtrando por:', { almacen, prioridad });
-
         this.solicitudesFiltradas = this.solicitudes.filter(solicitud => {
-            // Filtro de almacén
             const cumpleAlmacen = !almacen || solicitud.almacen === almacen;
-            
-            // Filtro de prioridad
             const cumplePrioridad = !prioridad || solicitud.prioridad === prioridad;
-
-            const cumple = cumpleAlmacen && cumplePrioridad;
-            
-            return cumple;
+            return cumpleAlmacen && cumplePrioridad;
         });
-
-        console.log('Resultados filtrados:', this.solicitudesFiltradas.length);
 
         if (this.paginator) {
             this.paginator.firstPage();
@@ -150,9 +127,7 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
 
         const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
         const endIndex = startIndex + this.paginator.pageSize;
-
-        this.solicitudesPaginadas =
-            this.solicitudesFiltradas.slice(startIndex, endIndex);
+        this.solicitudesPaginadas = this.solicitudesFiltradas.slice(startIndex, endIndex);
     }
 
     limpiarFiltros(): void {
@@ -164,6 +139,26 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
 
     verDetalle(solicitud: Solicitud): void {
         this.router.navigate(['/catering/detalle', solicitud.id]);
+    }
+
+    aprobarSolicitud(solicitud: Solicitud): void {
+        if (!confirm(`¿Aprobar la solicitud de ${solicitud.almacen}? Se descontará el stock.`)) {
+            return;
+        }
+
+        this.solicitudService.aprobar(solicitud.id).subscribe({
+            next: () => {
+                this.snackBar.open(
+                    'Solicitud aprobada y stock descontado correctamente',
+                    'Cerrar',
+                    { duration: 3000 }
+                );
+            },
+            error: (err) => {
+                const mensaje = err?.error?.message || 'Error al aprobar la solicitud';
+                this.snackBar.open(mensaje, 'Cerrar', { duration: 4000 });
+            }
+        });
     }
 
     eliminarSolicitud(solicitud: Solicitud): void {

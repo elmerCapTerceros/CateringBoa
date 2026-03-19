@@ -34,7 +34,7 @@ model User {
   // Relaciones
   abastecimientos Abastecimiento[]
   solicitudes     Solicitud[]
-  solicitudesDot  SolicitudDotacion[]
+  //solicitudesDot  SolicitudDotacion[]
   ordenesCompra   OrdenCompra[]       @relation("UsuarioCreoOrden")
 }
 
@@ -64,7 +64,7 @@ model Aeronave {
 
   cargas          Carga[]
   rutas           AeronaveHasRuta[]
-  solicitudesDot  SolicitudDotacion[]
+  //solicitudesDot  SolicitudDotacion[]
   movimientos     Movimiento[]
   abastecimientos Abastecimiento[]
 }
@@ -394,20 +394,16 @@ model SolicitudDotacion {
   descripcion    String   @map("Descripcion") @db.VarChar(45)
   prioridad      String   @map("Prioridad") @db.VarChar(10)
   almacenId      Int      @map("Almacen_idAlmacen")
-  usuarioId      String   @default("admin1234") @map("Usuario_idUsuario")
-  aeronaveId     Int      @map("Aeronave_idAeronave")
 
   almacen  Almacen           @relation(fields: [almacenId], references: [idAlmacen])
-  usuario  User              @relation(fields: [usuarioId], references: [id])
-  aeronave Aeronave          @relation(fields: [aeronaveId], references: [idAeronave])
   detalles DetalleDotacion[]
 }
 
 model DetalleDotacion {
-  idDetalleDotacion   Int @id @default(autoincrement())
+  idDetalleDotacion   Int @id @default(autoincrement()) @map("idDetalle_dotacion")
   cantidad            Int
-  solicitudDotacionId Int               @map("Solicitud_Dotacion_idSolicitud_Dotacion")
-  itemId              Int               @map("Item_idItem")
+  solicitudDotacionId Int @map("Solicitud_Dotacion_idSolicitud_Dotacion")
+  itemId              Int @map("Item_idItem")
 
   solicitud SolicitudDotacion @relation(fields: [solicitudDotacionId], references: [idSolicitudDotacion])
   item      Item              @relation(fields: [itemId], references: [idItem])

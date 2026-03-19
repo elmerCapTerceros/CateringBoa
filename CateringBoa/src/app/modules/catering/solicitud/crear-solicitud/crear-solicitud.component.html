@@ -13,11 +13,12 @@
 
     <form [formGroup]="solicitudForm" (ngSubmit)="guardarSolicitud()">
         <div class="flex flex-wrap gap-3 mb-6">
+
             <!-- Almacén -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">
                     <mat-label>Almacén solicitado:</mat-label>
-                    <mat-select formControlName="almacenId" placeholder="Seleccionar almacén" 
+                    <mat-select formControlName="almacenId" placeholder="Seleccionar almacén"
                                 [disabled]="isLoadingCatalogos">
                         <mat-option>Seleccionar</mat-option>
                         @for (almacen of almacenes; track almacen.idAlmacen) {
@@ -35,36 +36,14 @@
                 </mat-form-field>
             </div>
 
-            <!-- Aeronave -->
-            <div>
-                <mat-form-field appearance="outline" class="w-64">
-                    <mat-label>Aeronave:</mat-label>
-                    <mat-select formControlName="aeronaveId" placeholder="Seleccionar aeronave"
-                                [disabled]="isLoadingCatalogos">
-                        <mat-option>Seleccionar</mat-option>
-                        @for (aeronave of aeronaves; track aeronave.idAeronave) {
-                            <mat-option [value]="aeronave.idAeronave">
-                                {{ aeronave.matricula }}
-                                @if (aeronave.tipoAeronave) {
-                                    <span class="text-gray-500 text-sm ml-2">({{ aeronave.tipoAeronave }})</span>
-                                }
-                            </mat-option>
-                        }
-                    </mat-select>
-                    @if (solicitudForm.get('aeronaveId')?.hasError('required') && solicitudForm.get('aeronaveId')?.touched) {
-                        <mat-error>La aeronave es requerida</mat-error>
-                    }
-                </mat-form-field>
-            </div>
-
             <!-- Fecha requerida -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">
                     <mat-label>Fecha requerida:</mat-label>
-                    <input matInput [matDatepicker]="picker" 
-                           formControlName="fechaRequerida" 
-                           placeholder="dd/mm/aaaa" 
-                           [min]="minDate" 
+                    <input matInput [matDatepicker]="picker"
+                           formControlName="fechaRequerida"
+                           placeholder="dd/mm/aaaa"
+                           [min]="minDate"
                            required>
                     <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-datepicker #picker></mat-datepicker>
@@ -105,7 +84,7 @@
                         Detalles de la solicitud: <span class="text-red-500">*</span>
                     </mat-card-title>
                 </div>
-                <button mat-button color="primary" type="button" 
+                <button mat-button color="primary" type="button"
                         (click)="agregarDetalle()" class="flex items-center gap-1"
                         [disabled]="isLoadingCatalogos">
                     <mat-icon>add</mat-icon>
@@ -174,7 +153,6 @@
                     }
                 </div>
 
-                <!-- Mensaje si no hay detalles -->
                 @if (detalles.length === 0) {
                     <div class="text-center py-8 text-gray-500">
                         No hay detalles agregados. Haz clic en "Agregar detalle" para comenzar.
@@ -188,7 +166,7 @@
             <button mat-stroked-button type="button" (click)="cancelar()" [disabled]="isLoading">
                 Cancelar
             </button>
-            <button mat-raised-button color="primary" type="submit" 
+            <button mat-raised-button color="primary" type="submit"
                     [disabled]="isLoading || isLoadingCatalogos">
                 @if (isLoading) {
                     <mat-spinner diameter="20" class="mr-2"></mat-spinner>

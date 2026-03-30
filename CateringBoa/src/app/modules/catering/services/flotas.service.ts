@@ -29,6 +29,10 @@ export class FlotasService {
         return this.http.get<FlotaApi[]>(this.apiUrl);
     }
 
+    getFlotasExternas(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/external`);
+    }
+
     getAeronaves(flotaId: number): Observable<AeronaveApi[]> {
         return this.http.get<AeronaveApi[]>(`${this.apiUrl}/${flotaId}/aeronaves`);
     }

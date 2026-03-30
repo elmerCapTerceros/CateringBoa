@@ -83,9 +83,23 @@ export class FlotaComponent implements OnInit {
         private stockService: StockService
     ) {}
 
+
     ngOnInit(): void {
         this.cargarDatosMaestros();
         this.cargarItemsCatalogo();
+        // Ejemplo: cargar flotas externas
+        // this.cargarFlotasExternas();
+    }
+
+    cargarFlotasExternas() {
+        this.flotasService.getFlotasExternas().subscribe({
+            next: (data) => {
+                // Aquí puedes adaptar el mapeo según la estructura de datos externa
+                this.snackBar.open('Flotas externas cargadas', 'Cerrar', { duration: 2000 });
+                console.log('Flotas externas:', data);
+            },
+            error: () => this.snackBar.open('Error cargando flotas externas', 'Cerrar')
+        });
     }
 
     cargarDatosMaestros() {

@@ -10,6 +10,11 @@ export class FlotasController {
         return this.flotasService.findAll();
     }
 
+    // @Get('external')
+    // findExternal() {
+    //     return this.flotasService.findExternal();
+    // }
+
     @Get(':id/aeronaves')
     findAeronaves(@Param('id', ParseIntPipe) id: number) {
         return this.flotasService.findAeronavesByFlotaId(id);

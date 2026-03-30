@@ -6,6 +6,8 @@ import { seedItems } from './seeds/items';
 import { seedFlotas } from './seeds/flotas';
 import { seedCompras } from './seeds/compras';
 import { seedStock} from "./seeds/stock";
+import { seedPlantillas } from './seeds/plantillas';
+import { seedAbastecimientos } from './seeds/abastecimientos';
 
 const prisma = new PrismaClient();
 
@@ -26,6 +28,8 @@ async function main() {
 
         // 3. Operaciones Complejas
         await seedFlotas(prisma);
+        await seedPlantillas(prisma);
+        await seedAbastecimientos(prisma);
         await seedCompras(prisma);
 
         console.log('✅ Base de datos poblada exitosamente.');

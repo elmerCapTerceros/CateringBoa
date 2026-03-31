@@ -174,13 +174,13 @@ export class CompraComponent implements OnInit {
         if (this.listaItemsCompra.length > 0 && this.compraForm.valid) {
             const formVal = this.compraForm.value;
 
-            // Mapeo para el Backend
+
             const nuevaOrden = {
                 codigoOrden: `ORD-${Date.now()}`,
                 proveedor: formVal.proveedor,
                 fechaEntrega: formVal.fechaRequerida,
                 almacenDestinoId: 1,
-                usuarioId: '4abbd038-a4f5-4189-8319-bbe0845f2483', // ID temporal
+                usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419', // ID temporal
                 items: this.listaItemsCompra.map((item) => ({
                     itemId: Number(item.id),
                     cantidad: item.cantidadSolicitada,

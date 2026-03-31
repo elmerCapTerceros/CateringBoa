@@ -22,7 +22,6 @@ export const seedItems = async (prisma: PrismaClient) => {
                 categoriaItem: p.cat,
                 tipoItem: 'Estándar',
                 unidadMedida: p.unit,
-                stockActual: 1000,
             }
         });
     }

@@ -1,44 +1,23 @@
-// listar-solicitud.component.ts
-import { Component, OnInit,  ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule, Router } from '@angular/router';
+
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
-import { SolicitudService } from '../solicitud.service';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
+import { SolicitudService, Solicitud } from '../solicitud.service';
 
 interface Almacen {
     value: string;
     viewValue: string;
-}
-interface Aeronave {
-    value: string;
-    viewValue: string;
-}
-
-interface Item {
-    id?: number;
-    categoria: string;
-    nombre: string;
-    cantidad: number;
-}
-
-interface Solicitud {
-    id: number;
-    almacen: string;
-    aeronave: string;
-    fecha: string;
-    descripcion: string;
-    prioridad: 'Alta' | 'Media' | 'Baja';
-    estado: 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada';
-    items: Item[];
 }
 
 @Component({
@@ -47,6 +26,7 @@ interface Solicitud {
     imports: [
         CommonModule,
         ReactiveFormsModule,
+        RouterModule,
         MatFormFieldModule,
         MatSelectModule,
         MatInputModule,
@@ -54,70 +34,74 @@ interface Solicitud {
         MatTableModule,
         MatChipsModule,
         MatPaginatorModule,
-        RouterModule,
         MatIconModule,
         MatSnackBarModule
     ],
     templateUrl: './listar-solicitud.component.html',
     styleUrls: ['./listar-solicitud.component.scss']
 })
-export class ListarSolicitudComponent implements OnInit {
-
+export class ListarSolicitudComponent implements OnInit, AfterViewInit {
     @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-    filtroForm: FormGroup;
+    filtroForm!: FormGroup;
+
     solicitudes: Solicitud[] = [];
     solicitudesFiltradas: Solicitud[] = [];
     solicitudesPaginadas: Solicitud[] = [];
 
     almacenes: Almacen[] = [
-        { value: '', viewValue: 'Todos' },
-        { value: 'Miami', viewValue: 'Miami' },
-        { value: 'Madrid', viewValue: 'Madrid' },
-        { value: 'Viru viru', viewValue: 'Viru viru' },
+        { value: '', viewValue: 'Todos' }
     ];
 
-    constructor(private fb: FormBuilder,
-                private _solService: SolicitudService,
-                private router: Router,
-                private snackBar: MatSnackBar
-    ) {
-        this.filtroForm = this.fb.group({
-            almacen: [''],
-            prioridad: [''],
-
-        });
-    }
+    constructor(
+        private fb: FormBuilder,
+        private solicitudService: SolicitudService,
+        private router: Router,
+        private snackBar: MatSnackBar
+    ) {}
 
     ngOnInit(): void {
+        this.filtroForm = this.fb.group({
+            almacen: [''],
+            prioridad: ['']
+        });
 
-        this._solService.getList().subscribe(
-            (response: any ) => {
-                console.log('response', response);
-                this.solicitudes = response;
-                this.solicitudesFiltradas = [...this.solicitudes];
-                this.actualizarDatosPaginados();
-            }
-        )
+        this.solicitudService.getList().subscribe();
 
+        this.solicitudService.solicitudes$.subscribe((data) => {
+            this.solicitudes = data;
+            this.solicitudesFiltradas = [...data];
+            this.extraerAlmacenesUnicos(data);
+            this.actualizarDatosPaginados();
+        });
 
-        // Escuchar cambios en el formulario para filtrar
         this.filtroForm.valueChanges.subscribe(() => {
             this.filtrarSolicitudes();
         });
     }
 
     ngAfterViewInit(): void {
-        // Configurar el paginador después de que la vista se inicialice
-        setTimeout(() => {
-            if (this.paginator) {
-                this.paginator.page.subscribe(() => {
-                    this.actualizarDatosPaginados();
-                });
-                // Actualizar datos paginados inicialmente
-                this.actualizarDatosPaginados();
+        this.paginator.page.subscribe(() => {
+            this.actualizarDatosPaginados();
+        });
+    }
+
+    extraerAlmacenesUnicos(solicitudes: Solicitud[]): void {
+        const almacenesUnicos = new Set<string>();
+
+        solicitudes.forEach(sol => {
+            if (sol.almacen) {
+                almacenesUnicos.add(sol.almacen);
             }
         });
+
+        this.almacenes = [
+            { value: '', viewValue: 'Todos' },
+            ...Array.from(almacenesUnicos).map(almacen => ({
+                value: almacen,
+                viewValue: almacen
+            }))
+        ];
     }
 
     filtrarSolicitudes(): void {
@@ -125,21 +109,18 @@ export class ListarSolicitudComponent implements OnInit {
 
         this.solicitudesFiltradas = this.solicitudes.filter(solicitud => {
             const cumpleAlmacen = !almacen || solicitud.almacen === almacen;
-            const cumplePrioridad = !prioridad || this.getPrioridadValue(solicitud.prioridad) === prioridad;
-
+            const cumplePrioridad = !prioridad || solicitud.prioridad === prioridad;
             return cumpleAlmacen && cumplePrioridad;
         });
-        // Resetear paginador cuando se filtran datos
+
         if (this.paginator) {
             this.paginator.firstPage();
         }
-
         this.actualizarDatosPaginados();
     }
 
     actualizarDatosPaginados(): void {
         if (!this.paginator) {
-            // Si el paginador no está disponible, mostrar todos los datos
             this.solicitudesPaginadas = this.solicitudesFiltradas;
             return;
         }
@@ -147,29 +128,6 @@ export class ListarSolicitudComponent implements OnInit {
         const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
         const endIndex = startIndex + this.paginator.pageSize;
         this.solicitudesPaginadas = this.solicitudesFiltradas.slice(startIndex, endIndex);
-    }
-
-    getPrioridadValue(prioridad: string): string {
-        const map: { [key: string]: string } = {
-            'Alta': '1',
-            'Media': '2',
-            'Baja': '3'
-        };
-        return map[prioridad] || '';
-    }
-
-    getEstadoClass(estado: string): string {
-        const classes: { [key: string]: string } = {
-            'Pendiente': 'bg-red-500 text-white',
-            'Parcial': 'bg-yellow-500 text-white',
-            'Aprobada': 'bg-green-500 text-white',
-            'Rechazada': 'bg-gray-700 text-white'
-        };
-        return classes[estado] || 'bg-gray-500 text-white';
-    }
-
-    getPrioridadText(prioridad: string): string {
-        return prioridad;
     }
 
     limpiarFiltros(): void {
@@ -180,38 +138,59 @@ export class ListarSolicitudComponent implements OnInit {
     }
 
     verDetalle(solicitud: Solicitud): void {
-        console.log('Ver detalle de:', solicitud);
-        // this.router.navigate(['/catering/detalle', solicitud.id]);
         this.router.navigate(['/catering/detalle', solicitud.id]);
     }
 
-    eliminarSolicitud(solicitud: Solicitud): void {
-        console.log('Iniciando eliminación de solicitud:', solicitud);
-        console.log('ID a eliminar:', solicitud.id);
-        console.log('Tipo de ID:', typeof solicitud.id);
-
-        if (confirm(`¿Está seguro de eliminar la solicitud de ${solicitud.almacen}?`)) {
-            this._solService.delete(solicitud.id).subscribe({
-                next: (response) => {
-                    console.log('Solicitud eliminada:', response);
-
-                    // Recargar lista
-                    this._solService.getList().subscribe(
-                        (data: any) => {
-                            this.solicitudes = data;
-                            this.solicitudesFiltradas = [...this.solicitudes];
-                            this.actualizarDatosPaginados();
-                        }
-                    );
-                },
-                error: (error) => {
-                    console.error('Error completo:', error);
-                    console.error('URL del error:', error.url);
-                    console.error('Status:', error.status);
-                    console.error('Message:', error.message);
-                    alert('Error al eliminar la solicitud');
-                }
-            });
+    aprobarSolicitud(solicitud: Solicitud): void {
+        if (!confirm(`¿Aprobar la solicitud de ${solicitud.almacen}? Se descontará el stock.`)) {
+            return;
         }
+
+        this.solicitudService.aprobar(solicitud.id).subscribe({
+            next: () => {
+                this.snackBar.open(
+                    'Solicitud aprobada y stock descontado correctamente',
+                    'Cerrar',
+                    { duration: 3000 }
+                );
+            },
+            error: (err) => {
+                const mensaje = err?.error?.message || 'Error al aprobar la solicitud';
+                this.snackBar.open(mensaje, 'Cerrar', { duration: 4000 });
+            }
+        });
+    }
+
+    eliminarSolicitud(solicitud: Solicitud): void {
+        if (!confirm(`¿Eliminar solicitud de ${solicitud.almacen}?`)) {
+            return;
+        }
+
+        this.solicitudService.delete(solicitud.id).subscribe({
+            next: () => {
+                this.snackBar.open(
+                    'Solicitud eliminada correctamente',
+                    'Cerrar',
+                    { duration: 3000 }
+                );
+            },
+            error: () => {
+                this.snackBar.open(
+                    'Error al eliminar la solicitud',
+                    'Cerrar',
+                    { duration: 3000 }
+                );
+            }
+        });
+    }
+
+    getEstadoClass(estado: string): string {
+        const classes: Record<string, string> = {
+            Pendiente: 'bg-red-500 text-white',
+            Parcial: 'bg-yellow-500 text-white',
+            Aprobada: 'bg-green-500 text-white',
+            Rechazada: 'bg-gray-700 text-white'
+        };
+        return classes[estado] ?? 'bg-gray-500 text-white';
     }
 }

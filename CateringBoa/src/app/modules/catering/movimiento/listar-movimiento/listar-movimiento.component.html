@@ -1,0 +1,140 @@
+<div class="flex flex-col flex-auto min-w-0">
+  <div class="flex-auto p-6 sm:p-10">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-3xl font-bold">Movimientos Realizados</h2>
+      <button type="button" (click)="irACrear()"
+        class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-colors">
+        + Nuevo Movimiento
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <form [formGroup]="filtroForm">
+      <div class="flex flex-wrap gap-3 mb-6">
+        <div>
+          <mat-form-field appearance="outline" class="w-64">
+            <mat-label>Filtrar por tipo:</mat-label>
+            <mat-select formControlName="tipo">
+              @for (tipo of tiposMovimiento; track tipo.value) {
+                <mat-option [value]="tipo.value">{{ tipo.viewValue }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" class="w-64">
+            <mat-label>Filtrar por almacén:</mat-label>
+            <input matInput formControlName="almacen" placeholder="Nombre del almacén">
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="flex justify-end mb-4">
+        <button type="button" (click)="limpiarFiltros()"
+          class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium shadow-lg transition-colors text-sm">
+          Limpiar filtros
+        </button>
+      </div>
+    </form>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-800"></div>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+      {{ error }}
+    </div>
+
+    <!-- Tabla -->
+    <div *ngIf="!loading && !error" class="overflow-x-auto bg-white rounded-lg shadow">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-800 text-white text-sm">
+          <tr>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">#</th>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Tipo</th>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Fecha</th>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Almacén</th>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Aeronave</th>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Descripción</th>
+            <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @for (mov of movimientosPaginados; track mov.id) {
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mov.id }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span [class]="getTipoClass(mov.tipoMovimiento)"
+                  class="px-3 py-1 rounded-full text-xs font-semibold">
+                  {{ mov.tipoMovimiento }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ mov.fecha | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mov.almacen.nombreAlmacen }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mov.aeronave.matricula }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ mov.descripcion }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <button type="button" (click)="verDetalle(mov)"
+                  class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Ver items">
+                  <mat-icon class="icon-size-5">
+                    {{ movimientoSeleccionado?.id === mov.id ? 'expand_less' : 'expand_more' }}
+                  </mat-icon>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Fila expandible -->
+            @if (movimientoSeleccionado?.id === mov.id) {
+              <tr>
+                <td colspan="7" class="px-6 py-4 bg-gray-50">
+                  <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Items del movimiento</p>
+                  <table class="min-w-full">
+                    <thead>
+                      <tr class="text-xs text-gray-500 uppercase">
+                        <th class="text-left py-1 pr-6">Item</th>
+                        <th class="text-left py-1 pr-6">Categoría</th>
+                        <th class="text-left py-1 pr-6">Tipo</th>
+                        <th class="text-left py-1">Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (d of mov.detalles; track d.id) {
+                        <tr class="text-sm text-gray-700">
+                          <td class="py-1 pr-6">{{ d.item.nombreItem }}</td>
+                          <td class="py-1 pr-6">{{ d.item.categoriaItem }}</td>
+                          <td class="py-1 pr-6">{{ d.item.tipoItem }}</td>
+                          <td class="py-1">{{ d.cantidad }} {{ d.item.unidadMedida }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                No se encontraron movimientos
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginador -->
+    <mat-paginator
+      [length]="movimientosFiltrados.length"
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 25]"
+      aria-label="Paginador movimientos">
+    </mat-paginator>
+
+  </div>
+</div>

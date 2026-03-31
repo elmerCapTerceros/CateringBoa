@@ -13,24 +13,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {SolicitudService} from '../solicitud.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-interface Almacen {
-    value: string;
-    viewValue: string;
-}
-
-interface Aeronave{
-    value:string;
-    viewValue:string;
-}
-
-interface Item {
-    id?: number;
-    categoria: string;
-    nombre: string;
-    cantidad: number;
-}
+import { SolicitudService, CreateSolicitudDto } from '../solicitud.service';
+import { CatalogosService, Almacen, Item } from '../../services/catalogo.service';
 
 @Component({
     selector: 'app-crear-solicitud',
@@ -48,217 +34,150 @@ interface Item {
         MatCardModule,
         MatNativeDateModule,
         MatSnackBarModule,
-        MatProgressSpinnerModule
+        MatProgressSpinnerModule,
+        MatTooltipModule
     ],
     templateUrl: './crear-solicitud.component.html',
     styleUrls: ['./crear-solicitud.component.scss']
 })
 export class CrearSolicitudComponent implements OnInit {
-
     solicitudForm: FormGroup;
     isLoading = false;
+    isLoadingCatalogos = false;
     minDate = new Date();
-    almacenes: Almacen[] = [
-        {value: 'Miami', viewValue: 'Miami'},
-        {value: 'Madrid', viewValue: 'Madrid'},
-        {value: 'Viru viru', viewValue: 'Viru viru'},
-    ];
 
-    aeronaves: Aeronave[] = [
-        { value: 'Boeing 737-800', viewValue: 'Boeing 737-800' },
-        { value: 'Airbus A320', viewValue: 'Airbus A320' },
-        { value: 'Boeing 767-300', viewValue: 'Boeing 767-300' },
-        { value: 'Airbus A330', viewValue: 'Airbus A330' },
-        { value: 'Boeing 787-9', viewValue: 'Boeing 787-9' },
-    ];
-
-    categorias: string[] = [
-        'Bebidas',
-        'Bebidas Calientes',
-        'Bebidas Personales',
-        'Lacteos/Alimentos Básicos',
-        'Desechables',
-        'Toolkit/Material Varios',
-        'Mantelería',
-        'Confort/Higiene'
-    ];
-
-    prioridades = [
-        { value: '1', label: 'Baja' },
-        { value: '2', label: 'Media' },
-        { value: '3', label: 'Alta' }
-    ];
+    almacenes: Almacen[] = [];
+    items: Item[] = [];
 
     constructor(
         private fb: FormBuilder,
         private solicitudService: SolicitudService,
+        private catalogosService: CatalogosService,
         private snackBar: MatSnackBar,
         private router: Router
     ) {
         this.solicitudForm = this.fb.group({
-            almacen: ['', Validators.required],
-            aeronave: ['', Validators.required],
-            fecha: ['', Validators.required],
-            prioridad: ['2', Validators.required],
+            fechaRequerida: ['', Validators.required],
             descripcion: ['', Validators.required],
-            items: this.fb.array([])
+            prioridad: ['Media', Validators.required],
+            almacenId: [null, Validators.required],
+            detalles: this.fb.array([])
         });
     }
 
     ngOnInit(): void {
-        console.log('Componente crear solicitud iniciado');
-        this.agregarItem();
+        this.cargarCatalogos();
+        this.agregarDetalle();
     }
 
-    get items(): FormArray {
-        return this.solicitudForm.get('items') as FormArray;
-    }
+    cargarCatalogos(): void {
+        this.isLoadingCatalogos = true;
 
-    crearItemForm(): FormGroup {
-        return this.fb.group({
-            categoria: ['', Validators.required],
-            nombre: ['', Validators.required],
-            cantidad: [0, [Validators.required, Validators.min(1)]]
+        this.catalogosService.getAllCatalogos().subscribe({
+            next: (response) => {
+                this.almacenes = response.almacenes || [];
+                this.items = response.items || [];
+                this.isLoadingCatalogos = false;
+            },
+            error: () => {
+                this.isLoadingCatalogos = false;
+                this.cargarCatalogosSeparados();
+            }
         });
     }
 
-    agregarItem(): void {
-        this.items.push(this.crearItemForm());
+    cargarCatalogosSeparados(): void {
+        this.catalogosService.getAlmacenes().subscribe({
+            next: (data) => { this.almacenes = data; },
+            error: () => this.snackBar.open('Error cargando almacenes', 'Cerrar', { duration: 3000 })
+        });
+
+        this.catalogosService.getItems().subscribe({
+            next: (data) => { this.items = data; },
+            error: () => this.snackBar.open('Error cargando items', 'Cerrar', { duration: 3000 })
+        });
     }
 
-    eliminarItem(index: number): void {
-        if (this.items.length > 1) {
-            this.items.removeAt(index);
+    get detalles(): FormArray {
+        return this.solicitudForm.get('detalles') as FormArray;
+    }
+
+    crearDetalleForm(): FormGroup {
+        return this.fb.group({
+            itemId: [null, Validators.required],
+            cantidad: [1, [Validators.required, Validators.min(1)]]
+        });
+    }
+
+    agregarDetalle(): void {
+        this.detalles.push(this.crearDetalleForm());
+    }
+
+    eliminarDetalle(index: number): void {
+        if (this.detalles.length > 1) {
+            this.detalles.removeAt(index);
         } else {
-            this.snackBar.open('Debe haber al menos un item', 'Cerrar', {
-                duration: 3000
-            });
+            this.snackBar.open('Debe haber al menos un detalle', 'Cerrar', { duration: 3000 });
         }
     }
 
     guardarSolicitud(): void {
-        // Marcar todos los campos como touched para mostrar errores
+        if (this.solicitudForm.valid) {
+            this.isLoading = true;
+
+            const formValue = this.solicitudForm.value;
+            const solicitudDto: CreateSolicitudDto = {
+                fechaRequerida: new Date(formValue.fechaRequerida).toISOString(),
+                descripcion: formValue.descripcion,
+                prioridad: formValue.prioridad,
+                almacenId: Number(formValue.almacenId),
+                detalles: formValue.detalles.map((detalle: any) => ({
+                    itemId: Number(detalle.itemId),
+                    cantidad: Number(detalle.cantidad)
+                }))
+            };
+
+            this.solicitudService.create(solicitudDto).subscribe({
+                next: () => {
+                    this.isLoading = false;
+                    this.snackBar.open('Solicitud creada exitosamente!', 'Cerrar', { duration: 3000 });
+                    this.resetForm();
+                    setTimeout(() => this.router.navigate(['/catering/list']), 1000);
+                },
+                error: (error) => {
+                    this.isLoading = false;
+                    const errorMessage = error.error?.message || 'Error al crear la solicitud';
+                    this.snackBar.open(errorMessage, 'Cerrar', { duration: 5000 });
+                }
+            });
+        } else {
+            this.marcarCamposComoVisitados();
+            this.snackBar.open('Complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
+        }
+    }
+
+    private resetForm(): void {
+        this.solicitudForm.reset({ prioridad: 'Media', almacenId: null });
+        this.detalles.clear();
+        this.agregarDetalle();
+    }
+
+    private marcarCamposComoVisitados(): void {
         Object.keys(this.solicitudForm.controls).forEach(key => {
             this.solicitudForm.get(key)?.markAsTouched();
         });
 
-        // Marcar items como touched
-        this.items.controls.forEach(item => {
-            Object.keys((item as FormGroup).controls).forEach(key => {
-                item.get(key)?.markAsTouched();
+        this.detalles.controls.forEach(detalle => {
+            Object.values((detalle as FormGroup).controls).forEach(control => {
+                control.markAsTouched();
             });
         });
-
-        if (this.solicitudForm.valid) {
-            this.isLoading = true;
-
-            // Formatear la fecha
-            const formValue = this.solicitudForm.value;
-            const fecha = new Date(formValue.fecha);
-            const fechaFormateada = `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
-
-            // Mapear prioridad numérica a texto
-            const prioridadMap: { [key: string]: string } = {
-                '1': 'Baja',
-                '2': 'Media',
-                '3': 'Alta'
-            };
-
-            // Preparar datos para enviar
-            const solicitudData = {
-                almacen: formValue.almacen,
-                aeronave: formValue.aeronave,
-                fecha: fechaFormateada,
-                descripcion: formValue.descripcion,
-                prioridad: prioridadMap[formValue.prioridad] || 'Media',
-                estado: 'Pendiente',
-                items: formValue.items
-            };
-
-            // ← AGREGAMOS ESTOS CONSOLE.LOG PARA VERIFICAR
-            console.log('Datos completos a enviar:', solicitudData);
-            console.log('Items que se van a guardar:', solicitudData.items);
-            console.log('Cantidad de items:', solicitudData.items.length);
-
-            // Enviar al backend (mock API)
-            this.solicitudService.create(solicitudData).subscribe({
-                next: (response) => {
-                    this.isLoading = false;
-                    console.log('Solicitud creada exitosamente:', response);
-                    console.log('Items guardados:', response.items);
-
-                    this.snackBar.open('¡Solicitud creada exitosamente!', 'Cerrar', {
-                        duration: 3000,
-                        panelClass: ['success-snackbar']
-                    });
-
-                    // Resetear formulario
-                    this.solicitudForm.reset({prioridad: '2'});
-                    this.items.clear();
-                    this.agregarItem();
-
-                    // Opcional: Redirigir a la lista después de 1 segundo
-                    setTimeout(() => {
-                        this.router.navigate(['/solicitud/listar']);
-                    }, 1000);
-                },
-                error: (error) => {
-                    this.isLoading = false;
-                    console.error('Error al crear solicitud:', error);
-
-                    this.snackBar.open(
-                        'Error al crear la solicitud. Intente nuevamente.',
-                        'Cerrar',
-                        {
-                            duration: 5000,
-                            panelClass: ['error-snackbar']
-                        }
-                    );
-                }
-            });
-        } else {
-            console.log('Formulario inválido');
-            this.snackBar.open('Por favor complete todos los campos requeridos', 'Cerrar', {
-                duration: 3000,
-                panelClass: ['warning-snackbar']
-            });
-        }
-        this.router.navigate(['/catering/list']);
     }
 
     cancelar(): void {
-        if (confirm('¿Está seguro de cancelar? Se perderán todos los datos ingresados.')) {
-            this.solicitudForm.reset({prioridad: '2'});
-            this.items.clear();
-            this.agregarItem();
-            this.redirigir();
-
-            this.snackBar.open('Formulario cancelado', 'Cerrar', {
-                duration: 2000
-            });
+        if (confirm('¿Está seguro de cancelar? Se perderán los datos ingresados.')) {
+            this.resetForm();
+            this.router.navigate(['/catering/list']);
         }
-    }
-
-    // Métodos auxiliares para validación en el template
-    getErrorMessage(fieldName: string): string {
-        const field = this.solicitudForm.get(fieldName);
-        if (field?.hasError('required')) {
-            return 'Este campo es requerido';
-        }
-        return '';
-    }
-
-    getItemErrorMessage(index: number, fieldName: string): string {
-        const field = this.items.at(index).get(fieldName);
-        if (field?.hasError('required')) {
-            return 'Este campo es requerido';
-        }
-        if (field?.hasError('min')) {
-            return 'La cantidad debe ser mayor a 0';
-        }
-        return '';
-    }
-    redirigir(){
-        this.router.navigate(['/catering/list']);
     }
 }

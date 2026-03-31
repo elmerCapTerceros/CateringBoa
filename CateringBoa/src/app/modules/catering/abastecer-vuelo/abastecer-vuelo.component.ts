@@ -309,7 +309,7 @@ export class AbastecerVueloComponent implements OnInit {
             codigoVuelo: this.vueloSeleccionado.codigo,
             aeronaveId: this.aeronaveIdSeleccionada,
             almacenId: 1, // ID Almacén Principal (Hardcodeado Temporal)
-            usuarioId: '4abbd038-a4f5-4189-8319-bbe0845f2483',
+            usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419',
             observaciones: 'Despacho regular',
             items: this.listaCargaActual.map((i) => ({
                 itemId: i.itemId,

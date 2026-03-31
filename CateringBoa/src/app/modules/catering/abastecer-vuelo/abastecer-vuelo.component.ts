@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
@@ -15,27 +15,26 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 // --- SERVICIOS ---
 import { AbastecimientoService } from '../services/abastecimiento.service';
+import { FlotaApi, FlotasService } from '../services/flotas.service';
 import { PlantillasService } from '../services/plantillas.service';
 import { StockService } from '../services/stock.service';
-import { FlotaApi, FlotasService } from '../services/flotas.service';
 
-// --- INTERFACES ADAPTADAS ---
+// --- INTERFACES ---
 interface ItemCarga {
-    itemId: number; // ID real de BD
+    itemId: number;
     nombre: string;
     cantidad: number;
     unidad: string;
     tipo: 'Base' | 'Extra';
 }
 
-// Interfaz para el selector de stock (visual)
 interface ItemStockSelection {
     id: number;
     nombre: string;
     unidad: string;
     selected: boolean;
     cantidadAgregar: number;
-    stockActual?: number; // Opcional si el endpoint items no trae stock
+    stockActual: number;
 }
 
 @Component({
@@ -44,6 +43,7 @@ interface ItemStockSelection {
     imports: [
         CommonModule,
         FormsModule,
+        ReactiveFormsModule, // Agregado para evitar errores de inyector en formularios
         MatIconModule,
         MatButtonModule,
         MatInputModule,
@@ -61,13 +61,12 @@ interface ItemStockSelection {
 export class AbastecerVueloComponent implements OnInit {
     @ViewChild('modalAgregarItem') modalAgregarItem!: TemplateRef<any>;
 
-    // Búsqueda
+    // Variables de búsqueda (Usa el atributo 'name' en el HTML con ngModel)
     searchVueloTerm: string = '';
     searchStockTerm: string = '';
 
-    // Datos
+    // Datos Mock
     vuelosDelDia: any[] = [
-        // MOCK TEMPORAL DE VUELOS (Hasta que tengas módulo Vuelos)
         {
             codigo: 'OB-760',
             ruta: 'VVI > MIA',
@@ -90,6 +89,7 @@ export class AbastecerVueloComponent implements OnInit {
             matricula: 'CP-2923',
         },
     ];
+
     vuelosBase: any[] = [];
     vuelosFiltrados: any[] = [];
     vueloSeleccionado: any = null;
@@ -98,14 +98,11 @@ export class AbastecerVueloComponent implements OnInit {
     flotaSeleccionada: FlotaApi | null = null;
     aeronaveIdSeleccionada: number | null = null;
 
-    // Plantillas (Desde Backend)
     plantillasDisponibles: any[] = [];
     plantillaSeleccionadaId: number | null = null;
 
-    // Carga Actual (Tabla)
     listaCargaActual: ItemCarga[] = [];
 
-    // Stock (Desde Backend)
     stockCompleto: ItemStockSelection[] = [];
     stockFiltrado: ItemStockSelection[] = [];
 
@@ -121,16 +118,14 @@ export class AbastecerVueloComponent implements OnInit {
     ngOnInit(): void {
         this.vuelosBase = [...this.vuelosDelDia];
         this.vuelosFiltrados = [...this.vuelosDelDia];
-        this.cargarPlantillasBackend(); // Cargar al inicio
+        this.cargarPlantillasBackend();
         this.cargarFlotasBackend();
     }
 
-    // --- CARGA DE DATOS REALES ---
+    // --- CARGA DE DATOS ---
     cargarPlantillasBackend() {
         this.plantillasService.getPlantillas().subscribe({
-            next: (data) => {
-                this.plantillasDisponibles = data;
-            },
+            next: (data) => (this.plantillasDisponibles = data),
             error: (err) => console.error('Error cargando plantillas', err),
         });
     }
@@ -138,32 +133,30 @@ export class AbastecerVueloComponent implements OnInit {
     cargarStockBackend() {
         this.stockService.getItems().subscribe({
             next: (data) => {
-                // Mapeamos respuesta BD a interfaz visual
                 this.stockCompleto = data.map((item: any) => ({
                     id: item.idItem,
                     nombre: item.nombreItem,
                     unidad: item.unidadMedida || 'Unidad',
                     selected: false,
                     cantidadAgregar: 1,
-                    stockActual: item.stockActual ?? 0,
+                    // CORRECCIÓN: Acceso a stock por almacén (detallesStock)
+                    stockActual: item.detallesStock?.[0]?.cantidad ?? 0,
                 }));
                 this.stockFiltrado = [...this.stockCompleto];
             },
-            error: (err) =>
+            error: () =>
                 this.snackBar.open('Error cargando productos', 'Cerrar'),
         });
     }
 
     cargarFlotasBackend() {
         this.flotasService.getFlotas().subscribe({
-            next: (data) => {
-                this.flotas = data;
-            },
-            error: () =>
-                this.snackBar.open('Error cargando flotas', 'Cerrar'),
+            next: (data) => (this.flotas = data),
+            error: () => this.snackBar.open('Error cargando flotas', 'Cerrar'),
         });
     }
 
+    // --- SELECCIÓN ---
     seleccionarFlota(flota: FlotaApi) {
         this.flotaSeleccionada = flota;
         this.aeronaveIdSeleccionada = null;
@@ -173,7 +166,6 @@ export class AbastecerVueloComponent implements OnInit {
         this.filtrarVuelos();
     }
 
-    // --- LÓGICA VUELOS ---
     seleccionarVuelo(vuelo: any) {
         this.vueloSeleccionado = vuelo;
         this.aeronaveIdSeleccionada = this.encontrarAeronaveId(vuelo.matricula);
@@ -207,11 +199,10 @@ export class AbastecerVueloComponent implements OnInit {
         return null;
     }
 
-    // --- LÓGICA PLANTILLAS ---
+    // --- PLANTILLAS ---
     aplicarPlantilla() {
         if (!this.plantillaSeleccionadaId) return;
 
-        // Buscar plantilla en la lista que ya trajimos del backend
         const plantilla = this.plantillasDisponibles.find(
             (p) => (p.id ?? p.idPlantilla) === this.plantillaSeleccionadaId
         );
@@ -222,7 +213,6 @@ export class AbastecerVueloComponent implements OnInit {
                     return;
             }
 
-            // Mapeamos items de la plantilla a la tabla de carga
             this.listaCargaActual = plantilla.items.map((i: any) => ({
                 itemId: i.itemId,
                 nombre: i.item ? i.item.nombreItem : 'Item Desconocido',
@@ -231,16 +221,14 @@ export class AbastecerVueloComponent implements OnInit {
                 tipo: 'Base',
             }));
 
-            this.snackBar.open('Plantilla aplicada correctamente', 'OK', {
-                duration: 2000,
-            });
+            this.snackBar.open('Plantilla aplicada', 'OK', { duration: 2000 });
         }
     }
 
-    // --- LÓGICA STOCK EXTRA (MODAL) ---
+    // --- MODAL STOCK ---
     abrirModalItem() {
         this.searchStockTerm = '';
-        this.cargarStockBackend(); // Cargar stock fresco cada vez que abre
+        this.cargarStockBackend();
         this.dialog.open(this.modalAgregarItem, {
             width: '800px',
             maxHeight: '90vh',
@@ -264,11 +252,9 @@ export class AbastecerVueloComponent implements OnInit {
         if (seleccionados.length === 0) return;
 
         seleccionados.forEach((sel) => {
-            // Verificar si ya existe en la tabla para sumar
             const existente = this.listaCargaActual.find(
                 (i) => i.itemId === sel.id
             );
-
             if (existente) {
                 existente.cantidad += sel.cantidadAgregar;
             } else {
@@ -294,22 +280,22 @@ export class AbastecerVueloComponent implements OnInit {
         this.listaCargaActual.splice(index, 1);
     }
 
-    // --- GUARDAR DESPACHO (BACKEND) ---
+    // --- DESPACHO ---
     confirmarDespacho() {
         if (!this.vueloSeleccionado || this.listaCargaActual.length === 0) {
-            this.snackBar.open('Seleccione un vuelo e items', 'Cerrar');
+            this.snackBar.open('Seleccione vuelo e items', 'Cerrar');
             return;
         }
         if (!this.aeronaveIdSeleccionada) {
-            this.snackBar.open('No se encontro aeronave para el vuelo', 'Cerrar');
+            this.snackBar.open('No se encontró aeronave', 'Cerrar');
             return;
         }
 
         const payload = {
             codigoVuelo: this.vueloSeleccionado.codigo,
             aeronaveId: this.aeronaveIdSeleccionada,
-            almacenId: 1, // ID Almacén Principal (Hardcodeado Temporal)
-            usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419',
+            almacenId: 1, // ID Almacén de tu Seed
+            usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419', // Verifica que este UUID exista
             observaciones: 'Despacho regular',
             items: this.listaCargaActual.map((i) => ({
                 itemId: i.itemId,
@@ -318,20 +304,15 @@ export class AbastecerVueloComponent implements OnInit {
         };
 
         this.abastecimientoService.despacharVuelo(payload).subscribe({
-            next: (res) => {
-                this.snackBar.open('✅ Vuelo despachado con éxito', 'Cerrar', {
+            next: () => {
+                this.snackBar.open('✅ Vuelo despachado', 'Cerrar', {
                     duration: 4000,
-                    panelClass: ['bg-green-600', 'text-white'],
                 });
-
-                // Limpiar pantalla
                 this.vueloSeleccionado = null;
                 this.listaCargaActual = [];
-                this.plantillaSeleccionadaId = null;
             },
             error: (err) => {
-                console.error(err);
-                const msg = err.error?.message || 'Error desconocido';
+                const msg = err.error?.message || 'Error en el servidor';
                 this.snackBar.open(`❌ Error: ${msg}`, 'Cerrar', {
                     duration: 5000,
                 });
@@ -339,7 +320,7 @@ export class AbastecerVueloComponent implements OnInit {
         });
     }
 
-    // Helpers Visuales
+    // Getters
     get countSeleccionados() {
         return this.stockCompleto.filter((i) => i.selected).length;
     }

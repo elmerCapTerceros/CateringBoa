@@ -41,34 +41,42 @@ export class ListaComprasComponent implements OnInit {
     }
 
     cargarDatos() {
-        // CORRECCIÓN: Usar obtenerHistorial()
         this.comprasService.obtenerHistorial().subscribe({
             next: (data) => {
                 this.ordenes = data.map((orden: any) => ({
                     id: orden.codigoOrden,
                     proveedor: orden.proveedor,
                     fecha: new Date(orden.fechaSolicitud).toLocaleDateString(),
-                    destino: orden.almacenDestino?.nombreAlmacen || 'Viru Viru',
-                    totalItems: orden.detalles.length,
+                    destino:
+                        orden.almacenDestino?.nombreAlmacen || 'Sin Destino',
+                    totalItems: orden.detalles?.length || 0,
                     estado: orden.estado,
-                    progreso: this.calcProgreso(orden.detalles),
+                    progreso: this.calcProgreso(orden.detalles || []),
                     costoTotalEstimado: orden.costoTotalEstimado,
                     costoTotalReal: orden.costoTotalReal,
-                    detalle: orden.detalles.map((d: any) => ({
-                        nombre: d.item.nombreItem,
-                        unidad: d.item.unidadMedida,
+                    expandido: false,
+                    detalle: (orden.detalles || []).map((d: any) => ({
+                        nombre: d.item?.nombreItem || 'Producto desconocido',
+                        unidad: d.item?.unidadMedida || 'Unidad',
                         cantidadSolicitada: d.cantidadSolicitada,
                         cantidadRecibida: d.cantidadRecibida,
                         costoUnitario: d.costoUnitario,
                     })),
                 }));
-                this.ordenesVisibles = this.ordenes;
+                this.ordenesVisibles = [...this.ordenes];
             },
-            error: (err) => console.error(err),
+            error: (err) =>
+                console.error('Error al cargar lista de compras:', err),
         });
     }
 
+    // SOLUCIÓN TS2339: Se agrega la función que el HTML estaba pidiendo
+    toggleDetalle(orden: any): void {
+        orden.expandido = !orden.expandido;
+    }
+
     calcProgreso(detalles: any[]): number {
+        if (!detalles || detalles.length === 0) return 0;
         const total = detalles.reduce(
             (acc: number, d: any) => acc + d.cantidadSolicitada,
             0
@@ -81,16 +89,12 @@ export class ListaComprasComponent implements OnInit {
     }
 
     filtrarOrdenes() {
-        const term = this.filtroTexto.toLowerCase();
+        const term = this.filtroTexto.toLowerCase().trim();
         this.ordenesVisibles = this.ordenes.filter(
             (o) =>
                 o.proveedor.toLowerCase().includes(term) ||
                 o.id.toLowerCase().includes(term)
         );
-    }
-
-    toggleDetalle(orden: any): void {
-        orden.expandido = !orden.expandido;
     }
 
     getEstadoClass(estado: string): string {

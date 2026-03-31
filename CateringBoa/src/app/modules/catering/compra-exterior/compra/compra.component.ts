@@ -22,9 +22,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-// SERVICIOS INTEGRADOS
 import { ComprasService } from '../../services/compras.service';
-import { StockService } from '../../services/stock.service'; // <--- IMPORTANTE: Importar StockService
+import { StockService } from '../../services/stock.service';
 
 @Component({
     selector: 'app-compra',
@@ -59,10 +58,11 @@ export class CompraComponent implements OnInit {
 
     private selectorDialogRef: MatDialogRef<any> | null = null;
 
-    almacenes: string[] = [
-        'VVI - Viru Viru (Principal)',
-        'CBB - Jorge Wilstermann',
-        'LPB - El Alto',
+    // Lista de almacenes con sus IDs reales de la base de datos
+    almacenes = [
+        { id: 1, nombre: 'VVI - Viru Viru (Principal)' },
+        { id: 2, nombre: 'CBB - Jorge Wilstermann' },
+        { id: 3, nombre: 'LPB - El Alto' },
     ];
 
     constructor(
@@ -70,17 +70,14 @@ export class CompraComponent implements OnInit {
         private dialog: MatDialog,
         private snackBar: MatSnackBar,
         private comprasService: ComprasService,
-        private stockService: StockService // <--- INYECTAR STOCK SERVICE
+        private stockService: StockService
     ) {}
 
     ngOnInit(): void {
         this.compraForm = this.fb.group({
             proveedor: ['', Validators.required],
             fechaRequerida: [new Date(), Validators.required],
-            almacenDestino: [
-                'VVI - Viru Viru (Principal)',
-                Validators.required,
-            ],
+            almacenDestinoId: [1, Validators.required],
             observaciones: [''],
         });
 
@@ -88,27 +85,28 @@ export class CompraComponent implements OnInit {
     }
 
     cargarCatalogo() {
-        // CORRECCIÓN: Usar stockService.getItems()
-        this.stockService.getItems().subscribe((data) => {
-            this.productosCatalogo = data.map((item: any) => ({
-                id: String(item.idItem), // Asegúrate de usar la propiedad correcta del backend (idItem)
-                nombre: item.nombreItem,
-                unidad: item.unidadMedida,
-                costoDefault: 10, // Valor por defecto o traer del backend si existe
-                selected: false,
-                cantidadPedir: 1,
-            }));
-            this.filtrarProductos();
+        this.stockService.getItems().subscribe({
+            next: (data) => {
+                this.productosCatalogo = data.map((item: any) => ({
+                    id: item.idItem,
+                    nombre: item.nombreItem,
+                    unidad: item.unidadMedida || 'Unidad',
+                    costoDefault: 10,
+                    selected: false,
+                    cantidadPedir: 1,
+                }));
+                this.productosFiltrados = [...this.productosCatalogo];
+            },
+            error: () =>
+                this.snackBar.open('Error al cargar catálogo', 'Cerrar'),
         });
     }
 
-    // --- LÓGICA DEL SELECTOR ---
     abrirSelector(): void {
         this.searchTermProductos = '';
         this.productosFiltrados = this.productosCatalogo.map((p) => ({
             ...p,
             selected: false,
-            cantidadPedir: 1,
         }));
         this.selectorDialogRef = this.dialog.open(this.modalSelectorProductos, {
             width: '800px',
@@ -121,21 +119,18 @@ export class CompraComponent implements OnInit {
     }
 
     filtrarProductos(): void {
-        const term = this.searchTermProductos.toLowerCase();
-        this.productosFiltrados = this.productosCatalogo
-            .map((p) => ({ ...p, selected: false, cantidadPedir: 1 }))
-            .filter((p) => p.nombre.toLowerCase().includes(term));
+        const term = this.searchTermProductos.toLowerCase().trim();
+        this.productosFiltrados = this.productosCatalogo.filter((p) =>
+            p.nombre.toLowerCase().includes(term)
+        );
     }
 
     toggleSeleccion(prod: any): void {
         prod.selected = !prod.selected;
-        if (!prod.selected) prod.cantidadPedir = 1;
     }
 
     agregarSeleccion(): void {
         const seleccionados = this.productosFiltrados.filter((p) => p.selected);
-        if (seleccionados.length === 0) return;
-
         seleccionados.forEach((sel) => {
             const existente = this.listaItemsCompra.find(
                 (i) => i.id === sel.id
@@ -169,52 +164,42 @@ export class CompraComponent implements OnInit {
         );
     }
 
-    // --- GUARDAR EN BACKEND ---
     guardarCompra(): void {
         if (this.listaItemsCompra.length > 0 && this.compraForm.valid) {
             const formVal = this.compraForm.value;
-
 
             const nuevaOrden = {
                 codigoOrden: `ORD-${Date.now()}`,
                 proveedor: formVal.proveedor,
                 fechaEntrega: formVal.fechaRequerida,
-                almacenDestinoId: 1,
-                usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419', // ID temporal
+                almacenDestinoId: Number(formVal.almacenDestinoId),
+                usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419', // Asegúrate de que este ID exista en tu DB
                 items: this.listaItemsCompra.map((item) => ({
                     itemId: Number(item.id),
-                    cantidad: item.cantidadSolicitada,
-                    costoUnitario: item.costoUnitario,
+                    cantidad: Number(item.cantidadSolicitada),
+                    costoUnitario: Number(item.costoUnitario),
                 })),
             };
 
-            // Usar crearOrden
             this.comprasService.crearOrden(nuevaOrden).subscribe({
                 next: (res) => {
                     this.snackBar.open(
                         `✅ Orden ${res.codigoOrden} creada correctamente`,
                         'Cerrar',
-                        {
-                            duration: 4000,
-                            panelClass: ['bg-green-700', 'text-white'],
-                        }
+                        { duration: 4000 }
                     );
                     this.listaItemsCompra = [];
                     this.compraForm.reset({
                         fechaRequerida: new Date(),
-                        almacenDestino: 'VVI - Viru Viru (Principal)',
+                        almacenDestinoId: 1,
                     });
                 },
-                error: (err) => {
-                    console.error(err);
+                error: (err) =>
                     this.snackBar.open(
-                        '❌ Error al guardar la orden',
+                        '❌ Error: ' + err.error?.message,
                         'Cerrar'
-                    );
-                },
+                    ),
             });
-        } else {
-            this.snackBar.open('⚠️ Complete el formulario', 'Cerrar');
         }
     }
 }

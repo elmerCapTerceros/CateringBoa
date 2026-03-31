@@ -1,63 +1,84 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service'; // Ajusta la ruta a tu PrismaService
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CrearDespachoDto } from './dto/crear-despacho.dto';
 
 @Injectable()
 export class AbastecimientoService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Procesa un despacho: Valida stock en el almacén específico,
+   * descuenta cantidades y registra el abastecimiento.
+   */
   async despachar(dto: CrearDespachoDto) {
-    // Iniciamos una transacción: Todo o nada.
     return this.prisma.$transaction(async (tx) => {
 
-      // 1. Validar que la Aeronave y Almacén existan
-      const almacen = await tx.almacen.findUnique({ where: { idAlmacen: dto.almacenId } });
+      // 1. Validar que el Almacén exista y obtener su Stock vinculado
+      const almacen = await tx.almacen.findUnique({
+        where: { idAlmacen: dto.almacenId },
+        include: { stocks: true }
+      });
+
       if (!almacen) throw new NotFoundException('Almacén no encontrado');
 
-      // 2. Recorrer items para verificar Stock y Descontar
-      for (const itemPedido of dto.items) {
+      // Un almacén en el nuevo esquema debe tener un registro en la tabla Stock
+      const stockPrincipal = almacen.stocks[0];
+      if (!stockPrincipal) {
+        throw new BadRequestException('Este almacén no tiene un inventario (Stock) configurado.');
+      }
 
-        // Buscamos el item por su ID correcto (idItem)
-        const itemDb = await tx.item.findUnique({
-          where: { idItem: itemPedido.itemId }
+      // 2. Validar disponibilidad y descontar de DetalleStock
+      for (const itemPedido of dto.items) {
+        // Buscamos la relación única entre el Stock del almacén y el Item
+        const detalleStock = await tx.detalleStock.findUnique({
+          where: {
+            stockId_itemId: {
+              stockId: stockPrincipal.idStock,
+              itemId: itemPedido.itemId,
+            },
+          },
+          include: { item: true }
         });
 
-        if (!itemDb) {
-          throw new BadRequestException(`El item ID ${itemPedido.itemId} no existe.`);
+        if (!detalleStock) {
+          throw new BadRequestException(`El item ID ${itemPedido.itemId} no existe en el inventario de este almacén.`);
         }
 
-        // Verificamos si hay suficiente stock
-        if (itemDb.stockActual < itemPedido.cantidad) {
+        if (detalleStock.cantidad < itemPedido.cantidad) {
           throw new BadRequestException(
-              `Stock insuficiente para "${itemDb.nombreItem}". Disponible: ${itemDb.stockActual}, Solicitado: ${itemPedido.cantidad}`
+              `Stock insuficiente para "${detalleStock.item.nombreItem}". Disponible: ${detalleStock.cantidad}, Solicitado: ${itemPedido.cantidad}`
           );
         }
 
-        // Descontamos el stock
-        await tx.item.update({
-          where: { idItem: itemPedido.itemId },
-          data: { stockActual: itemDb.stockActual - itemPedido.cantidad }
+        // Descuento atómico de la cantidad
+        await tx.detalleStock.update({
+          where: {
+            stockId_itemId: {
+              stockId: stockPrincipal.idStock,
+              itemId: itemPedido.itemId,
+            },
+          },
+          data: {
+            cantidad: { decrement: itemPedido.cantidad }
+          }
         });
       }
 
-      // 3. Crear el registro de Abastecimiento (Cabecera)
+      // 3. Gestión de Usuario Responsable
       let usuarioId = dto.usuarioId || '';
       if (usuarioId) {
         const usuarioExiste = await tx.user.findUnique({ where: { id: usuarioId } });
-        if (!usuarioExiste) {
-          usuarioId = '';
-        }
+        if (!usuarioExiste) usuarioId = '';
       }
 
       if (!usuarioId) {
         const usuarioFallback = await tx.user.findFirst({ orderBy: { createdAt: 'asc' } });
-        if (!usuarioFallback) {
-          throw new BadRequestException('No existe un usuario valido para crear el despacho');
-        }
+        if (!usuarioFallback) throw new BadRequestException('No hay usuarios válidos en el sistema para registrar el despacho.');
         usuarioId = usuarioFallback.id;
       }
 
-      const nuevoDespacho = await tx.abastecimiento.create({
+      // 4. Crear registro de Abastecimiento y sus detalles
+      return await tx.abastecimiento.create({
         data: {
           codigoVuelo: dto.codigoVuelo,
           fechaDespacho: new Date(),
@@ -66,8 +87,6 @@ export class AbastecimientoService {
           usuario: { connect: { id: usuarioId } },
           almacen: { connect: { idAlmacen: dto.almacenId } },
           aeronave: { connect: { idAeronave: dto.aeronaveId } },
-
-          // Guardamos los detalles
           detalles: {
             create: dto.items.map(i => ({
               item: { connect: { idItem: i.itemId } },
@@ -75,21 +94,42 @@ export class AbastecimientoService {
             }))
           }
         },
-        include: { detalles: true }
+        include: {
+          detalles: { include: { item: true } },
+          almacen: true,
+          aeronave: true
+        }
       });
-
-      return nuevoDespacho;
     });
   }
 
-  // Método extra para listar el historial
+  /**
+   * Retorna el historial completo con nombres de usuario, almacenes,
+   * aeronaves y los items despachados.
+   */
   async getHistorial() {
     return this.prisma.abastecimiento.findMany({
       orderBy: { fechaDespacho: 'desc' },
       include: {
-        usuario: { select: { name: true } },
+        usuario: {
+          select: { name: true, email: true }
+        },
+        almacen: {
+          select: { nombreAlmacen: true, codigo: true }
+        },
+        aeronave: {
+          select: { matricula: true, tipoAeronave: true }
+        },
         detalles: {
-          include: { item: true }
+          include: {
+            item: {
+              select: {
+                nombreItem: true,
+                categoriaItem: true,
+                unidadMedida: true
+              }
+            }
+          }
         }
       }
     });

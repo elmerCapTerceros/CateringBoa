@@ -1,18 +1,33 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UsePipes,
+  ValidationPipe
+} from '@nestjs/common';
 import { AbastecimientoService } from './abastecimiento.service';
 import { CrearDespachoDto } from './dto/crear-despacho.dto';
 
-@Controller('abastecimiento') // Ruta base: /api/v1/abastecimiento
+@Controller('abastecimiento')
 export class AbastecimientoController {
   constructor(private readonly service: AbastecimientoService) {}
 
   @Post('despachar')
-  crearDespacho(@Body() dto: CrearDespachoDto) {
-    return this.service.despachar(dto);
+  @HttpCode(HttpStatus.CREATED)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async crearDespacho(@Body() dto: CrearDespachoDto) {
+    try {
+      return await this.service.despachar(dto);
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Get('historial')
-  obtenerHistorial() {
-    return this.service.getHistorial();
+  async obtenerHistorial() {
+    return await this.service.getHistorial();
   }
 }

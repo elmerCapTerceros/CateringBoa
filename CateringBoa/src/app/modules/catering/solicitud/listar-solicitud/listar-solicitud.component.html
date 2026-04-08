@@ -9,7 +9,7 @@
                 + Nueva Solicitud
             </button>
         </div>
-        
+
         <!-- Formulario de Filtros -->
         <form [formGroup]="filtroForm">
             <div class="flex flex-wrap gap-3 mb-6">
@@ -58,26 +58,26 @@
         <div class="overflow-x-auto bg-white rounded-lg shadow">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-800 text-white text-sm">
-                <tr>
-                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
-                        Almacén
-                    </th>
-                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
-                        Fecha
-                    </th>
-                    <th class="px-6 py-3 text-left  font-medium uppercase tracking-wider">
-                        Descripción
-                    </th>
-                    <th class="px-6 py-3 text-left  font-medium uppercase tracking-wider">
-                        Prioridad
-                    </th>
-                    <th class="px-6 py-3 text-left  font-medium uppercase tracking-wider">
-                        Estado
-                    </th>
-                    <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
-                        Acciones
-                    </th>
-                </tr>
+                    <tr>
+                        <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                            Almacén
+                        </th>
+                        <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                            Fecha
+                        </th>
+                        <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                            Descripción
+                        </th>
+                        <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                            Prioridad
+                        </th>
+                        <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @for (solicitud of solicitudesPaginadas; track solicitud.id) {
@@ -103,6 +103,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex gap-2">
+
                                     <!-- Botón Ver -->
                                     <button
                                         type="button"
@@ -112,6 +113,28 @@
                                         <mat-icon class="icon-size-5">visibility</mat-icon>
                                     </button>
 
+                                    <!-- Botón Aprobar (solo si Pendiente) -->
+                                    @if (solicitud.estado === 'Pendiente') {
+                                        <button
+                                            type="button"
+                                            (click)="aprobarSolicitud(solicitud)"
+                                            class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                            title="Aprobar">
+                                            <mat-icon class="icon-size-5">check_circle</mat-icon>
+                                        </button>
+                                    }
+
+                                    <!-- Botón Rechazar (solo si Pendiente) -->
+                                    @if (solicitud.estado === 'Pendiente') {
+                                        <button
+                                            type="button"
+                                            (click)="rechazarSolicitud(solicitud)"
+                                            class="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                                            title="Rechazar">
+                                            <mat-icon class="icon-size-5">cancel</mat-icon>
+                                        </button>
+                                    }
+
                                     <!-- Botón Eliminar -->
                                     <button
                                         type="button"
@@ -120,12 +143,13 @@
                                         title="Eliminar">
                                         <mat-icon class="icon-size-5">delete</mat-icon>
                                     </button>
+
                                 </div>
                             </td>
                         </tr>
                     } @empty {
                         <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                 No se encontraron solicitudes con los filtros seleccionados
                             </td>
                         </tr>
@@ -133,9 +157,9 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Paginador -->
-        <mat-paginator 
+        <mat-paginator
             [length]="solicitudesFiltradas.length"
             [pageSize]="5"
             [pageSizeOptions]="[5, 10, 25, 100]"

@@ -22,7 +22,7 @@
 
           <!-- Almacén Origen -->
           <mat-form-field appearance="outline" class="w-64">
-            <mat-label>Almacén Origen</mat-label>
+            <mat-label>Almacén Origen *</mat-label>
             <mat-select formControlName="almacenOrigenId">
               @for (a of almacenes; track a.idAlmacen) {
                 <mat-option [value]="a.idAlmacen">{{ a.nombreAlmacen }}</mat-option>
@@ -37,7 +37,7 @@
 
           <!-- Almacén Destino -->
           <mat-form-field appearance="outline" class="w-64">
-            <mat-label>Almacén Destino</mat-label>
+            <mat-label>Almacén Destino *</mat-label>
             <mat-select formControlName="almacenDestinoId">
               @for (a of almacenesDestino; track a.idAlmacen) {
                 <mat-option [value]="a.idAlmacen">{{ a.nombreAlmacen }}</mat-option>
@@ -59,53 +59,88 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold text-gray-700">Items a transferir</h3>
           <button type="button" (click)="agregarDetalle()"
-            class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            [disabled]="!form.get('almacenOrigenId')?.value || loadingItems"
+            class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
             <mat-icon class="icon-size-4">add</mat-icon> Agregar item
           </button>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-800 text-white text-sm">
-              <tr>
-                <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Item</th>
-                <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Cantidad</th>
-                <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Acción</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200" formArrayName="detalles">
-              @for (detalle of detalles.controls; track $index) {
-                <tr [formGroupName]="$index" class="hover:bg-gray-50">
-                  <td class="px-4 py-2">
-                    <mat-form-field appearance="outline" class="w-72">
-                      <mat-label>Seleccionar item</mat-label>
-                      <mat-select formControlName="itemId">
-                        @for (item of items; track item.idItem) {
-                          <mat-option [value]="item.idItem">
-                            {{ item.nombreItem }} ({{ item.unidadMedida }})
-                          </mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  </td>
-                  <td class="px-4 py-2">
-                    <mat-form-field appearance="outline" class="w-32">
-                      <mat-label>Cantidad</mat-label>
-                      <input matInput type="number" formControlName="cantidad" min="1">
-                    </mat-form-field>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button type="button" (click)="eliminarDetalle($index)"
-                      [disabled]="detalles.length === 1"
-                      class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </td>
+        <!-- Loading items -->
+        @if (loadingItems) {
+          <div class="flex items-center gap-2 text-gray-500 py-4">
+            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-800"></div>
+            <span>Cargando items del almacén...</span>
+          </div>
+        }
+
+        <!-- Sin almacén seleccionado -->
+        @if (!form.get('almacenOrigenId')?.value && !loadingItems) {
+          <div class="text-center py-8 text-gray-400">
+            Selecciona un almacén origen para ver los items disponibles
+          </div>
+        }
+
+        <!-- Sin stock disponible -->
+        @if (form.get('almacenOrigenId')?.value && !loadingItems && itemsDisponibles.length === 0) {
+          <div class="text-center py-8 text-red-400">
+            Este almacén no tiene stock disponible
+          </div>
+        }
+
+        <!-- Tabla de items -->
+        @if (itemsDisponibles.length > 0 && !loadingItems) {
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-800 text-white text-sm">
+                <tr>
+                  <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Item</th>
+                  <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Cantidad</th>
+                  <th class="px-6 py-3 text-left font-medium uppercase tracking-wider">Acción</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200" formArrayName="detalles">
+                @for (detalle of detalles.controls; track $index) {
+                  <tr [formGroupName]="$index" class="hover:bg-gray-50">
+                    <td class="px-4 py-2">
+                      <mat-form-field appearance="outline" class="w-72">
+                        <mat-label>Seleccionar item</mat-label>
+                        <mat-select formControlName="itemId">
+                          @for (item of itemsDisponibles; track item.idItem) {
+                            <mat-option [value]="item.idItem">
+                              {{ item.nombreItem }} ({{ item.unidadMedida }})
+                              <span class="text-gray-400 text-xs ml-1">
+                                — Disponible: {{ item.cantidadDisponible }}
+                              </span>
+                            </mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    </td>
+                    <td class="px-4 py-2">
+                      <mat-form-field appearance="outline" class="w-32">
+                        <mat-label>Cantidad</mat-label>
+                        <input matInput type="number" formControlName="cantidad" min="1"
+                          [max]="getCantidadDisponible(detalle.get('itemId')?.value)">
+                        @if (detalle.get('cantidad')?.value > getCantidadDisponible(detalle.get('itemId')?.value) && detalle.get('itemId')?.value) {
+                          <mat-error>
+                            Máx: {{ getCantidadDisponible(detalle.get('itemId')?.value) }}
+                          </mat-error>
+                        }
+                      </mat-form-field>
+                    </td>
+                    <td class="px-4 py-2">
+                      <button type="button" (click)="eliminarDetalle($index)"
+                        [disabled]="detalles.length === 1"
+                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
 
       <!-- Acciones -->
@@ -114,7 +149,7 @@
           class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-colors">
           Cancelar
         </button>
-        <button type="submit" [disabled]="form.invalid || loading"
+        <button type="submit" [disabled]="form.invalid || loading || itemsDisponibles.length === 0"
           class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-3 rounded-lg font-medium shadow-lg transition-colors disabled:opacity-50 flex items-center gap-2">
           <span *ngIf="loading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
           {{ loading ? 'Guardando...' : 'Registrar Transferencia' }}

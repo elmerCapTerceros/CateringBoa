@@ -142,25 +142,37 @@ export class ListarSolicitudComponent implements OnInit, AfterViewInit {
     }
 
     aprobarSolicitud(solicitud: Solicitud): void {
-        if (!confirm(`¿Aprobar la solicitud de ${solicitud.almacen}? Se descontará el stock.`)) {
-            return;
-        }
-
-        this.solicitudService.aprobar(solicitud.id).subscribe({
-            next: () => {
-                this.snackBar.open(
-                    'Solicitud aprobada y stock descontado correctamente',
-                    'Cerrar',
-                    { duration: 3000 }
-                );
-            },
-            error: (err) => {
-                const mensaje = err?.error?.message || 'Error al aprobar la solicitud';
-                this.snackBar.open(mensaje, 'Cerrar', { duration: 4000 });
-            }
-        });
+    if (!confirm(`¿Aprobar la solicitud de ${solicitud.almacen}? Se descontará el stock.`)) {
+        return;
     }
 
+    this.solicitudService.aprobar(solicitud.id).subscribe({
+        next: () => {
+            this.snackBar.open('Solicitud aprobada correctamente', 'Cerrar', { duration: 3000 });
+            this.solicitudService.getList().subscribe(); // refresca la tabla
+        },
+        error: (err) => {
+            const mensaje = err?.error?.message || 'Error al aprobar la solicitud';
+            this.snackBar.open(mensaje, 'Cerrar', { duration: 6000 });
+        }
+    });
+}
+
+rechazarSolicitud(solicitud: Solicitud): void {
+    if (!confirm(`¿Rechazar la solicitud de ${solicitud.almacen}?`)) {
+        return;
+    }
+
+    this.solicitudService.rechazar(solicitud.id).subscribe({
+        next: () => {
+            this.snackBar.open('Solicitud rechazada', 'Cerrar', { duration: 3000 });
+            this.solicitudService.getList().subscribe(); // refresca la tabla
+        },
+        error: () => {
+            this.snackBar.open('Error al rechazar la solicitud', 'Cerrar', { duration: 3000 });
+        }
+    });
+}
     eliminarSolicitud(solicitud: Solicitud): void {
         if (!confirm(`¿Eliminar solicitud de ${solicitud.almacen}?`)) {
             return;

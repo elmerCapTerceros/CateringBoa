@@ -197,4 +197,22 @@ export class SolicitudService {
     refresh(): void {
         this.getList().subscribe();
     }
+
+    rechazar(id: number): Observable<Solicitud> {
+  return this.http.patch<SolicitudBackendResponse>(
+    `${this.apiUrl}/${id}/rechazar`, {}
+  ).pipe(
+    map(response => this.mapBackendToFrontend(response)),
+    tap(actualizada => {
+      const solicitudes = this.solicitudesSubject.value.map(s =>
+        s.id === id ? actualizada : s
+      );
+      this.solicitudesSubject.next(solicitudes);
+    }),
+    catchError(error => {
+      console.error('Error RECHAZAR:', error);
+      throw error;
+    })
+  );
+}
 }

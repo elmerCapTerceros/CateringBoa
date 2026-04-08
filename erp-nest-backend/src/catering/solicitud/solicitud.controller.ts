@@ -54,5 +54,9 @@ export class SolicitudController {
   @Patch(':id/aprobar')
   aprobar(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudService.aprobar(id);
-}
+    }
+  @Patch(':id/rechazar')
+  rechazar(@Param('id', ParseIntPipe) id: number) {
+  return this.solicitudService.rechazar(id);
+  }
 }

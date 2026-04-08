@@ -170,24 +170,11 @@ export const horizontalNavigation: ErpNavigationItem[] = [
                 icon: 'heroicons_outline:arrow-down-tray'
             },
             {
-                id: 'movimiento',
-                title: 'Listado de Movimientos',
-                type: 'basic',
-                link: '/catering/movimientos',
-            },
-            {
                 id: 'Stockss',
                 title: 'Stock',
                 type: 'basic',
                 link: '/catering/stock',
             },
-            {
-                id: 'solicitudes-almacen',
-                title: 'Solicitudes',
-                type: 'basic',
-                link : '/catering/listar-solicitudes-almacen',
-            },
-
             {
                 id: 'ListarTransferencias',
                 title: 'Transferencias',

@@ -91,19 +91,24 @@ export class SolicitudService {
   }
 
   async remove(id: number) {
-    return this.prisma.solicitudDotacion.delete({
-      where: { idSolicitudDotacion: id }
-    });
-  }
+  // Primero eliminar los detalles
+  await this.prisma.detalleDotacion.deleteMany({
+    where: { solicitudDotacionId: id }
+  });
+
+  // Luego eliminar la solicitud
+  return this.prisma.solicitudDotacion.delete({
+    where: { idSolicitudDotacion: id }
+  });
+}
 
   async aprobar(id: number) {
   return this.prisma.$transaction(async (tx) => {
 
-    // 1. Obtener la solicitud con sus detalles
     const solicitud = await tx.solicitudDotacion.findUnique({
       where: { idSolicitudDotacion: id },
       include: {
-        detalles: true
+        detalles: { include: { item: true } }  // <- incluir item para mostrar nombre
       }
     });
 
@@ -117,9 +122,10 @@ export class SolicitudService {
       );
     }
 
-    // 2. Verificar y descontar stock por cada item
-    for (const detalle of solicitud.detalles) {
+    // PASO 1: Validar TODOS los items primero
+    const errores: string[] = [];
 
+    for (const detalle of solicitud.detalles) {
       const detalleStock = await tx.detalleStock.findFirst({
         where: {
           itemId: detalle.itemId,
@@ -128,26 +134,37 @@ export class SolicitudService {
       });
 
       if (!detalleStock) {
-        throw new BadRequestException(
-          `El item ID ${detalle.itemId} no tiene stock en el almacén`
+        errores.push(`"${detalle.item.nombreItem}" no tiene stock en el almacén`);
+      } else if (detalleStock.cantidad < detalle.cantidad) {
+        errores.push(
+          `"${detalle.item.nombreItem}": disponible ${detalleStock.cantidad}, solicitado ${detalle.cantidad}`
         );
       }
+    }
 
-      if (detalleStock.cantidad < detalle.cantidad) {
-        throw new BadRequestException(
-          `Stock insuficiente para el item ID ${detalle.itemId}. ` +
-          `Disponible: ${detalleStock.cantidad}, Solicitado: ${detalle.cantidad}`
-        );
-      }
+    // Si hay errores, lanzar todos juntos sin descontar nada
+    if (errores.length > 0) {
+      throw new BadRequestException(
+        `No se puede aprobar. Problemas de stock: ${errores.join(' | ')}`
+      );
+    }
 
-      // Descontar el stock
+    // PASO 2: Si todo está bien, descontar
+    for (const detalle of solicitud.detalles) {
+      const detalleStock = await tx.detalleStock.findFirst({
+        where: {
+          itemId: detalle.itemId,
+          stock: { almacenId: solicitud.almacenId }
+        }
+      });
+
       await tx.detalleStock.update({
-        where: { idDetalleStock: detalleStock.idDetalleStock },
-        data: { cantidad: detalleStock.cantidad - detalle.cantidad }
+        where: { idDetalleStock: detalleStock!.idDetalleStock },
+        data: { cantidad: detalleStock!.cantidad - detalle.cantidad }
       });
     }
 
-    // 3. Cambiar estado a Aprobada
+    // PASO 3: Cambiar estado
     return tx.solicitudDotacion.update({
       where: { idSolicitudDotacion: id },
       data: { estado: 'Aprobada' },
@@ -156,6 +173,30 @@ export class SolicitudService {
         almacen: true
       }
     });
+  });
+}
+async rechazar(id: number) {
+  const solicitud = await this.prisma.solicitudDotacion.findUnique({
+    where: { idSolicitudDotacion: id }
+  });
+
+  if (!solicitud) {
+    throw new NotFoundException('Solicitud no encontrada');
+  }
+
+  if (solicitud.estado !== 'Pendiente') {
+    throw new BadRequestException(
+      `La solicitud ya fue ${solicitud.estado.toLowerCase()}`
+    );
+  }
+
+  return this.prisma.solicitudDotacion.update({
+    where: { idSolicitudDotacion: id },
+    data: { estado: 'Rechazada' },
+    include: {
+      detalles: { include: { item: true } },
+      almacen: true
+    }
   });
 }
 }

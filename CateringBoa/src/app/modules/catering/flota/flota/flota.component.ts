@@ -63,6 +63,7 @@ export class FlotaComponent implements OnInit {
     aeronaveSeleccionada: Aeronave | null = null;
     rutaSeleccionada: RutaProgramada | null = null;
     tramoSeleccionado: TramoRuta | null = null;
+    abastecimientoVista: 'grid' | 'list' = 'grid';
 
     flotas: Flota[] = [];
     todasLasAeronaves: Aeronave[] = [];
@@ -168,6 +169,7 @@ export class FlotaComponent implements OnInit {
     seleccionarAeronave(avion: Aeronave) {
         this.aeronaveSeleccionada = avion;
         this.tramoSeleccionado = null;
+        this.abastecimientoVista = 'grid';
         this.cargarRutasDelAvion(avion.matricula);
     }
 
@@ -178,10 +180,15 @@ export class FlotaComponent implements OnInit {
         }
         this.rutaSeleccionada = rutaPadre;
         this.tramoSeleccionado = tramo;
+        this.abastecimientoVista = 'grid';
 
         setTimeout(() => {
             document.getElementById('seccion-catering')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 200);
+    }
+
+    setAbastecimientoVista(vista: 'grid' | 'list') {
+        this.abastecimientoVista = vista;
     }
 
     cargarRutasDelAvion(matricula: string) {

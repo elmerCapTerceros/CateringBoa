@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CrearDespachoDto } from './dto/crear-despacho.dto';
+import { CierreVueloDto } from './dto/cierre-vuelo.dto';
 
 @Injectable()
 export class AbastecimientoService {
@@ -100,6 +101,125 @@ export class AbastecimientoService {
           aeronave: true
         }
       });
+    });
+  }
+
+  /**
+   * Retorna los abastecimientos en estado DESPACHADO pendientes de cierre.
+   */
+  async getPendientesCierre() {
+    return this.prisma.abastecimiento.findMany({
+      where: { estado: 'DESPACHADO' },
+      orderBy: { fechaDespacho: 'desc' },
+      include: {
+        aeronave: { select: { matricula: true, tipoAeronave: true } },
+        almacen: { select: { nombreAlmacen: true, codigo: true } },
+        detalles: {
+          include: {
+            item: { select: { idItem: true, nombreItem: true, unidadMedida: true } }
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Cierra un vuelo: registra remanentes y consumos, devuelve stock Normal al almacén
+   * y actualiza el estado del Abastecimiento a CERRADO.
+   */
+  async cerrarVuelo(dto: CierreVueloDto) {
+    return this.prisma.$transaction(async (tx) => {
+
+      // 1. Verificar que el abastecimiento exista y esté en estado DESPACHADO
+      const abastecimiento = await tx.abastecimiento.findUnique({
+        where: { idAbastecimiento: dto.abastecimientoId },
+        include: {
+          almacen: { include: { stocks: true } }
+        }
+      });
+
+      if (!abastecimiento) {
+        throw new NotFoundException('Abastecimiento no encontrado');
+      }
+      if (abastecimiento.estado !== 'DESPACHADO') {
+        throw new BadRequestException(
+          `Este vuelo ya fue cerrado o no está en estado DESPACHADO (estado actual: ${abastecimiento.estado})`
+        );
+      }
+
+      const stockPrincipal = abastecimiento.almacen.stocks[0];
+
+      // 2. Crear registro Carga vinculado al abastecimiento
+      const carga = await tx.carga.create({
+        data: {
+          abastecimientoId: dto.abastecimientoId,
+          aeronaveId: abastecimiento.aeronaveId,
+        }
+      });
+
+      // 3. Por cada item: crear DetalleCarga, Remanente y ControlConsumo
+      for (const itemCierre of dto.items) {
+
+        const detalleCarga = await tx.detalleCarga.create({
+          data: {
+            cargaId: carga.idCarga,
+            itemId: itemCierre.itemId,
+            cantidad: itemCierre.cantidadCargada,
+          }
+        });
+
+        // Registrar el remanente (sobrante físico al retorno)
+        await tx.remanente.create({
+          data: {
+            detalleCargaId: detalleCarga.idDetalleCarga,
+            cantidad: itemCierre.remanente,
+          }
+        });
+
+        // Registrar el control de consumo real
+        await tx.controlConsumo.create({
+          data: {
+            detalleCargaId: detalleCarga.idDetalleCarga,
+            estado: itemCierre.estado,
+            cantidad: itemCierre.consumido,
+          }
+        });
+
+        // 4. Si el estado es 'Normal', devolver el remanente al stock del almacén
+        if (itemCierre.estado === 'Normal' && itemCierre.remanente > 0 && stockPrincipal) {
+          await tx.detalleStock.upsert({
+            where: {
+              stockId_itemId: {
+                stockId: stockPrincipal.idStock,
+                itemId: itemCierre.itemId,
+              }
+            },
+            create: {
+              stockId: stockPrincipal.idStock,
+              itemId: itemCierre.itemId,
+              cantidad: itemCierre.remanente,
+            },
+            update: {
+              cantidad: { increment: itemCierre.remanente }
+            }
+          });
+        }
+      }
+
+      // 5. Actualizar estado del abastecimiento a CERRADO
+      await tx.abastecimiento.update({
+        where: { idAbastecimiento: dto.abastecimientoId },
+        data: {
+          estado: 'CERRADO',
+          observaciones: dto.observaciones ?? abastecimiento.observaciones,
+        }
+      });
+
+      return {
+        message: 'Vuelo cerrado correctamente. Remanentes registrados e inventario actualizado.',
+        abastecimientoId: dto.abastecimientoId,
+        cargaId: carga.idCarga,
+      };
     });
   }
 

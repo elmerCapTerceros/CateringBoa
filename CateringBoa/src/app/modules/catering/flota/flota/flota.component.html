@@ -228,40 +228,110 @@
                             <p class="text-sm text-gray-500">Seleccione los productos y defina las cantidades.</p>
                         </div>
 
-                        <div class="bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
-                            <mat-checkbox color="primary" [checked]="todosSeleccionados" (change)="toggleSeleccionarTodo($event.checked)">
-                                <span class="font-bold text-slate-700 pl-1">Seleccionar Todo</span>
-                            </mat-checkbox>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm flex items-center">
+                                <button
+                                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                    [ngClass]="abastecimientoVista === 'grid' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'"
+                                    (click)="setAbastecimientoVista('grid')">
+                                    <mat-icon class="icon-size-4 mr-1 align-[-2px]">grid_view</mat-icon>
+                                    Cuadricula
+                                </button>
+                                <button
+                                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                    [ngClass]="abastecimientoVista === 'list' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'"
+                                    (click)="setAbastecimientoVista('list')">
+                                    <mat-icon class="icon-size-4 mr-1 align-[-2px]">view_list</mat-icon>
+                                    Listado
+                                </button>
+                            </div>
+
+                            <div class="bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+                                <mat-checkbox color="primary" [checked]="todosSeleccionados" (change)="toggleSeleccionarTodo($event.checked)">
+                                    <span class="font-bold text-slate-700 pl-1">Seleccionar Todo</span>
+                                </mat-checkbox>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        @for (item of tramoSeleccionado.itemsCatering; track item.nombre) {
-                            <div class="group relative rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 cursor-pointer overflow-hidden border-2"
-                                 [ngClass]="item.check ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50/30 shadow-md scale-[1.02] z-10' : 'border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm hover:scale-[1.01]'"
-                                 (click)="item.check = !item.check">
+                    @if (abastecimientoVista === 'grid') {
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            @for (item of tramoSeleccionado.itemsCatering; track item.nombre) {
+                                <div class="group relative rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 cursor-pointer overflow-hidden border-2"
+                                     [ngClass]="item.check ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50/30 shadow-md scale-[1.02] z-10' : 'border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm hover:scale-[1.01]'"
+                                     (click)="item.check = !item.check">
 
-                                <div class="flex items-start gap-3">
-                                    <mat-checkbox color="primary" [(ngModel)]="item.check" (click)="$event.stopPropagation()" class="mt-1"></mat-checkbox>
-                                    <div>
-                                        <div class="font-bold text-slate-800 text-sm leading-tight transition-colors" [class.text-blue-700]="item.check">{{ item.nombre }}</div>
-                                        <div class="text-xs font-medium text-gray-400 mt-1 bg-gray-100 px-2 py-0.5 rounded-full w-fit">{{ item.unidad }}</div>
-                                    </div>
-                                </div>
-
-                                @if (item.check) {
-                                    <div class="mt-auto pt-3 border-t border-blue-200/50 animate-in slide-in-from-bottom-2 fade-in duration-300 flex items-center justify-between" (click)="$event.stopPropagation()">
-                                        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Cantidad:</span>
-                                        <div class="flex items-center bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden">
-                                            <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold" (click)="item.cantidad = item.cantidad > 0 ? item.cantidad - 1 : 0; $event.stopPropagation()">-</button>
-                                            <input type="number" [(ngModel)]="item.cantidad" class="w-12 h-8 text-center text-sm font-black border-x border-blue-100 focus:outline-none text-slate-800" (click)="$event.stopPropagation()">
-                                            <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold" (click)="item.cantidad = item.cantidad + 1; $event.stopPropagation()">+</button>
+                                    <div class="flex items-start gap-3">
+                                        <mat-checkbox color="primary" [(ngModel)]="item.check" (click)="$event.stopPropagation()" class="mt-1"></mat-checkbox>
+                                        <div>
+                                            <div class="font-bold text-slate-800 text-sm leading-tight transition-colors" [class.text-blue-700]="item.check">{{ item.nombre }}</div>
+                                            <div class="text-xs font-medium text-gray-400 mt-1 bg-gray-100 px-2 py-0.5 rounded-full w-fit">{{ item.unidad }}</div>
                                         </div>
                                     </div>
-                                }
+
+                                    @if (item.check) {
+                                        <div class="mt-auto pt-3 border-t border-blue-200/50 animate-in slide-in-from-bottom-2 fade-in duration-300 flex items-center justify-between" (click)="$event.stopPropagation()">
+                                            <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Cantidad:</span>
+                                            <div class="flex items-center bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden">
+                                                <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold" (click)="item.cantidad = item.cantidad > 0 ? item.cantidad - 1 : 0; $event.stopPropagation()">-</button>
+                                                <input type="number" [(ngModel)]="item.cantidad" class="w-12 h-8 text-center text-sm font-black border-x border-blue-100 focus:outline-none text-slate-800" (click)="$event.stopPropagation()">
+                                                <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold" (click)="item.cantidad = item.cantidad + 1; $event.stopPropagation()">+</button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    } @else {
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-50 text-xs uppercase text-gray-500 font-bold border-b border-gray-100 tracking-wider">
+                                        <tr>
+                                            <th class="p-4 w-16 text-center">Sel</th>
+                                            <th class="p-4">Producto</th>
+                                            <th class="p-4">Unidad</th>
+                                            <th class="p-4 text-right">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 text-sm">
+                                        @for (item of tramoSeleccionado.itemsCatering; track item.nombre) {
+                                            <tr class="hover:bg-slate-50 transition-colors" [ngClass]="item.check ? 'bg-blue-50/40' : ''">
+                                                <td class="p-4 text-center" (click)="item.check = !item.check">
+                                                    <mat-checkbox color="primary" [(ngModel)]="item.check" (click)="$event.stopPropagation()"></mat-checkbox>
+                                                </td>
+                                                <td class="p-4 font-semibold text-slate-800" (click)="item.check = !item.check">
+                                                    {{ item.nombre }}
+                                                </td>
+                                                <td class="p-4 text-gray-500">
+                                                    <span class="text-xs font-medium bg-gray-100 px-2 py-0.5 rounded-full">{{ item.unidad }}</span>
+                                                </td>
+                                                <td class="p-4">
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <button
+                                                            class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold rounded-lg"
+                                                            (click)="item.cantidad = item.cantidad > 0 ? item.cantidad - 1 : 0; $event.stopPropagation()">
+                                                            -
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            [(ngModel)]="item.cantidad"
+                                                            class="w-16 h-8 text-center text-sm font-black border border-blue-100 rounded-lg focus:outline-none text-slate-800"
+                                                            (click)="$event.stopPropagation()">
+                                                        <button
+                                                            class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold rounded-lg"
+                                                            (click)="item.cantidad = item.cantidad + 1; $event.stopPropagation()">
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
-                        }
-                    </div>
+                        </div>
+                    }
                 </div>
             </div>
         </section>

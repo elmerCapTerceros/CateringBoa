@@ -21,6 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 
 import { ComprasService } from '../../services/compras.service';
 import { StockService } from '../../services/stock.service';
@@ -70,7 +71,8 @@ export class CompraComponent implements OnInit {
         private dialog: MatDialog,
         private snackBar: MatSnackBar,
         private comprasService: ComprasService,
-        private stockService: StockService
+        private stockService: StockService,
+        private router: Router
     ) {}
 
     ngOnInit(): void {
@@ -193,6 +195,7 @@ export class CompraComponent implements OnInit {
                         fechaRequerida: new Date(),
                         almacenDestinoId: 1,
                     });
+                    this.router.navigate(['/catering/compra-exterior/listar']);
                 },
                 error: (err) =>
                     this.snackBar.open(

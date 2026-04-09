@@ -1,104 +1,362 @@
 <div class="w-full flex-auto p-6 sm:p-10">
 
+    <!-- ENCABEZADO -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
         <div>
             <h2 class="text-3xl font-bold tracking-tight">Cierre de Vuelo</h2>
-            <p class="text-gray-500">Registro de remanentes y cálculo de consumo.</p>
+            <p class="text-gray-500">Registro de remanentes, consumo real y actualización de inventario.</p>
         </div>
-        <div class="mt-4 sm:mt-0 px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-green-800 font-medium">
-            <mat-icon class="icon-size-5 mr-2 align-text-bottom">flight_land</mat-icon>
+        <div class="mt-4 sm:mt-0 px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-green-800 font-medium flex items-center gap-2">
+            <mat-icon class="icon-size-5">flight_land</mat-icon>
             Estado: Post-Vuelo
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+    <!-- FORMULARIO DE SELECCIÓN -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
         <form [formGroup]="cierreForm" class="flex flex-col md:flex-row gap-6 items-start">
 
             <mat-form-field appearance="outline" class="w-full md:w-1/3">
                 <mat-label>Seleccionar Vuelo Aterrizado</mat-label>
                 <mat-select formControlName="vueloId">
-                    @for (vuelo of vuelosPendientes; track vuelo.id) {
-                        <mat-option [value]="vuelo.id">
-                            {{ vuelo.codigo }} | {{ vuelo.fecha }}
+                    @if (cargandoVuelos) {
+                        <mat-option disabled>Cargando vuelos...</mat-option>
+                    }
+                    @for (vuelo of vuelosPendientes; track vuelo.idAbastecimiento) {
+                        <mat-option [value]="vuelo.idAbastecimiento">
+                            {{ vuelo.codigoVuelo }} — {{ vuelo.aeronave.matricula }}
                         </mat-option>
+                    }
+                    @if (!cargandoVuelos && vuelosPendientes.length === 0) {
+                        <mat-option disabled>No hay vuelos pendientes de cierre</mat-option>
                     }
                 </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full md:w-2/3">
                 <mat-label>Observaciones del Jefe de Cabina</mat-label>
-                <input matInput formControlName="observaciones" placeholder="Ej. Se rompieron 2 botellas durante turbulencia">
+                <input matInput formControlName="observaciones"
+                    placeholder="Ej. Se rompieron 2 botellas durante turbulencia">
+                <mat-icon matSuffix class="text-gray-400">notes</mat-icon>
             </mat-form-field>
 
         </form>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full">
-            <thead>
-            <tr class="text-left text-white" style="background-color: #0B1E47;">
-                <th class="p-4 font-medium">Ítem</th>
-                <th class="p-4 font-medium text-center w-32">Carga Inicial</th>
-                <th class="p-4 font-medium text-center w-32 bg-blue-900">Remanente (Sobrante)</th>
-                <th class="p-4 font-medium text-center w-32">Consumo Real</th>
-                <th class="p-4 font-medium w-40">Estado Retorno</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @for (item of listaItems; track $index) {
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 font-medium text-gray-800">{{ item.nombre }}</td>
+    <!-- PANEL DE INFORMACIÓN DEL VUELO SELECCIONADO -->
+    @if (vueloSeleccionado) {
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 flex flex-wrap gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <mat-icon class="text-blue-700">flight</mat-icon>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">Vuelo</p>
+                    <p class="font-bold text-blue-900 text-lg">{{ vueloSeleccionado.codigoVuelo }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <mat-icon class="text-blue-700">airplanemode_active</mat-icon>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">Aeronave</p>
+                    <p class="font-semibold text-gray-800">{{ vueloSeleccionado.aeronave.matricula }}</p>
+                    <p class="text-xs text-gray-500">{{ vueloSeleccionado.aeronave.tipoAeronave }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <mat-icon class="text-blue-700">warehouse</mat-icon>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">Almacén Origen</p>
+                    <p class="font-semibold text-gray-800">{{ vueloSeleccionado.almacen.nombreAlmacen }}</p>
+                    <p class="text-xs text-gray-500">{{ vueloSeleccionado.almacen.codigo }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <mat-icon class="text-blue-700">schedule</mat-icon>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">Fecha Despacho</p>
+                    <p class="font-semibold text-gray-800">{{ formatFecha(vueloSeleccionado.fechaDespacho) }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <mat-icon class="text-blue-700">inventory_2</mat-icon>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">Ítems en manifiesto</p>
+                    <p class="font-semibold text-gray-800">{{ listaItems.length }} productos</p>
+                </div>
+            </div>
+        </div>
+    }
 
-                        <td class="p-4 text-center text-gray-500 font-medium">
-                            {{ item.cantidadCargada }}
-                        </td>
+    <!-- TARJETAS DE MÉTRICAS (solo cuando hay items cargados) -->
+    @if (listaItems.length > 0) {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
-                        <td class="p-4 bg-blue-50">
-                            <input
-                                type="number"
-                                min="0"
-                                [max]="item.cantidadCargada"
-                                class="w-full text-center border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-bold text-blue-900 p-2 border"
-                                [(ngModel)]="item.remanente"
-                                (change)="calcularConsumo($index)"
-                                (keyup)="calcularConsumo($index)">
-                        </td>
+            <!-- Total Cargado -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total Cargado</p>
+                <p class="text-3xl font-bold text-gray-800">{{ totalCargado }}</p>
+                <p class="text-xs text-gray-400 mt-1">unidades en manifiesto</p>
+            </div>
 
-                        <td class="p-4 text-center font-bold text-lg text-green-700">
-                            {{ item.consumido }}
-                        </td>
+            <!-- Remanentes -->
+            <div class="bg-white rounded-xl border border-blue-100 shadow-sm p-4">
+                <p class="text-xs font-medium text-blue-500 uppercase tracking-wide mb-1">Remanentes</p>
+                <p class="text-3xl font-bold text-blue-700">{{ totalRemanente }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ itemsConRemanente }} ítem(s) con sobrante</p>
+            </div>
 
-                        <td class="p-4">
-                            <select
-                                class="w-full text-sm border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 p-2 border"
-                                [(ngModel)]="item.estado">
-                                <option value="Normal">Retorno a Stock</option>
-                                <option value="Desecho">Desechar</option>
-                                <option value="Merma">Merma/Roto</option>
-                            </select>
-                        </td>
+            <!-- Consumido -->
+            <div class="bg-white rounded-xl border border-green-100 shadow-sm p-4">
+                <p class="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">Consumido</p>
+                <p class="text-3xl font-bold text-green-700">{{ totalConsumido }}</p>
+                <p class="text-xs text-gray-400 mt-1">unidades usadas en vuelo</p>
+            </div>
+
+            <!-- % Consumo -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">% Consumo</p>
+                <p class="text-3xl font-bold" [class]="porcentajeConsumo >= 90 ? 'text-green-700' : porcentajeConsumo >= 60 ? 'text-orange-500' : 'text-red-600'">
+                    {{ porcentajeConsumo }}%
+                </p>
+                <mat-progress-bar
+                    mode="determinate"
+                    [value]="porcentajeConsumo"
+                    [color]="porcentajeConsumo >= 90 ? 'primary' : 'warn'"
+                    class="mt-2 rounded-full">
+                </mat-progress-bar>
+            </div>
+
+        </div>
+    }
+
+    <!-- ESTADO VACÍO: sin vuelo seleccionado -->
+    @if (listaItems.length === 0) {
+        <div class="rounded-2xl overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #0B1E47 0%, #1a3a7a 45%, #2563eb 100%);">
+
+            <div class="px-8 py-12 flex flex-col lg:flex-row items-center gap-10">
+
+                <!-- Lado izquierdo: icono + texto -->
+                <div class="flex flex-col items-center lg:items-start text-center lg:text-left flex-1 gap-4">
+
+                    <div class="relative">
+                        <div class="w-20 h-20 rounded-2xl flex items-center justify-center" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(4px);">
+                            <mat-icon style="font-size: 44px; width: 44px; height: 44px; color: white;">flight_land</mat-icon>
+                        </div>
+                        <span class="absolute -bottom-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-lg"
+                            style="background: #22c55e;">
+                            <mat-icon style="font-size: 14px; width: 14px; height: 14px; color: white;">arrow_downward</mat-icon>
+                        </span>
+                    </div>
+
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Selecciona un vuelo aterrizado</h3>
+                        <p class="text-blue-200 text-sm leading-relaxed max-w-sm">
+                            Usa el selector de arriba para cargar el manifiesto de carga y registrar los remanentes por ítem.
+                        </p>
+                    </div>
+
+                    <!-- Pill de disponibilidad -->
+                    <div class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+                        style="background: rgba(255,255,255,0.12); color: #bfdbfe;">
+                        @if (cargandoVuelos) {
+                            <span class="w-2 h-2 rounded-full bg-yellow-300 animate-pulse"></span>
+                            Buscando vuelos pendientes...
+                        } @else if (vuelosPendientes.length > 0) {
+                            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                            {{ vuelosPendientes.length }} vuelo(s) listo(s) para cierre
+                        } @else {
+                            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                            No hay vuelos pendientes en este momento
+                        }
+                    </div>
+
+                </div>
+
+                <!-- Lado derecho: pasos -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-3 flex-1 w-full">
+
+                    <div class="flex items-center gap-4 p-4 rounded-xl" style="background: rgba(255,255,255,0.1);">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(37,99,235,0.6);">
+                            <mat-icon style="font-size: 22px; width: 22px; height: 22px; color: white;">airplanemode_active</mat-icon>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color: #93c5fd;">Paso 1</p>
+                            <p class="text-sm text-white font-medium">Selecciona el vuelo</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 p-4 rounded-xl" style="background: rgba(255,255,255,0.1);">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(99,102,241,0.6);">
+                            <mat-icon style="font-size: 22px; width: 22px; height: 22px; color: white;">edit_note</mat-icon>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color: #c7d2fe;">Paso 2</p>
+                            <p class="text-sm text-white font-medium">Ingresa los sobrantes</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 p-4 rounded-xl" style="background: rgba(255,255,255,0.1);">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(22,163,74,0.6);">
+                            <mat-icon style="font-size: 22px; width: 22px; height: 22px; color: white;">inventory_2</mat-icon>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider" style="color: #86efac;">Paso 3</p>
+                            <p class="text-sm text-white font-medium">Guarda y actualiza stock</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!-- TABLA DE REMANENTES (solo cuando hay items) -->
+    @if (listaItems.length > 0) {
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between" style="background-color: #0B1E47;">
+            <div class="flex items-center gap-3">
+                <mat-icon class="text-white">inventory</mat-icon>
+                <h3 class="text-white font-semibold text-lg">Manifiesto de Remanentes</h3>
+            </div>
+            <span class="text-blue-200 text-sm">{{ listaItems.length }} ítem(s) cargados</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                        <th class="px-6 py-3">Ítem / Unidad</th>
+                        <th class="px-4 py-3 text-center w-32">Carga Inicial</th>
+                        <th class="px-4 py-3 text-center w-48">Remanente (Sobrante)</th>
+                        <th class="px-4 py-3 text-center w-32">Consumo Real</th>
+                        <th class="px-4 py-3 w-56">% Consumo</th>
+                        <th class="px-4 py-3 w-44">Estado Retorno</th>
                     </tr>
-                }
-                @if (listaItems.length === 0) {
-                    <tr>
-                        <td colspan="5" class="p-12 text-center text-gray-400">
-                            Seleccione un vuelo arriba para cargar el manifiesto de carga.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @for (item of listaItems; track $index) {
+                        <tr class="hover:bg-gray-50 transition-colors">
+
+                            <!-- Ítem -->
+                            <td class="px-6 py-4">
+                                <p class="font-semibold text-gray-800">{{ item.nombre }}</p>
+                                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ item.unidad }}</span>
+                            </td>
+
+                            <!-- Carga Inicial -->
+                            <td class="px-4 py-4 text-center">
+                                <span class="font-bold text-gray-700 text-lg">{{ item.cantidadCargada }}</span>
+                            </td>
+
+                            <!-- Remanente (input) -->
+                            <td class="px-4 py-4 bg-blue-50">
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        [max]="item.cantidadCargada"
+                                        class="w-24 text-center border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2 border-gray-300 font-bold text-blue-900"
+                                        [ngClass]="getClaseRemanente(item)"
+                                        [(ngModel)]="item.remanente"
+                                        (change)="calcularConsumo($index)"
+                                        (keyup)="calcularConsumo($index)">
+                                    <span class="text-xs text-gray-400">{{ item.unidad }}</span>
+                                </div>
+                                @if (item.remanente > 0) {
+                                    <p class="text-xs mt-1"
+                                        [ngClass]="item.remanente / item.cantidadCargada > 0.3 ? 'text-orange-500' : 'text-blue-500'">
+                                        {{ ((item.remanente / item.cantidadCargada) * 100) | number:'1.0-0' }}% del total
+                                    </p>
+                                }
+                            </td>
+
+                            <!-- Consumo Real -->
+                            <td class="px-4 py-4 text-center">
+                                <span class="text-xl font-bold text-green-700">{{ item.consumido }}</span>
+                            </td>
+
+                            <!-- % Consumo con barra -->
+                            <td class="px-4 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                        <div class="h-2 rounded-full transition-all duration-300"
+                                            [style.width.%]="getPorcentajeConsumoItem(item)"
+                                            [ngClass]="getPorcentajeConsumoItem(item) >= 90 ? 'bg-green-500' : getPorcentajeConsumoItem(item) >= 60 ? 'bg-orange-400' : 'bg-red-400'">
+                                        </div>
+                                    </div>
+                                    <span class="text-sm font-semibold w-10 text-right"
+                                        [ngClass]="getPorcentajeConsumoItem(item) >= 90 ? 'text-green-700' : getPorcentajeConsumoItem(item) >= 60 ? 'text-orange-600' : 'text-red-600'">
+                                        {{ getPorcentajeConsumoItem(item) }}%
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Estado Retorno -->
+                            <td class="px-4 py-4">
+                                <select
+                                    class="w-full text-sm border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2 border font-medium"
+                                    [ngClass]="getClaseBadgeEstado(item.estado)"
+                                    [(ngModel)]="item.estado">
+                                    <option value="Normal">Retorno a Stock</option>
+                                    <option value="Desecho">Desechar</option>
+                                    <option value="Merma">Merma / Roto</option>
+                                </select>
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Leyenda de estados -->
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4 text-xs text-gray-500">
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                Retorno a Stock: el sobrante vuelve al almacén
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-orange-400 inline-block"></span>
+                Merma / Roto: no se reintegra al stock
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
+                Desechar: descartado sin retorno
+            </span>
+        </div>
+
     </div>
+    } <!-- fin @if listaItems.length > 0 -->
 
+    <!-- BOTÓN DE CIERRE -->
     <div class="mt-8 flex justify-end">
         <button
             mat-raised-button
             color="primary"
             class="px-8 py-2 text-lg"
             style="background-color: #0B1E47; height: 50px;"
+            [disabled]="guardando || listaItems.length === 0"
             (click)="guardarCierre()">
-            <mat-icon class="mr-2">save</mat-icon>
-            Cerrar Vuelo y Guardar
+            @if (guardando) {
+                <mat-icon class="mr-2 animate-spin">sync</mat-icon>
+                Guardando...
+            } @else {
+                <mat-icon class="mr-2">save</mat-icon>
+                Cerrar Vuelo y Guardar
+            }
         </button>
     </div>
+
 </div>

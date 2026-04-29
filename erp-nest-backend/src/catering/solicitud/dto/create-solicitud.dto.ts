@@ -4,7 +4,8 @@ import {
   IsNotEmpty,
   IsDateString,
   IsArray,
-  ValidateNested
+  ValidateNested,
+  IsIn
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -31,6 +32,11 @@ export class CreateSolicitudDto {
   @IsString()
   @IsNotEmpty()
   prioridad: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['Entrada', 'Salida'])
+  tipo: string;
 
   @IsInt()
   @IsNotEmpty()

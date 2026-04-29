@@ -36,6 +36,7 @@ export class SolicitudService {
         fechaRequerida: new Date(dto.fechaRequerida),
         descripcion: dto.descripcion,
         prioridad: dto.prioridad,
+        tipo: dto.tipo,
         almacenId: dto.almacenId,
         detalles: {
           create: dto.detalles.map(d => ({

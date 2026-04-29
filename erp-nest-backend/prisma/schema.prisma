@@ -393,6 +393,7 @@ model SolicitudDotacion {
   estado         String   @default("Pendiente") @map("Estado") @db.VarChar(45)
   descripcion    String   @map("Descripcion") @db.VarChar(45)
   prioridad      String   @map("Prioridad") @db.VarChar(10)
+  tipo           String   @db.VarChar(25)
   almacenId      Int      @map("Almacen_idAlmacen")
 
   almacen  Almacen           @relation(fields: [almacenId], references: [idAlmacen])

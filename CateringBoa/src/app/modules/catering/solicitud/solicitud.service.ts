@@ -20,6 +20,7 @@ export interface SolicitudBackendResponse {
     estado: string;
     descripcion: string;
     prioridad: string;
+    tipo: string;
     almacenId: number;
     almacen?: Almacen;
     detalles?: DetalleResponse[];
@@ -32,6 +33,7 @@ export interface Solicitud {
     fecha: string;
     descripcion: string;
     prioridad: 'Alta' | 'Media' | 'Baja';
+    tipo: string; 
     estado: 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada';
     items: ItemSolicitud[];
 }
@@ -78,7 +80,7 @@ export class SolicitudService {
  
             prioridad: this.mapearPrioridad(backend.prioridad),
             estado: backend.estado as 'Pendiente' | 'Parcial' | 'Aprobada' | 'Rechazada',
- 
+            tipo: backend.tipo ?? 'Entrada',
             items: (backend.detalles || []).map(detalle => ({
                 categoria: detalle.item?.categoriaItem || 'Sin categoría',
                 nombre: detalle.item?.nombreItem || 'Sin nombre',

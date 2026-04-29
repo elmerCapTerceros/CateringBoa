@@ -82,5 +82,16 @@ export class FlotaService {
         this.getList().subscribe();
     }
 
+    getFleet(): Observable<any> {
+        return this._http.post<any>('https://preprod-intra.boa.bo/MS_Catering/api/Catering/GetFleet', {}).pipe(
+            tap((response) => {
+                return response;
+            }),
+            catchError((error) => {
+                console.error('Error en GetFleet:', error);
+                throw error;
+            })
+        );
+    }
 }
 

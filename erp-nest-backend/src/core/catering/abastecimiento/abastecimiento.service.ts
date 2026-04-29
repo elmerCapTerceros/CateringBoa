@@ -77,6 +77,24 @@ export class AbastecimientoService {
         usuarioId = usuarioFallback.id;
       }
 
+      await tx.solicitudDotacion.create({
+        data: {
+          fechaRequerida: new Date(), // o puedes poner +1 día
+           descripcion: `Despacho vuelo ${dto.codigoVuelo}`,
+           prioridad: 'Media',
+           tipo: 'Salida',
+            almacenId: dto.almacenId,
+            estado: 'Aprobada', 
+
+            detalles: {
+              create: dto.items.map(i => ({
+               itemId: i.itemId,
+               cantidad: i.cantidad
+            }))
+          }
+        }
+        });
+
       // 4. Crear registro de Abastecimiento y sus detalles
       return await tx.abastecimiento.create({
         data: {

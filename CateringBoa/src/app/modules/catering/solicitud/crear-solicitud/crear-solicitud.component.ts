@@ -60,6 +60,7 @@ export class CrearSolicitudComponent implements OnInit {
             fechaRequerida: ['', Validators.required],
             descripcion: ['', Validators.required],
             prioridad: ['Media', Validators.required],
+            tipo: [null, Validators.required],
             almacenId: [null, Validators.required],
             detalles: this.fb.array([])
         });
@@ -130,6 +131,7 @@ export class CrearSolicitudComponent implements OnInit {
                 fechaRequerida: new Date(formValue.fechaRequerida).toISOString(),
                 descripcion: formValue.descripcion,
                 prioridad: formValue.prioridad,
+                tipo: formValue.tipo,
                 almacenId: Number(formValue.almacenId),
                 detalles: formValue.detalles.map((detalle: any) => ({
                     itemId: Number(detalle.itemId),

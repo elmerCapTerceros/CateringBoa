@@ -49,6 +49,7 @@ export interface CreateSolicitudDto {
     fechaRequerida: string;
     descripcion: string;
     prioridad: string;
+    tipo: string;
     almacenId: number;
     detalles: {
         itemId: number;

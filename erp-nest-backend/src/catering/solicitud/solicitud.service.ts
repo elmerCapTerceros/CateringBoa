@@ -84,6 +84,7 @@ export class SolicitudService {
       data: {
         descripcion: dto.descripcion,
         prioridad: dto.prioridad,
+        tipo: dto.tipo,
         fechaRequerida: dto.fechaRequerida
           ? new Date(dto.fechaRequerida)
           : undefined

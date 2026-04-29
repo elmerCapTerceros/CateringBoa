@@ -36,6 +36,22 @@
                 </mat-form-field>
             </div>
 
+            <!---Tipo de solicitud-->
+             <div>
+                <mat-form-field appearance="outline" class="w-64">
+                    <mat-label>Tipo de solicitud:</mat-label>
+                    <mat-select formControlName="tipo" placeholder="Seleccionar tipo de solicitud"
+                                [disabled]="isLoadingCatalogos">
+                        <mat-option>Seleccionar</mat-option>
+                        <mat-option value="Entrada">Entrada</mat-option>
+                        <mat-option value="Salida">Salida</mat-option>
+                    </mat-select>
+                    @if (solicitudForm.get('tipo')?.hasError('required') && solicitudForm.get('tipo')?.touched) {
+                         <mat-error>El tipo es requerido</mat-error>
+                        }
+                </mat-form-field>
+            </div>
+
             <!-- Fecha requerida -->
             <div>
                 <mat-form-field appearance="outline" class="w-64">

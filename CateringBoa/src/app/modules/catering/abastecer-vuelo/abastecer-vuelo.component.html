@@ -2,7 +2,7 @@
 
     <div>
         <h2 class="text-3xl font-bold tracking-tight text-slate-800">Abastecimiento de Vuelo</h2>
-        <p class="text-secondary">Gestión de carga operativa y asignación de suministros.</p>
+        <p class="text-secondary">Gestión hola de carga operativa y asignación de suministros.</p>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8 items-start">
@@ -81,6 +81,7 @@
         <div class="w-full lg:w-2/3">
             @if (vueloSeleccionado) {
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px] flex flex-col">
+                    
 
                     <div class="p-6 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
                         <div>
@@ -97,8 +98,30 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Seleccioón de Almacen -->
 
                     <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-white border-b border-gray-100 items-end">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Seleccione almacén</label>
+                            <div class="flex gap-2">
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Seleccionar Almacén</mat-label>
+                                         <mat-select [(ngModel)]="almacenSeleccionadoId">
+        
+                                         <mat-option [value]="null">Seleccionar</mat-option>
+
+                                            @for (almacen of almacenes; track almacen.idAlmacen) {
+                                                 <mat-option [value]="almacen.idAlmacen">
+                                                  {{ almacen.codigo || '' }} {{ almacen.nombreAlmacen }}
+                                                    </mat-option>
+                                                            }
+
+                                        </mat-select>
+                                </mat-form-field>                               
+                            </div>
+                        </div>
+                        
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Cargar Plantilla Base</label>
                             <div class="flex gap-2">

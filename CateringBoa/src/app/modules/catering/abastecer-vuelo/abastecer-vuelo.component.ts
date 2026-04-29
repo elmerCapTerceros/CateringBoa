@@ -18,6 +18,7 @@ import { AbastecimientoService } from '../services/abastecimiento.service';
 import { FlotaApi, FlotasService } from '../services/flotas.service';
 import { PlantillasService } from '../services/plantillas.service';
 import { StockService } from '../services/stock.service';
+import { CatalogosService, Almacen } from '../services/catalogo.service';
 
 // --- INTERFACES ---
 interface ItemCarga {
@@ -106,13 +107,18 @@ export class AbastecerVueloComponent implements OnInit {
     stockCompleto: ItemStockSelection[] = [];
     stockFiltrado: ItemStockSelection[] = [];
 
+    isLoadingCatalogos = false;
+    almacenes: Almacen[] = [];
+
+    almacenSeleccionadoId: number | null = null;
     constructor(
         private snackBar: MatSnackBar,
         protected dialog: MatDialog,
         private plantillasService: PlantillasService,
         private abastecimientoService: AbastecimientoService,
         private stockService: StockService,
-        private flotasService: FlotasService
+        private flotasService: FlotasService,
+        private catalogosService: CatalogosService
     ) {}
 
     ngOnInit(): void {
@@ -120,6 +126,7 @@ export class AbastecerVueloComponent implements OnInit {
         this.vuelosFiltrados = [...this.vuelosDelDia];
         this.cargarPlantillasBackend();
         this.cargarFlotasBackend();
+        this.cargarCatalogos();
     }
 
     // --- CARGA DE DATOS ---
@@ -129,6 +136,8 @@ export class AbastecerVueloComponent implements OnInit {
             error: (err) => console.error('Error cargando plantillas', err),
         });
     }
+
+
 
     cargarStockBackend() {
         this.stockService.getItems().subscribe({
@@ -155,6 +164,22 @@ export class AbastecerVueloComponent implements OnInit {
             error: () => this.snackBar.open('Error cargando flotas', 'Cerrar'),
         });
     }
+
+    cargarCatalogos(): void {
+    this.isLoadingCatalogos = true;
+
+    this.catalogosService.getAllCatalogos().subscribe({
+        next: (response) => {
+            console.log('Catalogos:', response); // DEBUG
+            this.almacenes = response.almacenes || [];
+            this.isLoadingCatalogos = false;
+        },
+        error: () => {
+            this.isLoadingCatalogos = false;
+            this.snackBar.open('Error cargando almacenes', 'Cerrar');
+        }
+    });
+}
 
     // --- SELECCIÓN ---
     seleccionarFlota(flota: FlotaApi) {
@@ -294,7 +319,7 @@ export class AbastecerVueloComponent implements OnInit {
         const payload = {
             codigoVuelo: this.vueloSeleccionado.codigo,
             aeronaveId: this.aeronaveIdSeleccionada,
-            almacenId: 1, // ID Almacén de tu Seed
+            almacenId: this.almacenSeleccionadoId,
             usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419', // Verifica que este UUID exista
             observaciones: 'Despacho regular',
             items: this.listaCargaActual.map((i) => ({

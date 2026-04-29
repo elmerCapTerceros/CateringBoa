@@ -4,44 +4,46 @@ import {
   IsNotEmpty,
   IsDateString,
   IsArray,
-  ValidateNested
+  ValidateNested,
+  IsIn
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class CreateDetalleDotacionDto {
-    @IsInt()
-    @IsNotEmpty()
-    cantidad: number;
+class CreateDetalleSolicitudDto {
+  @IsInt()
+  @IsNotEmpty()
+  itemId: number;
 
-    @IsInt()
-    @IsNotEmpty()
-    itemId: number;
-} 
+  @IsInt()
+  @IsNotEmpty()
+  cantidad: number;
+}
 
 export class CreateSolicitudDto {
-    
-    @IsDateString()
-    fechaRequerida: string;
 
-    @IsString()
-    @IsNotEmpty()
-    descripcion: string;
+  @IsDateString()
+  @IsNotEmpty()
+  fechaRequerida: string;
 
-    @IsString()
-    @IsNotEmpty()
-    prioridad: string;
+  @IsString()
+  @IsNotEmpty()
+  descripcion: string;
 
-    @IsInt()
-    almacenId: number;
+  @IsString()
+  @IsNotEmpty()
+  prioridad: string;
 
-    @IsString()
-    usuarioId: string;
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['Entrada', 'Salida'])
+  tipo: string;
 
-     @IsInt()
-    aeronaveId: number;
+  @IsInt()
+  @IsNotEmpty()
+  almacenId: number;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateDetalleDotacionDto)
-    detalles: CreateDetalleDotacionDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateDetalleSolicitudDto)
+  detalles: CreateDetalleSolicitudDto[];
 }

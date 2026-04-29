@@ -1,55 +1,40 @@
-import { Component, ViewChild, TemplateRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatCheckboxModule } from '@angular/material/checkbox'; // <--- IMPORTANTE
+
+// --- SERVICIOS ---
+import { AbastecimientoService } from '../services/abastecimiento.service';
+import { FlotaApi, FlotasService } from '../services/flotas.service';
+import { PlantillasService } from '../services/plantillas.service';
+import { StockService } from '../services/stock.service';
 
 // --- INTERFACES ---
-interface VueloProgramado {
-    id: number;
-    codigo: string;
-    ruta: string;
-    matricula: string;
-    horaSalida: string;
-    estado: 'Pendiente' | 'En Proceso' | 'Despachado';
-}
-
 interface ItemCarga {
-    id: string;
+    itemId: number;
     nombre: string;
     cantidad: number;
     unidad: string;
     tipo: 'Base' | 'Extra';
 }
 
-interface ItemStock {
-    id: string;
-    nombre: string;
-    categoria: string;
-    stockActual: number;
-    unidad: string;
-}
-
-// Nueva interfaz para manejar la selección en el modal
-interface ItemStockSelection extends ItemStock {
-    selected: boolean;
-    cantidadAgregar: number;
-}
-
-interface PlantillaResumen {
+interface ItemStockSelection {
     id: number;
     nombre: string;
-    totalItems: number;
-    items: ItemCarga[];
+    unidad: string;
+    selected: boolean;
+    cantidadAgregar: number;
+    stockActual: number;
 }
 
 @Component({
@@ -58,6 +43,7 @@ interface PlantillaResumen {
     imports: [
         CommonModule,
         FormsModule,
+        ReactiveFormsModule, // Agregado para evitar errores de inyector en formularios
         MatIconModule,
         MatButtonModule,
         MatInputModule,
@@ -75,216 +61,174 @@ interface PlantillaResumen {
 export class AbastecerVueloComponent implements OnInit {
     @ViewChild('modalAgregarItem') modalAgregarItem!: TemplateRef<any>;
 
-    // Búsqueda
+    // Variables de búsqueda (Usa el atributo 'name' en el HTML con ngModel)
     searchVueloTerm: string = '';
     searchStockTerm: string = '';
 
-    // Listas
-    vuelosFiltrados: VueloProgramado[] = [];
-
-    // --- LÓGICA DE SELECCIÓN MÚLTIPLE ---
-    stockCompleto: ItemStockSelection[] = []; // Todos los ítems con estado
-    stockFiltrado: ItemStockSelection[] = []; // Lo que se ve en pantalla al buscar
-
-    // Datos Mock (Stock Base)
-    stockAlmacen: ItemStock[] = [
+    // Datos Mock
+    vuelosDelDia: any[] = [
         {
-            id: 'STK-1',
-            nombre: 'Whisky Etiqueta Negra',
-            categoria: 'Licores',
-            stockActual: 50,
-            unidad: 'Botella',
-        },
-        {
-            id: 'STK-2',
-            nombre: 'Vino Tinto Tannat',
-            categoria: 'Licores',
-            stockActual: 120,
-            unidad: 'Botella',
-        },
-        {
-            id: 'STK-3',
-            nombre: 'Coca Cola 2L',
-            categoria: 'Bebidas',
-            stockActual: 500,
-            unidad: 'Botella',
-        },
-        {
-            id: 'STK-4',
-            nombre: 'Agua Mineral 500ml',
-            categoria: 'Bebidas',
-            stockActual: 1000,
-            unidad: 'Botella',
-        },
-        {
-            id: 'STK-5',
-            nombre: 'Hielo 5kg',
-            categoria: 'Insumos',
-            stockActual: 30,
-            unidad: 'Bolsa',
-        },
-        {
-            id: 'STK-6',
-            nombre: 'Kit Cubiertos VIP',
-            categoria: 'Menaje',
-            stockActual: 200,
-            unidad: 'Kit',
-        },
-        {
-            id: 'STK-7',
-            nombre: 'Sandwich Pollo',
-            categoria: 'Alimentos',
-            stockActual: 80,
-            unidad: 'Unidad',
-        },
-        {
-            id: 'STK-8',
-            nombre: 'Menu Vegetariano',
-            categoria: 'Alimentos',
-            stockActual: 15,
-            unidad: 'Bandeja',
-        },
-    ];
-
-    vuelosDelDia: VueloProgramado[] = [
-        {
-            id: 101,
             codigo: 'OB-760',
-            ruta: 'VVI ➔ MIA',
+            ruta: 'VVI > MIA',
+            hora: '08:00',
+            estado: 'PENDIENTE',
             matricula: 'CP-3030',
-            horaSalida: '08:00',
-            estado: 'Pendiente',
         },
         {
-            id: 102,
             codigo: 'OB-770',
-            ruta: 'VVI ➔ MAD',
+            ruta: 'VVI > MAD',
+            hora: '12:30',
+            estado: 'EN PROCESO',
             matricula: 'CP-3204',
-            horaSalida: '12:30',
-            estado: 'En Proceso',
         },
         {
-            id: 103,
             codigo: 'OB-550',
-            ruta: 'CBB ➔ LPB',
+            ruta: 'CBB > LPB',
+            hora: '14:00',
+            estado: 'PENDIENTE',
             matricula: 'CP-2923',
-            horaSalida: '14:00',
-            estado: 'Pendiente',
-        },
-        {
-            id: 104,
-            codigo: 'OB-680',
-            ruta: 'VVI ➔ SAO',
-            matricula: 'CP-3151',
-            horaSalida: '16:45',
-            estado: 'Pendiente',
         },
     ];
 
-    plantillasDisponibles: PlantillaResumen[] = [
-        {
-            id: 1,
-            nombre: 'Desayuno Estándar B737',
-            totalItems: 3,
-            items: [
-                {
-                    id: 'P1',
-                    nombre: 'Sandwich Pollo',
-                    cantidad: 150,
-                    unidad: 'Unidad',
-                    tipo: 'Base',
-                },
-                {
-                    id: 'P2',
-                    nombre: 'Jugo Valle',
-                    cantidad: 20,
-                    unidad: 'Litro',
-                    tipo: 'Base',
-                },
-                {
-                    id: 'P3',
-                    nombre: 'Servilletas',
-                    cantidad: 200,
-                    unidad: 'Unidad',
-                    tipo: 'Base',
-                },
-            ],
-        },
-        {
-            id: 2,
-            nombre: 'Cena Internacional A330',
-            totalItems: 3,
-            items: [
-                {
-                    id: 'P4',
-                    nombre: 'Cena Carne',
-                    cantidad: 250,
-                    unidad: 'Bandeja',
-                    tipo: 'Base',
-                },
-                {
-                    id: 'P5',
-                    nombre: 'Vino Tinto',
-                    cantidad: 15,
-                    unidad: 'Botella',
-                    tipo: 'Base',
-                },
-                {
-                    id: 'P6',
-                    nombre: 'Kit Café',
-                    cantidad: 10,
-                    unidad: 'Caja',
-                    tipo: 'Base',
-                },
-            ],
-        },
-    ];
+    vuelosBase: any[] = [];
+    vuelosFiltrados: any[] = [];
+    vueloSeleccionado: any = null;
 
-    vueloSeleccionado: VueloProgramado | null = null;
-    listaCargaActual: ItemCarga[] = [];
+    flotas: FlotaApi[] = [];
+    flotaSeleccionada: FlotaApi | null = null;
+    aeronaveIdSeleccionada: number | null = null;
+
+    plantillasDisponibles: any[] = [];
     plantillaSeleccionadaId: number | null = null;
+
+    listaCargaActual: ItemCarga[] = [];
+
+    stockCompleto: ItemStockSelection[] = [];
+    stockFiltrado: ItemStockSelection[] = [];
 
     constructor(
         private snackBar: MatSnackBar,
-        protected dialog: MatDialog
+        protected dialog: MatDialog,
+        private plantillasService: PlantillasService,
+        private abastecimientoService: AbastecimientoService,
+        private stockService: StockService,
+        private flotasService: FlotasService
     ) {}
 
     ngOnInit(): void {
-        this.vuelosFiltrados = this.vuelosDelDia;
+        this.vuelosBase = [...this.vuelosDelDia];
+        this.vuelosFiltrados = [...this.vuelosDelDia];
+        this.cargarPlantillasBackend();
+        this.cargarFlotasBackend();
     }
 
-    // --- VUELOS ---
-    filtrarVuelos() {
-        const term = this.searchVueloTerm.toLowerCase();
-        this.vuelosFiltrados = this.vuelosDelDia.filter(
-            (v) =>
-                v.codigo.toLowerCase().includes(term) ||
-                v.ruta.toLowerCase().includes(term) ||
-                v.matricula.toLowerCase().includes(term)
-        );
+    // --- CARGA DE DATOS ---
+    cargarPlantillasBackend() {
+        this.plantillasService.getPlantillas().subscribe({
+            next: (data) => (this.plantillasDisponibles = data),
+            error: (err) => console.error('Error cargando plantillas', err),
+        });
     }
 
-    seleccionarVuelo(vuelo: VueloProgramado) {
-        this.vueloSeleccionado = vuelo;
+    cargarStockBackend() {
+        this.stockService.getItems().subscribe({
+            next: (data) => {
+                this.stockCompleto = data.map((item: any) => ({
+                    id: item.idItem,
+                    nombre: item.nombreItem,
+                    unidad: item.unidadMedida || 'Unidad',
+                    selected: false,
+                    cantidadAgregar: 1,
+                    // CORRECCIÓN: Acceso a stock por almacén (detallesStock)
+                    stockActual: item.detallesStock?.[0]?.cantidad ?? 0,
+                }));
+                this.stockFiltrado = [...this.stockCompleto];
+            },
+            error: () =>
+                this.snackBar.open('Error cargando productos', 'Cerrar'),
+        });
+    }
+
+    cargarFlotasBackend() {
+        this.flotasService.getFlotas().subscribe({
+            next: (data) => (this.flotas = data),
+            error: () => this.snackBar.open('Error cargando flotas', 'Cerrar'),
+        });
+    }
+
+    // --- SELECCIÓN ---
+    seleccionarFlota(flota: FlotaApi) {
+        this.flotaSeleccionada = flota;
+        this.aeronaveIdSeleccionada = null;
+        this.vueloSeleccionado = null;
         this.listaCargaActual = [];
         this.plantillaSeleccionadaId = null;
-        if (vuelo.estado === 'En Proceso') this.simularCargaExistente();
+        this.filtrarVuelos();
     }
 
-    // --- MODAL STOCK MULTIPLE ---
+    seleccionarVuelo(vuelo: any) {
+        this.vueloSeleccionado = vuelo;
+        this.aeronaveIdSeleccionada = this.encontrarAeronaveId(vuelo.matricula);
+        this.listaCargaActual = [];
+        this.plantillaSeleccionadaId = null;
+    }
+
+    filtrarVuelos() {
+        const term = this.searchVueloTerm.toLowerCase();
+        const matriculasFlota = this.flotaSeleccionada
+            ? new Set(this.flotaSeleccionada.aeronaves?.map((a) => a.matricula))
+            : null;
+        this.vuelosFiltrados = this.vuelosBase.filter((v) => {
+            const cumpleTexto =
+                v.codigo.toLowerCase().includes(term) ||
+                v.ruta.toLowerCase().includes(term);
+            const cumpleFlota = matriculasFlota
+                ? matriculasFlota.has(v.matricula)
+                : true;
+            return cumpleTexto && cumpleFlota;
+        });
+    }
+
+    private encontrarAeronaveId(matricula: string): number | null {
+        for (const flota of this.flotas) {
+            const encontrada = flota.aeronaves?.find(
+                (a) => a.matricula === matricula
+            );
+            if (encontrada) return encontrada.idAeronave;
+        }
+        return null;
+    }
+
+    // --- PLANTILLAS ---
+    aplicarPlantilla() {
+        if (!this.plantillaSeleccionadaId) return;
+
+        const plantilla = this.plantillasDisponibles.find(
+            (p) => (p.id ?? p.idPlantilla) === this.plantillaSeleccionadaId
+        );
+
+        if (plantilla) {
+            if (this.listaCargaActual.length > 0) {
+                if (!confirm('¿Reemplazar la carga actual con esta plantilla?'))
+                    return;
+            }
+
+            this.listaCargaActual = plantilla.items.map((i: any) => ({
+                itemId: i.itemId,
+                nombre: i.item ? i.item.nombreItem : 'Item Desconocido',
+                cantidad: i.cantidad,
+                unidad: i.item ? i.item.unidadMedida : 'Unidad',
+                tipo: 'Base',
+            }));
+
+            this.snackBar.open('Plantilla aplicada', 'OK', { duration: 2000 });
+        }
+    }
+
+    // --- MODAL STOCK ---
     abrirModalItem() {
         this.searchStockTerm = '';
-
-        // Inicializamos el stock con estado de selección en falso
-        // Mapeamos los datos originales a la interfaz con selección
-        this.stockCompleto = this.stockAlmacen.map((item) => ({
-            ...item,
-            selected: false,
-            cantidadAgregar: 1,
-        }));
-
-        this.stockFiltrado = this.stockCompleto; // Al inicio mostramos todo
-
+        this.cargarStockBackend();
         this.dialog.open(this.modalAgregarItem, {
             width: '800px',
             maxHeight: '90vh',
@@ -293,112 +237,93 @@ export class AbastecerVueloComponent implements OnInit {
 
     filtrarStock() {
         const term = this.searchStockTerm.toLowerCase();
-        // Filtramos sobre la lista completa que MANTIENE EL ESTADO selected
-        this.stockFiltrado = this.stockCompleto.filter(
-            (s) =>
-                s.nombre.toLowerCase().includes(term) ||
-                s.categoria.toLowerCase().includes(term)
+        this.stockFiltrado = this.stockCompleto.filter((s) =>
+            s.nombre.toLowerCase().includes(term)
         );
     }
 
-    // Toggle simple al hacer click en la fila
     toggleSeleccion(item: ItemStockSelection) {
         item.selected = !item.selected;
-        if (!item.selected) item.cantidadAgregar = 1; // Reset cantidad al deseleccionar
-    }
-
-    // Getter para saber cuántos hay seleccionados (globalmente, no solo los filtrados)
-    get countSeleccionados(): number {
-        return this.stockCompleto.filter((i) => i.selected).length;
+        if (!item.selected) item.cantidadAgregar = 1;
     }
 
     guardarSeleccionMultiple() {
         const seleccionados = this.stockCompleto.filter((i) => i.selected);
-
         if (seleccionados.length === 0) return;
 
-        let agregadosCount = 0;
-
-        seleccionados.forEach((itemSel) => {
-            // Validar Stock individualmente
-            if (itemSel.cantidadAgregar > itemSel.stockActual) {
-                // Podrías mostrar un aviso específico, aquí lo saltamos o ajustamos
-                // itemSel.cantidadAgregar = itemSel.stockActual; // Opcional: Ajustar al máx
-            }
-
-            // Buscar si ya existe en la carga del vuelo
+        seleccionados.forEach((sel) => {
             const existente = this.listaCargaActual.find(
-                (i) => i.id === itemSel.id
+                (i) => i.itemId === sel.id
             );
-
             if (existente) {
-                existente.cantidad += itemSel.cantidadAgregar;
+                existente.cantidad += sel.cantidadAgregar;
             } else {
                 this.listaCargaActual.push({
-                    id: itemSel.id,
-                    nombre: itemSel.nombre,
-                    unidad: itemSel.unidad,
-                    cantidad: itemSel.cantidadAgregar,
+                    itemId: sel.id,
+                    nombre: sel.nombre,
+                    cantidad: sel.cantidadAgregar,
+                    unidad: sel.unidad,
                     tipo: 'Extra',
                 });
             }
-            agregadosCount++;
         });
 
         this.dialog.closeAll();
         this.snackBar.open(
-            `✅ Se agregaron ${agregadosCount} ítems a la carga`,
+            `${seleccionados.length} items agregados`,
             'Cerrar',
-            { duration: 3000 }
+            { duration: 2000 }
         );
-    }
-
-    // --- HELPERS ---
-    cargarPlantilla() {
-        if (!this.plantillaSeleccionadaId) return;
-        const plantilla = this.plantillasDisponibles.find(
-            (p) => p.id === this.plantillaSeleccionadaId
-        );
-        if (plantilla) {
-            if (this.listaCargaActual.length > 0) {
-                if (!confirm('¿Reemplazar carga actual?')) return;
-            }
-            this.listaCargaActual = plantilla.items.map((i) => ({ ...i }));
-            this.snackBar.open(`Plantilla cargada`, 'OK', { duration: 2000 });
-        }
     }
 
     eliminarItem(index: number) {
         this.listaCargaActual.splice(index, 1);
     }
 
-    guardarCambios(despachar: boolean = false) {
-        if (!this.vueloSeleccionado || this.listaCargaActual.length === 0)
+    // --- DESPACHO ---
+    confirmarDespacho() {
+        if (!this.vueloSeleccionado || this.listaCargaActual.length === 0) {
+            this.snackBar.open('Seleccione vuelo e items', 'Cerrar');
             return;
-        this.vueloSeleccionado.estado = despachar ? 'Despachado' : 'En Proceso';
-        const msg = despachar ? 'Vuelo despachado ✈️' : 'Borrador guardado 💾';
-        this.snackBar.open(msg, 'Cerrar', {
-            duration: 3000,
-            panelClass: despachar ? ['bg-green-600', 'text-white'] : [],
-        });
-        if (despachar) {
-            this.vueloSeleccionado = null;
-            this.listaCargaActual = [];
         }
-    }
+        if (!this.aeronaveIdSeleccionada) {
+            this.snackBar.open('No se encontró aeronave', 'Cerrar');
+            return;
+        }
 
-    private simularCargaExistente() {
-        this.listaCargaActual = [
-            {
-                id: 'P1',
-                nombre: 'Sandwich Pollo',
-                cantidad: 100,
-                unidad: 'Unidad',
-                tipo: 'Base',
+        const payload = {
+            codigoVuelo: this.vueloSeleccionado.codigo,
+            aeronaveId: this.aeronaveIdSeleccionada,
+            almacenId: 1, // ID Almacén de tu Seed
+            usuarioId: 'ba7604a4-e1fa-4130-b46d-8623ea1f5419', // Verifica que este UUID exista
+            observaciones: 'Despacho regular',
+            items: this.listaCargaActual.map((i) => ({
+                itemId: i.itemId,
+                cantidad: i.cantidad,
+            })),
+        };
+
+        this.abastecimientoService.despacharVuelo(payload).subscribe({
+            next: () => {
+                this.snackBar.open('✅ Vuelo despachado', 'Cerrar', {
+                    duration: 4000,
+                });
+                this.vueloSeleccionado = null;
+                this.listaCargaActual = [];
             },
-        ];
+            error: (err) => {
+                const msg = err.error?.message || 'Error en el servidor';
+                this.snackBar.open(`❌ Error: ${msg}`, 'Cerrar', {
+                    duration: 5000,
+                });
+            },
+        });
     }
 
+    // Getters
+    get countSeleccionados() {
+        return this.stockCompleto.filter((i) => i.selected).length;
+    }
     get totalItems() {
         return this.listaCargaActual.length;
     }

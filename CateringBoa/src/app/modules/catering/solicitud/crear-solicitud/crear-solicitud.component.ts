@@ -15,19 +15,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-// Importar servicios
 import { SolicitudService, CreateSolicitudDto } from '../solicitud.service';
-import { 
-    CatalogosService, 
-    Almacen, 
-    Aeronave, 
-    Item 
-} from '../../services/catalogo.service';
+import { CatalogosService, Almacen, Item } from '../../services/catalogo.service';
 
 @Component({
     selector: 'app-crear-solicitud',
-    standalone: true, 
-    imports: [ 
+    standalone: true,
+    imports: [
         CommonModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -52,9 +46,7 @@ export class CrearSolicitudComponent implements OnInit {
     isLoadingCatalogos = false;
     minDate = new Date();
 
-    // Datos dinámicos desde servicios
     almacenes: Almacen[] = [];
-    aeronaves: Aeronave[] = [];
     items: Item[] = [];
 
     constructor(
@@ -68,8 +60,8 @@ export class CrearSolicitudComponent implements OnInit {
             fechaRequerida: ['', Validators.required],
             descripcion: ['', Validators.required],
             prioridad: ['Media', Validators.required],
+            tipo: [null, Validators.required],
             almacenId: [null, Validators.required],
-            aeronaveId: [null, Validators.required],
             detalles: this.fb.array([])
         });
     }
@@ -79,71 +71,34 @@ export class CrearSolicitudComponent implements OnInit {
         this.agregarDetalle();
     }
 
-    // Cargar catálogos desde el servicio
     cargarCatalogos(): void {
         this.isLoadingCatalogos = true;
-        
+
         this.catalogosService.getAllCatalogos().subscribe({
             next: (response) => {
                 this.almacenes = response.almacenes || [];
-                this.aeronaves = response.aeronaves || [];
                 this.items = response.items || [];
-                
-                console.log('Catálogos cargados:', {
-                    almacenes: this.almacenes.length,
-                    aeronaves: this.aeronaves.length,
-                    items: this.items.length
-                });
-                
                 this.isLoadingCatalogos = false;
             },
-            error: (error) => {
-                console.error('Error cargando catálogos:', error);
+            error: () => {
                 this.isLoadingCatalogos = false;
-                
-                // Cargar por separado como fallback
                 this.cargarCatalogosSeparados();
             }
         });
     }
 
-    // Fallback: cargar catálogos por separado
     cargarCatalogosSeparados(): void {
         this.catalogosService.getAlmacenes().subscribe({
-            next: (data) => {
-                this.almacenes = data;
-                console.log('Almacenes cargados:', data.length);
-            },
-            error: (error) => {
-                console.error('Error cargando almacenes:', error);
-                this.snackBar.open('Error cargando almacenes', 'Cerrar', { duration: 3000 });
-            }
+            next: (data) => { this.almacenes = data; },
+            error: () => this.snackBar.open('Error cargando almacenes', 'Cerrar', { duration: 3000 })
         });
-        
-        this.catalogosService.getAeronaves().subscribe({
-            next: (data) => {
-                this.aeronaves = data;
-                console.log('Aeronaves cargadas:', data.length);
-            },
-            error: (error) => {
-                console.error('Error cargando aeronaves:', error);
-                this.snackBar.open('Error cargando aeronaves', 'Cerrar', { duration: 3000 });
-            }
-        });
-        
+
         this.catalogosService.getItems().subscribe({
-            next: (data) => {
-                this.items = data;
-                console.log('Items cargados:', data.length);
-            },
-            error: (error) => {
-                console.error('Error cargando items:', error);
-                this.snackBar.open('Error cargando items', 'Cerrar', { duration: 3000 });
-            }
+            next: (data) => { this.items = data; },
+            error: () => this.snackBar.open('Error cargando items', 'Cerrar', { duration: 3000 })
         });
     }
 
-    // FormArray para detalles
     get detalles(): FormArray {
         return this.solicitudForm.get('detalles') as FormArray;
     }
@@ -163,90 +118,59 @@ export class CrearSolicitudComponent implements OnInit {
         if (this.detalles.length > 1) {
             this.detalles.removeAt(index);
         } else {
-            this.snackBar.open('Debe haber al menos un detalle', 'Cerrar', {
-                duration: 3000
-            });
+            this.snackBar.open('Debe haber al menos un detalle', 'Cerrar', { duration: 3000 });
         }
     }
 
-    // Guardar solicitud
     guardarSolicitud(): void {
         if (this.solicitudForm.valid) {
             this.isLoading = true;
-            
+
             const formValue = this.solicitudForm.value;
             const solicitudDto: CreateSolicitudDto = {
                 fechaRequerida: new Date(formValue.fechaRequerida).toISOString(),
                 descripcion: formValue.descripcion,
                 prioridad: formValue.prioridad,
+                tipo: formValue.tipo,
                 almacenId: Number(formValue.almacenId),
-                aeronaveId: Number(formValue.aeronaveId),
-                usuarioId: '569cbb4b-446f-4017-bb9b-172a748e0c42', // Temporal
                 detalles: formValue.detalles.map((detalle: any) => ({
                     itemId: Number(detalle.itemId),
                     cantidad: Number(detalle.cantidad)
                 }))
             };
-            
-            console.log('Enviando solicitud:', solicitudDto);
-            
+
             this.solicitudService.create(solicitudDto).subscribe({
-                next: (response) => {
+                next: () => {
                     this.isLoading = false;
-                    this.snackBar.open('Solicitud creada exitosamente!', 'Cerrar', {
-                        duration: 3000
-                    });
-                    
-                    // Resetear formulario
+                    this.snackBar.open('Solicitud creada exitosamente!', 'Cerrar', { duration: 3000 });
                     this.resetForm();
-                    
-                    // Redirigir después de 1 segundo
-                    setTimeout(() => {
-                        this.router.navigate(['/catering/list']);
-                    }, 1000);
+                    setTimeout(() => this.router.navigate(['/catering/list']), 1000);
                 },
                 error: (error) => {
                     this.isLoading = false;
-                    console.error(' Error:', error);
-                    
-                    let errorMessage = 'Error al crear la solicitud';
-                    if (error.error?.message) {
-                        errorMessage = error.error.message;
-                    }
-                    
-                    this.snackBar.open(errorMessage, 'Cerrar', {
-                        duration: 5000
-                    });
+                    const errorMessage = error.error?.message || 'Error al crear la solicitud';
+                    this.snackBar.open(errorMessage, 'Cerrar', { duration: 5000 });
                 }
             });
         } else {
             this.marcarCamposComoVisitados();
-            this.snackBar.open('Complete todos los campos requeridos', 'Cerrar', {
-                duration: 3000
-            });
+            this.snackBar.open('Complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
         }
     }
-    
-    // Métodos auxiliares
+
     private resetForm(): void {
-        this.solicitudForm.reset({
-            prioridad: 'Media',
-            almacenId: null,
-            aeronaveId: null
-        });
+        this.solicitudForm.reset({ prioridad: 'Media', almacenId: null });
         this.detalles.clear();
         this.agregarDetalle();
     }
-    
+
     private marcarCamposComoVisitados(): void {
         Object.keys(this.solicitudForm.controls).forEach(key => {
-            const control = this.solicitudForm.get(key);
-            control?.markAsTouched();
+            this.solicitudForm.get(key)?.markAsTouched();
         });
-        
+
         this.detalles.controls.forEach(detalle => {
-            const grupo = detalle as FormGroup;
-            Object.values(grupo.controls).forEach(control => {
+            Object.values((detalle as FormGroup).controls).forEach(control => {
                 control.markAsTouched();
             });
         });

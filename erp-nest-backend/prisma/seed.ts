@@ -5,6 +5,9 @@ import { seedAlmacenes } from './seeds/almacenes';
 import { seedItems } from './seeds/items';
 import { seedFlotas } from './seeds/flotas';
 import { seedCompras } from './seeds/compras';
+import { seedStock} from "./seeds/stock";
+import { seedPlantillas } from './seeds/plantillas';
+import { seedAbastecimientos } from './seeds/abastecimientos';
 
 const prisma = new PrismaClient();
 
@@ -20,8 +23,13 @@ async function main() {
         await seedAlmacenes(prisma);
         await seedItems(prisma);
 
+        // 3. Inventario Inicial
+        await seedStock(prisma);
+
         // 3. Operaciones Complejas
         await seedFlotas(prisma);
+        await seedPlantillas(prisma);
+        await seedAbastecimientos(prisma);
         await seedCompras(prisma);
 
         console.log('✅ Base de datos poblada exitosamente.');
@@ -33,4 +41,11 @@ async function main() {
     }
 }
 
-main();
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

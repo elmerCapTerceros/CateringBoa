@@ -5,7 +5,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router'; // Importante
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+
+// SERVICIOS REALES
+import { AbastecimientoService } from '../services/abastecimiento.service';
+import { ComprasService } from '../services/compras.service';
+import { StockService } from '../services/stock.service';
 
 @Component({
     selector: 'app-dashboard',
@@ -17,84 +22,56 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router'; // Impor
         MatCardModule,
         MatMenuModule,
         MatProgressBarModule,
-        RouterModule, // <--- Asegúrate que esté aquí
+        RouterModule,
     ],
     templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
-    // ... (Tus variables kpis, vuelosProximos, etc. se mantienen igual) ...
+    // --- 1. KPIs (Estructura visual fija, valores dinámicos) ---
     kpis = [
         {
-            title: 'Vuelos Hoy',
-            value: '12',
-            sub: '4 pendientes',
+            id: 'vuelos',
+            title: 'Vuelos Despachados',
+            value: '0', // Se actualizará
+            sub: 'Registrados hoy',
             icon: 'flight_takeoff',
             color: 'text-blue-600',
             bg: 'bg-blue-50',
         },
         {
+            id: 'stock',
             title: 'Alertas Stock',
-            value: '3',
-            sub: 'Productos críticos',
+            value: '0', // Se actualizará
+            sub: 'Productos bajos',
             icon: 'warning',
             color: 'text-red-600',
             bg: 'bg-red-50',
         },
         {
-            title: 'Pedidos Activos',
-            value: '5',
-            sub: 'Esperando entrega',
+            id: 'compras',
+            title: 'Compras Pendientes',
+            value: '0', // Se actualizará
+            sub: 'Por recepcionar',
             icon: 'local_shipping',
             color: 'text-orange-600',
             bg: 'bg-orange-50',
         },
         {
-            title: 'Cargas Completas',
-            value: '98%',
-            sub: 'Efectividad',
+            id: 'static',
+            title: 'Efectividad',
+            value: '98%', // ESTÁTICO
+            sub: 'KPI Mensual',
             icon: 'task_alt',
             color: 'text-green-600',
             bg: 'bg-green-50',
         },
     ];
 
-    vuelosProximos = [
-        {
-            codigo: 'OB-760',
-            destino: 'MIA',
-            hora: '08:00',
-            estado: 'Despachado',
-            color: 'green',
-        },
-        {
-            codigo: 'OB-770',
-            destino: 'MAD',
-            hora: '12:30',
-            estado: 'Cargando...',
-            color: 'blue',
-        },
-        {
-            codigo: 'OB-550',
-            destino: 'LPB',
-            hora: '14:00',
-            estado: 'Pendiente',
-            color: 'orange',
-        },
-        {
-            codigo: 'OB-680',
-            destino: 'SAO',
-            hora: '16:45',
-            estado: 'Pendiente',
-            color: 'gray',
-        },
-    ];
+    // --- 2. LISTAS DINÁMICAS ---
+    vuelosProximos: any[] = [];
+    stockCritico: any[] = [];
 
-    stockCritico = [
-        { nombre: 'Sandwich Pollo', stock: 5, min: 50, percent: 10 },
-        { nombre: 'Whisky Black', stock: 12, min: 20, percent: 60 },
-        { nombre: 'Hielo 5kg', stock: 2, min: 20, percent: 10 },
-    ];
-
+    // --- 3. DATOS ESTÁTICOS (Mock) ---
     actividades = [
         {
             user: 'Juan P.',
@@ -110,23 +87,81 @@ export class DashboardComponent implements OnInit {
         },
         {
             user: 'Sistema',
-            action: 'Alerta: Stock bajo en Licores',
+            action: 'Cierre de día automático',
             time: 'Hace 1 hora',
-            icon: 'notifications',
+            icon: 'settings',
         },
     ];
 
     constructor(
         private _router: Router,
-        private _route: ActivatedRoute
+        private _route: ActivatedRoute,
+        private stockService: StockService,
+        private comprasService: ComprasService,
+        private abastecimientoService: AbastecimientoService
     ) {}
 
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.cargarDatosReales();
+    }
 
-    // Función opcional si prefieres navegar desde TS
-    navegarA(ruta: string) {
-        // '../' sube un nivel (al padre 'catering') y luego entra a la ruta hija
-        this._router.navigate(['../' + ruta], { relativeTo: this._route });
+    cargarDatosReales() {
+        // A) CARGAR VUELOS (Historial de Abastecimiento)
+        this.abastecimientoService.getHistorial().subscribe((data) => {
+            // Actualizar KPI
+            this.kpis[0].value = data.length.toString();
+
+            // Actualizar Tabla "Operaciones en Curso" (Mostramos los últimos 4 despachos)
+            this.vuelosProximos = data.slice(0, 4).map((v: any) => ({
+                codigo: v.codigoVuelo,
+                destino: 'MIA', // Dato hardcodeado (backend no lo envía aún)
+                hora: new Date(v.fechaDespacho).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
+                estado: v.estado, // Ej: 'DESPACHADO'
+                color: this.mapEstadoToColor(v.estado),
+            }));
+        });
+
+        // B) CARGAR STOCK (Alertas de Críticos)
+        this.stockService.getItems().subscribe((data) => {
+            // Definimos "Crítico" como menos de 200 unidades
+            const umbralCritico = 200;
+            const productosBajos = data.filter(
+                (i: any) => i.stockActual < umbralCritico
+            );
+
+            // Actualizar KPI
+            this.kpis[1].value = productosBajos.length.toString();
+
+            // Actualizar Lista Stock Crítico (Top 3)
+            this.stockCritico = productosBajos.slice(0, 3).map((i: any) => ({
+                nombre: i.nombreItem,
+                stock: i.stockActual,
+                min: umbralCritico,
+                percent: (i.stockActual / umbralCritico) * 100,
+            }));
+        });
+
+        // C) CARGAR COMPRAS (Pendientes)
+        this.comprasService.obtenerHistorial().subscribe((data) => {
+            const pendientes = data.filter(
+                (c: any) => c.estado === 'PENDIENTE'
+            );
+
+            // Actualizar KPI
+            this.kpis[2].value = pendientes.length.toString();
+        });
+    }
+
+    // --- HELPERS ---
+    mapEstadoToColor(estado: string): string {
+        const est = estado.toUpperCase();
+        if (est === 'DESPACHADO' || est === 'COMPLETADO') return 'green';
+        if (est === 'PENDIENTE') return 'orange';
+        if (est === 'BORRADOR') return 'gray';
+        return 'blue';
     }
 
     getEstadoClass(color: string): string {

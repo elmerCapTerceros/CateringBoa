@@ -21,11 +21,10 @@ export class SolicitudController {
   // Crear solicitud
   @Post()
   create(@Body() createSolicitudDto: CreateSolicitudDto) {
-    // No enviamos userId -> el service usará 'user123'
+
     return this.solicitudService.create(createSolicitudDto);
   }
 
-  // Listar todas
   @Get()
   findAll() {
     return this.solicitudService.findAll();
@@ -50,5 +49,14 @@ export class SolicitudController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudService.remove(id);
+  }
+
+  @Patch(':id/aprobar')
+  aprobar(@Param('id', ParseIntPipe) id: number) {
+    return this.solicitudService.aprobar(id);
+    }
+  @Patch(':id/rechazar')
+  rechazar(@Param('id', ParseIntPipe) id: number) {
+  return this.solicitudService.rechazar(id);
   }
 }

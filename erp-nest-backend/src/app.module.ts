@@ -13,6 +13,13 @@ import { ItemModule } from './catering/item/item.module';
 import { IngresoModule } from './catering/ingreso/ingreso.module';
 import { MovimientoModule } from './catering/movimiento/movimiento.module';
 import { TransferenciaModule } from './catering/transferencia/transferencia.module';
+import { StockModule } from './core/catering/stock/stock.module';
+import { PlantillasModule } from './core/catering/plantillas/plantillas.module';
+import { ItemsModule } from './core/catering/items/items.module';
+import { AbastecimientoModule } from './core/catering/abastecimiento/abastecimiento.module';
+import { FlotasModule } from './core/catering/flotas/flotas.module';
+
+
 
 @Module({
   imports: [
@@ -20,15 +27,20 @@ import { TransferenciaModule } from './catering/transferencia/transferencia.modu
     AuthModule,
     PrismaModule,
     UserModule,
-    AlmacenModule,
     ComprasModule,
     SolicitudModule,
     CatalogoModule,
+    AlmacenModule,
     ItemModule,
     IngresoModule,
     MovimientoModule,
     TransferenciaModule,
-    PrismaModule
+    PrismaModule,
+    StockModule,
+    PlantillasModule,
+    ItemsModule,
+    AbastecimientoModule,
+    FlotasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

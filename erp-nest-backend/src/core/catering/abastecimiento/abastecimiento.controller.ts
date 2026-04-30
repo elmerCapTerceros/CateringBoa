@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { AbastecimientoService } from './abastecimiento.service';
 import { CrearDespachoDto } from './dto/crear-despacho.dto';
+import { CierreVueloDto } from './dto/cierre-vuelo.dto';
 
 @Controller('abastecimiento')
 export class AbastecimientoController {
@@ -29,5 +30,17 @@ export class AbastecimientoController {
   @Get('historial')
   async obtenerHistorial() {
     return await this.service.getHistorial();
+  }
+
+  @Get('pendientes-cierre')
+  async getPendientesCierre() {
+    return await this.service.getPendientesCierre();
+  }
+
+  @Post('cierre')
+  @HttpCode(HttpStatus.CREATED)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async cerrarVuelo(@Body() dto: CierreVueloDto) {
+    return await this.service.cerrarVuelo(dto);
   }
 }

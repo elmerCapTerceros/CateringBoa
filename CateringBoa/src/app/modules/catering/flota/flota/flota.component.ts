@@ -23,11 +23,13 @@ import { FlotasService, FlotaApi, AeronaveApi, FlotaBoa, AeronaveBoa } from '../
 import { AbastecimientoService } from '../../services/abastecimiento.service';
 import { Item, StockService } from '../../services/stock.service';
 
+// Interface actualizada con colorTheme
 interface Flota { id: string; nombre: string; icon: string; description?: string; colorTheme: string; }
 interface Aeronave { id: number; matricula: string; flotaId: string; estado: string; }
 interface RutaProgramada { id: number; nombre: string; codigo: string; fechaInicio: Date; fechaFin: Date; activa: boolean; tramos: TramoRuta[]; resumenRuta: string; }
 interface TramoRuta { id: number; origen: string; destino: string; vuelo: string; horaSalida: string; itemsCatering: ItemCatering[]; }
 interface ItemCatering { itemId: number | null; nombre: string; cantidad: number; check: boolean; unidad: string; }
+interface NuevoTramoForm { origen: string; destino: string; vuelo: string; hora: string; }
 
 @Component({
     selector: 'app-flota',
@@ -67,6 +69,7 @@ export class FlotaComponent implements OnInit {
     aeronaveSeleccionada: Aeronave | null = null;
     rutaSeleccionada: RutaProgramada | null = null;
     tramoSeleccionado: TramoRuta | null = null;
+    abastecimientoVista: 'grid' | 'list' = 'grid';
 
     flotas: Flota[] = [];
     todasLasAeronaves: Aeronave[] = [];
@@ -90,9 +93,12 @@ export class FlotaComponent implements OnInit {
         private stockService: StockService
     ) {}
 
+
     ngOnInit(): void {
         this.cargarFlotasBoa();
         this.cargarItemsCatalogo();
+        // Ejemplo: cargar flotas externas
+        // this.cargarFlotasExternas();
     }
 
     // ── Carga principal desde BOA, fallback al ERP ────────────────────────────
@@ -200,6 +206,7 @@ export class FlotaComponent implements OnInit {
     seleccionarAeronave(avion: Aeronave): void {
         this.aeronaveSeleccionada = avion;
         this.tramoSeleccionado = null;
+        this.abastecimientoVista = 'grid';
         this.cargarRutasDelAvion(avion.matricula);
     }
 
@@ -210,12 +217,18 @@ export class FlotaComponent implements OnInit {
         }
         this.rutaSeleccionada = rutaPadre;
         this.tramoSeleccionado = tramo;
+        this.abastecimientoVista = 'grid';
+
         setTimeout(() => {
             document.getElementById('seccion-catering')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 200);
     }
 
-    cargarRutasDelAvion(_matricula: string): void {
+    setAbastecimientoVista(vista: 'grid' | 'list') {
+        this.abastecimientoVista = vista;
+    }
+
+    cargarRutasDelAvion(matricula: string) {
         this.rutasDisponibles = [
             {
                 id: 1, nombre: 'Regular VVI-MIA', codigo: 'OB-760',
@@ -244,6 +257,7 @@ export class FlotaComponent implements OnInit {
             { nombre: 'Kit Café Start',        cantidad: 10,  check: false, unidad: 'Caja' },
             { nombre: 'Snack Mix Salado',      cantidad: 200, check: true,  unidad: 'Bolsa' },
         ];
+
         return base.map((b) => {
             const match = this.itemsPorNombre.get(b.nombre.toLowerCase());
             return { itemId: match?.idItem ?? null, nombre: b.nombre, cantidad: b.cantidad, check: b.check, unidad: b.unidad };
@@ -323,6 +337,8 @@ export class FlotaComponent implements OnInit {
     agregarTramoAlFormulario(): void {
         this.tramosArray.push(this.crearTramoGroup());
     }
+    agregarTramoAlFormulario() { this.nuevosTramos.push({ origen: '', destino: '', vuelo: '', hora: '' }); }
+    eliminarTramoDelFormulario(i: number) { this.nuevosTramos.splice(i, 1); }
 
     eliminarTramoDelFormulario(i: number): void {
         if (this.tramosArray.length > 1) this.tramosArray.removeAt(i);

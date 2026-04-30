@@ -26,7 +26,7 @@
     </div>
 
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
-        <form [formGroup]="filterForm" class="flex flex-col md:flex-row gap-4 items-center">
+        <form [formGroup]="filterForm" class="flex flex-col md:flex-row gap-4 items-end flex-wrap">
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full md:w-auto">
                 <mat-label>Rango de Fechas</mat-label>
                 <mat-date-range-input [rangePicker]="picker">
@@ -36,6 +36,26 @@
                 <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-date-range-picker #picker></mat-date-range-picker>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full md:w-56">
+                <mat-label>Proveedor</mat-label>
+                <mat-icon matPrefix class="text-gray-400 mr-1">search</mat-icon>
+                <input matInput formControlName="proveedor" placeholder="Buscar proveedor...">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full md:w-44">
+                <mat-label>Estado</mat-label>
+                <mat-select formControlName="estado">
+                    <mat-option value="">Todos</mat-option>
+                    <mat-option value="Pendiente">Pendiente</mat-option>
+                    <mat-option value="Parcial">Parcial</mat-option>
+                    <mat-option value="Completado">Completado</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <button mat-stroked-button type="button" (click)="limpiarFiltros()" class="h-[56px] text-gray-600">
+                <mat-icon>filter_list_off</mat-icon> Limpiar
+            </button>
         </form>
     </div>
 
@@ -47,6 +67,7 @@
                 <th class="p-4 text-left">Proveedor</th>
                 <th class="p-4 text-center">Fecha</th>
                 <th class="p-4 text-right">Ejecutado</th>
+                <th class="p-4 text-right">Remanente</th>
                 <th class="p-4 text-center">Estado</th>
                 <th class="p-4 text-center">Gestión</th>
                 <th class="p-4 text-center w-10"></th>
@@ -61,6 +82,11 @@
 
                         <td class="p-4 text-right">
                             <span class="font-bold text-slate-800">{{ getTotalEjecutado(orden) | currency }}</span>
+                        </td>
+
+                        <td class="p-4 text-right">
+                            <span class="font-bold text-slate-700">{{ getRemanenteTotalCosto(orden) | currency }}</span>
+                            <div class="text-[10px] text-gray-400">{{ getRemanenteTotalCantidad(orden) }} items</div>
                         </td>
 
                         <td class="p-4 text-center">
@@ -91,7 +117,7 @@
 
                     @if (orden.expandido) {
                         <tr class="bg-slate-50">
-                            <td colspan="7" class="p-0">
+                            <td colspan="8" class="p-0">
                                 <div class="p-6 pl-12 border-b border-gray-200">
                                     <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Progreso de Entrega</h4>
 
@@ -118,12 +144,27 @@
                                                         </div>
                                                     </td>
                                                     <td class="p-3 text-center font-bold text-red-500">
-                                                        {{ item.cantidad - item.cantidadRecibida }}
+                                                        {{ item.remanenteCantidad }}
                                                     </td>
                                                 </tr>
                                             }
                                         </tbody>
                                     </table>
+
+                                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                            <div class="text-xs uppercase text-gray-400 font-bold">Remanente Total</div>
+                                            <div class="text-lg font-black text-slate-800">
+                                                {{ getRemanenteTotalCosto(orden) | currency }}
+                                            </div>
+                                        </div>
+                                        <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                            <div class="text-xs uppercase text-gray-400 font-bold">Items Pendientes</div>
+                                            <div class="text-lg font-black text-orange-600">
+                                                {{ getRemanenteTotalCantidad(orden) }}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

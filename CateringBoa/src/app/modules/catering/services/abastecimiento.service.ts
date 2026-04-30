@@ -20,4 +20,14 @@ export class AbastecimientoService {
     getHistorial(): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/historial`);
     }
+
+    // Obtener vuelos despachados pendientes de cierre
+    getPendientesCierre(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/pendientes-cierre`);
+    }
+
+    // Cerrar un vuelo: registra remanentes y actualiza stock
+    cerrarVuelo(payload: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/cierre`, payload);
+    }
 }

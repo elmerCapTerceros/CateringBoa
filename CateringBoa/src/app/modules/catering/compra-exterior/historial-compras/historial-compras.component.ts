@@ -65,11 +65,13 @@ export class HistorialComprasComponent implements OnInit {
             fechaInicio: [null],
             fechaFin: [null],
             proveedor: [''],
+            estado: [''],
         });
     }
 
     ngOnInit(): void {
         this.cargarDatosReales();
+        this.filterForm.valueChanges.subscribe(() => this.aplicarFiltros());
     }
 
     cargarDatosReales() {
@@ -90,14 +92,59 @@ export class HistorialComprasComponent implements OnInit {
                         cantidadRecibida: d.cantidadRecibida,
                         costoUnitario: d.costoUnitario,
                         costoTotal: d.cantidadSolicitada * d.costoUnitario,
+                        remanenteCantidad: Math.max(
+                            0,
+                            d.cantidadSolicitada - d.cantidadRecibida
+                        ),
+                        remanenteCosto:
+                            Math.max(
+                                0,
+                                d.cantidadSolicitada - d.cantidadRecibida
+                            ) * d.costoUnitario,
                         ingresoActual: 0,
                     })),
+                    remanenteTotalCantidad: (orden.detalles || []).reduce(
+                        (acc: number, d: any) =>
+                            acc +
+                            Math.max(
+                                0,
+                                d.cantidadSolicitada - d.cantidadRecibida
+                            ),
+                        0
+                    ),
+                    remanenteTotalCosto: (orden.detalles || []).reduce(
+                        (acc: number, d: any) =>
+                            acc +
+                            Math.max(
+                                0,
+                                d.cantidadSolicitada - d.cantidadRecibida
+                            ) * d.costoUnitario,
+                        0
+                    ),
+                    itemsPendientes: (orden.detalles || []).filter(
+                        (d: any) => d.cantidadSolicitada > d.cantidadRecibida
+                    ).length,
                 }));
                 this.datosOriginales = [...this.listaVisible];
             },
             error: (err) =>
                 this.snackBar.open('Error al cargar historial', 'Cerrar'),
         });
+    }
+
+    aplicarFiltros(): void {
+        const { fechaInicio, fechaFin, proveedor, estado } = this.filterForm.value;
+        this.listaVisible = this.datosOriginales.filter((orden) => {
+            const matchProveedor = !proveedor || orden.proveedor.toLowerCase().includes(proveedor.toLowerCase());
+            const matchEstado = !estado || orden.estado === estado;
+            const matchFechaInicio = !fechaInicio || orden.fecha >= new Date(fechaInicio);
+            const matchFechaFin = !fechaFin || orden.fecha <= new Date(new Date(fechaFin).setHours(23, 59, 59));
+            return matchProveedor && matchEstado && matchFechaInicio && matchFechaFin;
+        });
+    }
+
+    limpiarFiltros(): void {
+        this.filterForm.reset({ fechaInicio: null, fechaFin: null, proveedor: '', estado: '' });
     }
 
     // SOLUCIÓN TS2339: Property 'toggleDetalle' does not exist
@@ -110,6 +157,20 @@ export class HistorialComprasComponent implements OnInit {
         return orden.items.reduce(
             (acc: number, item: any) =>
                 acc + item.cantidadRecibida * item.costoUnitario,
+            0
+        );
+    }
+
+    getRemanenteTotalCantidad(orden: any): number {
+        return orden.items.reduce(
+            (acc: number, item: any) => acc + item.remanenteCantidad,
+            0
+        );
+    }
+
+    getRemanenteTotalCosto(orden: any): number {
+        return orden.items.reduce(
+            (acc: number, item: any) => acc + item.remanenteCosto,
             0
         );
     }

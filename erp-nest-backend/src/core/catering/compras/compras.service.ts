@@ -131,6 +131,14 @@ export class ComprasService {
             include: {
                 almacenDestino: { select: { nombreAlmacen: true, codigo: true } },
                 detalles: { include: { item: true } },
+                recepciones: {
+                    orderBy: { fechaRecepcion: 'desc' },
+                    include: {
+                        items: {
+                            include: { item: true },
+                        },
+                    },
+                },
                 usuario: { select: { name: true } }
             }
         });

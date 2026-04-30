@@ -14,6 +14,16 @@
         <div class="flex items-center gap-3 mb-5">
             <div class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">1</div>
             <h3 class="text-xl font-bold text-slate-800">Selección de Flota</h3>
+            @if (cargandoBoa) {
+                <mat-spinner diameter="20" class="ml-2"></mat-spinner>
+                <span class="text-xs text-gray-400">Cargando desde API BOA…</span>
+            }
+            @if (errorBoa && !cargandoBoa) {
+                <span class="ml-2 inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full"
+                      matTooltip="No se pudo conectar con la API de BOA. Se muestran datos del ERP interno.">
+                    <mat-icon class="icon-size-4">warning_amber</mat-icon> API BOA no disponible — usando ERP
+                </span>
+            }
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
@@ -269,51 +279,112 @@
 </div>
 
 <ng-template #modalCrearRuta>
-    <div class="flex flex-col h-[500px] w-full max-w-[90vw] bg-white rounded-xl overflow-hidden">
+    <div class="flex flex-col h-[520px] w-full max-w-[90vw] bg-white rounded-xl overflow-hidden">
+
+        <!-- Header -->
         <div class="p-5 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
-            <div><h2 class="text-xl font-bold text-slate-800">Nueva Ruta</h2></div>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center">
+                    <mat-icon class="text-white icon-size-5">add_road</mat-icon>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">Nueva Ruta Programada</h2>
+            </div>
             <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
         </div>
-        <div class="flex-1 overflow-y-auto p-6">
+
+        <!-- Body con Reactive Form -->
+        <form [formGroup]="rutaForm" class="flex-1 overflow-y-auto p-6">
+
+            <!-- Cabecera -->
             <div class="grid grid-cols-12 gap-4 mb-6">
                 <mat-form-field appearance="outline" class="col-span-4">
-                    <mat-label>Código</mat-label>
-                    <input matInput [(ngModel)]="nuevaRutaCabecera.codigo" placeholder="Ej: OB-760" class="uppercase font-bold">
+                    <mat-label>Código de Vuelo</mat-label>
+                    <input matInput formControlName="codigo" placeholder="Ej: OB-760" style="text-transform:uppercase; font-weight:700;">
+                    @if (rutaForm.get('codigo')?.invalid && rutaForm.get('codigo')?.touched) {
+                        <mat-error>Requerido</mat-error>
+                    }
                 </mat-form-field>
+
                 <mat-form-field appearance="outline" class="col-span-8">
-                    <mat-label>Nombre</mat-label>
-                    <input matInput [(ngModel)]="nuevaRutaCabecera.nombre">
+                    <mat-label>Nombre de la Ruta</mat-label>
+                    <input matInput formControlName="nombre" placeholder="Ej: Regular VVI-MIA">
+                    @if (rutaForm.get('nombre')?.invalid && rutaForm.get('nombre')?.touched) {
+                        <mat-error>Requerido</mat-error>
+                    }
                 </mat-form-field>
+
                 <mat-form-field appearance="outline" class="col-span-6">
                     <mat-label>Fecha Inicio</mat-label>
-                    <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="nuevaRutaCabecera.fechaInicio">
+                    <input matInput [matDatepicker]="pickerInicio" formControlName="fechaInicio">
                     <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
                     <mat-datepicker #pickerInicio></mat-datepicker>
+                    @if (rutaForm.get('fechaInicio')?.invalid && rutaForm.get('fechaInicio')?.touched) {
+                        <mat-error>Requerido</mat-error>
+                    }
                 </mat-form-field>
+
                 <mat-form-field appearance="outline" class="col-span-6">
                     <mat-label>Fecha Fin</mat-label>
-                    <input matInput [matDatepicker]="pickerFin" [(ngModel)]="nuevaRutaCabecera.fechaFin">
+                    <input matInput [matDatepicker]="pickerFin" formControlName="fechaFin">
                     <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
                     <mat-datepicker #pickerFin></mat-datepicker>
+                    @if (rutaForm.get('fechaFin')?.invalid && rutaForm.get('fechaFin')?.touched) {
+                        <mat-error>Requerido</mat-error>
+                    }
                 </mat-form-field>
             </div>
-            <div class="bg-slate-50 p-4 rounded-xl border border-gray-200">
-                <div class="flex justify-between mb-2"><h4 class="font-bold">Tramos</h4> <button mat-button color="primary" (click)="agregarTramoAlFormulario()">+ Agregar</button></div>
-                @for (tramo of nuevosTramos; track $index) {
-                    <div class="flex gap-2 mb-2 items-center">
-                        <input class="w-16 p-2 border rounded text-center uppercase font-bold text-sm" placeholder="ORG" [(ngModel)]="tramo.origen" maxlength="3">
-                        <mat-icon class="text-gray-400 icon-size-4">arrow_forward</mat-icon>
-                        <input class="w-16 p-2 border rounded text-center uppercase font-bold text-sm" placeholder="DST" [(ngModel)]="tramo.destino" maxlength="3">
-                        <input class="w-24 p-2 border rounded text-center text-sm" placeholder="Vuelo" [(ngModel)]="tramo.vuelo">
-                        <input class="w-20 p-2 border rounded text-center text-sm" type="time" [(ngModel)]="tramo.hora">
-                        <button mat-icon-button color="warn" (click)="eliminarTramoDelFormulario($index)"><mat-icon>close</mat-icon></button>
+
+            <!-- Tramos (FormArray) -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-gray-200" formArrayName="tramos">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-slate-700 flex items-center gap-2">
+                        <mat-icon class="icon-size-5 text-indigo-500">route</mat-icon> Tramos
+                    </h4>
+                    <button mat-stroked-button color="primary" type="button" (click)="agregarTramoAlFormulario()">
+                        <mat-icon>add</mat-icon> Agregar tramo
+                    </button>
+                </div>
+
+                @for (ctrl of tramosArray.controls; track $index) {
+                    <div class="flex gap-2 mb-2 items-center" [formGroupName]="$index">
+
+                        <input formControlName="origen" maxlength="3"
+                               class="w-16 p-2 border rounded text-center uppercase font-bold text-sm focus:outline-none focus:border-indigo-400"
+                               [class.border-red-400]="ctrl.get('origen')?.invalid && ctrl.get('origen')?.touched"
+                               placeholder="ORG">
+
+                        <mat-icon class="text-gray-400 icon-size-4 shrink-0">arrow_forward</mat-icon>
+
+                        <input formControlName="destino" maxlength="3"
+                               class="w-16 p-2 border rounded text-center uppercase font-bold text-sm focus:outline-none focus:border-indigo-400"
+                               [class.border-red-400]="ctrl.get('destino')?.invalid && ctrl.get('destino')?.touched"
+                               placeholder="DST">
+
+                        <input formControlName="vuelo"
+                               class="w-24 p-2 border rounded text-center text-sm focus:outline-none focus:border-indigo-400"
+                               [class.border-red-400]="ctrl.get('vuelo')?.invalid && ctrl.get('vuelo')?.touched"
+                               placeholder="Nro. Vuelo">
+
+                        <input formControlName="hora" type="time"
+                               class="w-24 p-2 border rounded text-center text-sm focus:outline-none focus:border-indigo-400"
+                               [class.border-red-400]="ctrl.get('hora')?.invalid && ctrl.get('hora')?.touched">
+
+                        <button mat-icon-button color="warn" type="button"
+                                [disabled]="tramosArray.length === 1"
+                                (click)="eliminarTramoDelFormulario($index)">
+                            <mat-icon>close</mat-icon>
+                        </button>
                     </div>
                 }
             </div>
-        </div>
+        </form>
+
+        <!-- Footer -->
         <div class="p-4 bg-gray-50 flex justify-end gap-2 border-t">
-            <button mat-button mat-dialog-close>Cancelar</button>
-            <button mat-raised-button color="primary" (click)="guardarRuta()">Guardar</button>
+            <button mat-button mat-dialog-close type="button">Cancelar</button>
+            <button mat-raised-button color="primary" type="button" (click)="guardarRuta()">
+                <mat-icon class="mr-1">save</mat-icon> Guardar Ruta
+            </button>
         </div>
     </div>
 </ng-template>

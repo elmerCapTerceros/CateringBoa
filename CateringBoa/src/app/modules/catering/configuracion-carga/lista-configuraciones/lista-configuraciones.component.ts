@@ -199,7 +199,7 @@ export class ListaConfiguracionesComponent implements OnInit {
         this.searchTermProductos = '';
         // Reseteamos selección sobre la base real
         this.actualizarProductosFiltrados();
-        this.selectorDialogRef = this.dialog.open(this.modalSelectorProductos, { width: '600px', maxHeight: '80vh' });
+        this.selectorDialogRef = this.dialog.open(this.modalSelectorProductos, { width: '960px', maxWidth: '95vw', maxHeight: '88vh' });
     }
 
     filtrarProductos() {

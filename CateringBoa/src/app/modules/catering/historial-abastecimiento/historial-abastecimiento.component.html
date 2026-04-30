@@ -1,5 +1,6 @@
 <div class="flex flex-col w-full min-h-screen bg-gray-50/50 p-6 sm:p-10 gap-8">
 
+    <!-- ── Encabezado ─────────────────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h2 class="text-3xl font-bold tracking-tight text-slate-800">Historial de Operaciones</h2>
@@ -10,36 +11,51 @@
         </button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+    <!-- ── KPIs ───────────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
                 <div class="text-gray-500 text-xs font-bold uppercase tracking-wider">Vuelos Registrados</div>
                 <div class="text-3xl font-black text-slate-800 mt-1">{{ kpiVuelosTotal }}</div>
             </div>
-            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
                 <mat-icon>flight</mat-icon>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
                 <div class="text-gray-500 text-xs font-bold uppercase tracking-wider">Unidades Despachadas</div>
                 <div class="text-3xl font-black text-slate-800 mt-1">{{ kpiItemsCargados | number }}</div>
             </div>
-            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
                 <mat-icon>inventory_2</mat-icon>
             </div>
         </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+                <div class="text-gray-500 text-xs font-bold uppercase tracking-wider">Operaciones Verificadas</div>
+                <div class="text-3xl font-black text-slate-800 mt-1">{{ kpiVuelosVerificados }}</div>
+            </div>
+            <div class="w-12 h-12 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center">
+                <mat-icon>verified</mat-icon>
+            </div>
+        </div>
+
     </div>
 
-    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+    <!-- ── Tabla ──────────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
 
-        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row gap-4 items-center">
+        <!-- Filtros -->
+        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row gap-3 items-center">
             <div class="relative w-full md:w-80">
                 <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
                 <input type="text" (keyup)="aplicarFiltroTexto($event)"
                        placeholder="Buscar por vuelo, matrícula..."
-                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                       class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
             </div>
 
             <mat-form-field appearance="outline" class="w-full md:w-64 subscript-wrapper-none">
@@ -57,139 +73,248 @@
             </button>
         </div>
 
+        <!-- Tabla Material -->
         <div class="overflow-x-auto">
             <table mat-table [dataSource]="dataSource" matSort class="w-full">
 
+                <!-- Fecha -->
                 <ng-container matColumnDef="fecha">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Fecha</th>
-                    <td mat-cell *matCellDef="let row" class="text-sm text-gray-600 font-medium">
-                        {{ row.fecha | date:'dd/MM/yyyy HH:mm' }}
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50 whitespace-nowrap">Fecha</th>
+                    <td mat-cell *matCellDef="let row" class="text-sm text-gray-600 whitespace-nowrap py-4">
+                        {{ row.fecha | date:'dd/MM/yyyy' }}
+                        <div class="text-[10px] text-gray-400">{{ row.fecha | date:'HH:mm' }}</div>
                     </td>
                 </ng-container>
 
+                <!-- Vuelo -->
                 <ng-container matColumnDef="vuelo">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Vuelo</th>
-                    <td mat-cell *matCellDef="let row" class="font-bold text-slate-800">
-                        {{ row.codigoVuelo }}
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Vuelo</th>
+                    <td mat-cell *matCellDef="let row" class="py-4">
+                        <div class="font-black text-slate-800">{{ row.codigoVuelo }}</div>
+                        <div class="text-[10px] text-gray-400 font-mono">#{{ row.id }}</div>
                     </td>
                 </ng-container>
 
+                <!-- Ruta -->
                 <ng-container matColumnDef="ruta">
-                    <th mat-header-cell *matHeaderCellDef class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Ruta</th>
-                    <td mat-cell *matCellDef="let row">
-                        <div class="flex items-center text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded w-fit font-bold">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Ruta</th>
+                    <td mat-cell *matCellDef="let row" class="py-4">
+                        <span class="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-bold">
+                            <mat-icon class="icon-size-3">flight_takeoff</mat-icon>
                             {{ row.ruta }}
-                        </div>
+                        </span>
                     </td>
                 </ng-container>
 
+                <!-- Avión -->
                 <ng-container matColumnDef="matricula">
-                    <th mat-header-cell *matHeaderCellDef class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Avión</th>
-                    <td mat-cell *matCellDef="let row" class="text-sm text-gray-500">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Aeronave</th>
+                    <td mat-cell *matCellDef="let row" class="text-sm text-gray-500 font-mono py-4">
                         {{ row.matricula }}
                     </td>
                 </ng-container>
 
+                <!-- Tipos de Ítem -->
                 <ng-container matColumnDef="items">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="uppercase text-xs font-bold text-gray-500 bg-gray-50 text-center">Tipos Items</th>
-                    <td mat-cell *matCellDef="let row" class="text-center font-mono font-bold text-slate-700">
-                        {{ row.totalItems }}
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50 text-center">Tipos</th>
+                    <td mat-cell *matCellDef="let row" class="text-center py-4">
+                        <span class="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-bold text-sm">
+                            {{ row.totalItems }}
+                        </span>
                     </td>
                 </ng-container>
 
+                <!-- Total Unidades -->
+                <ng-container matColumnDef="totalUnidades">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50 text-center">Unidades</th>
+                    <td mat-cell *matCellDef="let row" class="text-center py-4">
+                        <span class="inline-block px-2 py-0.5 bg-green-50 text-green-700 rounded font-bold text-sm">
+                            {{ row.totalUnidades | number }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Responsable -->
                 <ng-container matColumnDef="responsable">
-                    <th mat-header-cell *matHeaderCellDef class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Despachador</th>
-                    <td mat-cell *matCellDef="let row">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50">Despachador</th>
+                    <td mat-cell *matCellDef="let row" class="py-4">
                         <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
-                                {{ row.responsable.charAt(0) }}
+                            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700 shrink-0">
+                                {{ row.responsable.charAt(0).toUpperCase() }}
                             </div>
                             <span class="text-sm text-gray-600">{{ row.responsable }}</span>
                         </div>
                     </td>
                 </ng-container>
 
+                <!-- Estado -->
                 <ng-container matColumnDef="estado">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="uppercase text-xs font-bold text-gray-500 bg-gray-50 text-center">Estado</th>
-                    <td mat-cell *matCellDef="let row" class="text-center">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="uppercase text-xs font-bold text-gray-500 bg-gray-50 text-center">Estado</th>
+                    <td mat-cell *matCellDef="let row" class="text-center py-4">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                               [ngClass]="getEstadoClass(row.estado)">
                             {{ row.estado }}
                         </span>
                     </td>
                 </ng-container>
 
+                <!-- Acciones -->
                 <ng-container matColumnDef="acciones">
                     <th mat-header-cell *matHeaderCellDef class="bg-gray-50"></th>
-                    <td mat-cell *matCellDef="let row" class="text-right">
-                        <button mat-icon-button color="primary" (click)="verDetalle(row)" matTooltip="Ver Detalle de Carga">
-                            <mat-icon>visibility</mat-icon>
-                        </button>
+                    <td mat-cell *matCellDef="let row" class="py-4">
+                        <div class="flex items-center justify-end gap-1">
+                            @if (!row.verificado) {
+                                <button mat-stroked-button
+                                        class="h-8 text-xs border-violet-300 text-violet-700 hover:bg-violet-50"
+                                        (click)="confirmarRegistro(row, $event)"
+                                        matTooltip="Confirmar operación">
+                                    <mat-icon class="icon-size-4 text-violet-600">verified</mat-icon>
+                                    <span class="ml-1">Confirmar</span>
+                                </button>
+                            } @else {
+                                <span class="text-xs text-violet-600 font-bold flex items-center gap-1 px-2">
+                                    <mat-icon class="icon-size-4">check_circle</mat-icon> Verificado
+                                </span>
+                            }
+                            <button mat-icon-button color="primary"
+                                    (click)="verDetalle(row)"
+                                    matTooltip="Ver detalle de carga">
+                                <mat-icon>visibility</mat-icon>
+                            </button>
+                        </div>
                     </td>
                 </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors border-b border-gray-100"></tr>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"
+                    class="border-b border-gray-200"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 cursor-default"></tr>
+
+                <!-- Fila vacía -->
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                        <div class="text-center py-16 text-gray-400">
+                            <mat-icon class="icon-size-12 opacity-20 mb-2">search_off</mat-icon>
+                            <p>No se encontraron registros.</p>
+                        </div>
+                    </td>
+                </tr>
             </table>
         </div>
 
-        <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons class="border-t border-gray-200"></mat-paginator>
+        <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons
+                       class="border-t border-gray-200"></mat-paginator>
     </div>
 </div>
 
+<!-- ── Modal Detalle ──────────────────────────────────────────────────── -->
 <ng-template #modalDetalle>
-    <div class="flex flex-col h-full bg-white" *ngIf="registroSeleccionado">
+    <div class="flex flex-col max-h-[90vh] bg-white" *ngIf="registroSeleccionado">
 
-        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <div>
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <mat-icon class="text-blue-600">receipt_long</mat-icon> Detalle de Carga
-                </h2>
-                <p class="text-xs text-gray-500 mt-1">ID Operación: #{{ registroSeleccionado.id }}</p>
+        <!-- Header -->
+        <div class="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-100 rounded-xl text-blue-600">
+                    <mat-icon>receipt_long</mat-icon>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">Detalle de Carga</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Operación #{{ registroSeleccionado.id }}</p>
+                </div>
             </div>
             <button mat-icon-button (click)="dialog.closeAll()"><mat-icon>close</mat-icon></button>
         </div>
 
-        <div class="p-6 grid grid-cols-2 gap-4 bg-white">
-            <div class="flex flex-col gap-1">
-                <span class="text-xs font-bold text-gray-400 uppercase">Vuelo</span>
-                <span class="text-lg font-black text-slate-800">{{ registroSeleccionado.codigoVuelo }}</span>
-                <span class="text-sm text-gray-500">{{ registroSeleccionado.ruta }}</span>
+        <!-- Info cards -->
+        <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-3 border-b border-gray-100 bg-white">
+            <div class="bg-gray-50 rounded-xl p-3">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Vuelo</div>
+                <div class="text-base font-black text-slate-800">{{ registroSeleccionado.codigoVuelo }}</div>
             </div>
-            <div class="flex flex-col gap-1 text-right">
-                <span class="text-xs font-bold text-gray-400 uppercase">Fecha Despacho</span>
-                <span class="text-sm font-bold text-slate-700">{{ registroSeleccionado.fecha | date:'medium' }}</span>
-                <span class="text-xs text-gray-500">Matrícula: {{ registroSeleccionado.matricula }}</span>
+            <div class="bg-blue-50 rounded-xl p-3">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Ruta</div>
+                <div class="text-base font-bold text-blue-700">{{ registroSeleccionado.ruta }}</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Aeronave</div>
+                <div class="text-base font-bold text-slate-700 font-mono">{{ registroSeleccionado.matricula }}</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Despachador</div>
+                <div class="text-sm font-bold text-slate-700">{{ registroSeleccionado.responsable }}</div>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 pb-6">
-            <div class="border rounded-lg overflow-hidden">
+        <!-- Tabla detalle -->
+        <div class="flex-1 overflow-y-auto px-5 py-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Manifiesto de Carga</h3>
+                <span class="text-xs text-gray-400">
+                    {{ registroSeleccionado.detalles.length }} tipos ·
+                    <span class="font-bold text-slate-700">{{ getTotalUnidadesDetalle(registroSeleccionado.detalles) | number }} unidades</span>
+                </span>
+            </div>
+            <div class="border border-gray-200 rounded-xl overflow-hidden">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
                     <tr>
                         <th class="px-4 py-3">Ítem</th>
+                        <th class="px-4 py-3 text-center">Unidad</th>
+                        <th class="px-4 py-3 text-center">Tipo</th>
                         <th class="px-4 py-3 text-right">Cantidad</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @for (item of registroSeleccionado.detalles; track item.nombre) {
-                            <tr>
-                                <td class="px-4 py-3 font-medium text-slate-700">
-                                    {{ item.nombre }} <span class="text-gray-400 font-normal text-xs">({{ item.unidad }})</span>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 font-medium text-slate-700">{{ item.nombre }}</td>
+                                <td class="px-4 py-3 text-center text-gray-500 text-xs">{{ item.unidad }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                                          [ngClass]="item.tipo === 'Base' ? 'bg-gray-100 text-gray-600' : 'bg-purple-100 text-purple-700'">
+                                        {{ item.tipo }}
+                                    </span>
                                 </td>
-                                <td class="px-4 py-3 text-right font-bold text-slate-800">
-                                    {{ item.cantidad }}
-                                </td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-800">{{ item.cantidad }}</td>
                             </tr>
                         }
                     </tbody>
+                    <tfoot class="bg-slate-50 border-t border-gray-200">
+                        <tr>
+                            <td colspan="3" class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Total Unidades</td>
+                            <td class="px-4 py-3 text-right font-black text-slate-800 text-base">
+                                {{ getTotalUnidadesDetalle(registroSeleccionado.detalles) | number }}
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
 
-        <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-            <button mat-flat-button color="primary" (click)="dialog.closeAll()">Cerrar</button>
+        <!-- Footer -->
+        <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+            <span class="text-xs font-bold px-3 py-1.5 rounded-full"
+                  [ngClass]="getEstadoClass(registroSeleccionado.estado)">
+                {{ registroSeleccionado.estado }}
+            </span>
+            <div class="flex gap-2">
+                @if (!registroSeleccionado.verificado) {
+                    <button mat-stroked-button
+                            class="border-violet-300 text-violet-700 hover:bg-violet-50"
+                            (click)="confirmarRegistro(registroSeleccionado, $event); dialog.closeAll()">
+                        <mat-icon class="mr-1 text-violet-600">verified</mat-icon> Confirmar Operación
+                    </button>
+                }
+                <button mat-flat-button color="primary" (click)="dialog.closeAll()">Cerrar</button>
+            </div>
         </div>
     </div>
 </ng-template>

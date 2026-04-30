@@ -28,6 +28,8 @@
     "apexcharts": "^3.49.0",
     "crypto-js": "4.2.0",
     "highlight.js": "11.9.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "lodash-es": "4.17.21",
     "luxon": "3.4.4",
     "material-design-icons-iconfont": "^6.7.0",
@@ -37,6 +39,7 @@
     "quill": "2.0.2",
     "rxjs": "7.8.1",
     "tslib": "2.6.2",
+    "xlsx": "^0.18.5",
     "zone.js": "0.15.1"
   },
   "devDependencies": {

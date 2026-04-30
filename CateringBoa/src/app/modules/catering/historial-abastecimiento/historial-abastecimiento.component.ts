@@ -35,7 +35,7 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
 
     // --- FUENTE DE DATOS ---
     dataSource: MatTableDataSource<any>;
-    displayedColumns: string[] = ['fecha', 'vuelo', 'ruta', 'matricula', 'items', 'responsable', 'estado', 'acciones'];
+    displayedColumns: string[] = ['fecha', 'vuelo', 'ruta', 'matricula', 'items', 'totalUnidades', 'responsable', 'estado', 'acciones'];
 
     // Filtros
     fechaInicio: Date | null = null;
@@ -50,6 +50,7 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
     // KPIs
     kpiVuelosTotal: number = 0;
     kpiItemsCargados: number = 0;
+    kpiVuelosVerificados: number = 0;
 
     constructor(
         public dialog: MatDialog,
@@ -86,13 +87,15 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
                     ruta: this.extraerRuta(registro.observaciones),
                     matricula: registro.aeronave?.matricula || 'N/A',
                     totalItems: registro.detalles.length,
+                    totalUnidades: registro.detalles.reduce((s: number, d: any) => s + d.cantidad, 0),
                     responsable: registro.usuario?.name || 'Desconocido',
                     estado: registro.estado,
+                    verificado: false,
                     detalles: registro.detalles.map((d: any) => ({
                         nombre: d.item.nombreItem,
                         cantidad: d.cantidad,
                         unidad: d.item.unidadMedida,
-                        tipo: 'Base' // Backend no distingue base/extra aún
+                        tipo: d.tipo || 'Base'
                     }))
                 }));
 
@@ -131,7 +134,15 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
     // --- ACCIONES ---
     verDetalle(registro: any) {
         this.registroSeleccionado = registro;
-        this.dialog.open(this.modalDetalle, { width: '600px' });
+        this.dialog.open(this.modalDetalle, { width: '700px', maxHeight: '90vh' });
+    }
+
+    confirmarRegistro(registro: any, event: Event) {
+        event.stopPropagation();
+        registro.verificado = true;
+        registro.estado = 'VERIFICADO';
+        this.calcularKPIs();
+        this._snackBar.open(`✅ Operación #${registro.id} verificada`, 'Cerrar', { duration: 2500 });
     }
 
     exportarReporte() {
@@ -142,18 +153,22 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
     calcularKPIs() {
         const datos = this.dataSource.filteredData.length > 0 ? this.dataSource.filteredData : this.dataSource.data;
         this.kpiVuelosTotal = datos.length;
-        // Sumamos cantidades individuales, no solo filas
         this.kpiItemsCargados = datos.reduce((acc, curr) => {
-            const totalItemsVuelo = curr.detalles.reduce((sum: number, d: any) => sum + d.cantidad, 0);
-            return acc + totalItemsVuelo;
+            return acc + curr.detalles.reduce((sum: number, d: any) => sum + d.cantidad, 0);
         }, 0);
+        this.kpiVuelosVerificados = datos.filter(d => d.estado === 'VERIFICADO').length;
+    }
+
+    getTotalUnidadesDetalle(detalles: any[]): number {
+        return (detalles ?? []).reduce((acc, d) => acc + d.cantidad, 0);
     }
 
     getEstadoClass(estado: string): string {
         switch (estado) {
-            case 'DESPACHADO': return 'bg-green-100 text-green-700';
-            case 'BORRADOR': return 'bg-orange-100 text-orange-700';
-            default: return 'bg-gray-100 text-gray-700';
+            case 'DESPACHADO':  return 'bg-green-100 text-green-700';
+            case 'VERIFICADO':  return 'bg-blue-100 text-blue-700';
+            case 'BORRADOR':    return 'bg-orange-100 text-orange-700';
+            default:            return 'bg-gray-100 text-gray-700';
         }
     }
 

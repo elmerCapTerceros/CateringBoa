@@ -1,4 +1,4 @@
-<div class="flex flex-col h-[700px] w-full bg-white"> <div class="p-6 border-b border-gray-200 bg-white shrink-0">
+<div class="flex flex-col h-[700px] w-[900px] max-w-[95vw] bg-white"> <div class="p-6 border-b border-gray-200 bg-white shrink-0">
     <div class="flex justify-between items-start mb-4">
         <div>
             <h2 class="text-2xl font-bold text-blue-900 m-0">Selección de Lote</h2>
@@ -25,32 +25,34 @@
             </div>
         }
 
-        <div class="grid grid-cols-1 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             @for (item of itemsFiltrados; track item.data.id) {
-
-                <div class="flex items-center p-3 rounded-xl border bg-white transition-all hover:shadow-md cursor-pointer group"
-                     [class.ring-2]="item.selected"
-                     [class.ring-blue-500]="item.selected"
-                     [class.bg-blue-50]="item.selected"
+                <div class="relative flex flex-col p-3 rounded-xl border bg-white transition-all hover:shadow-md cursor-pointer"
+                     [ngClass]="item.selected ? 'ring-2 ring-blue-500 bg-blue-50/40 border-blue-400' : 'border-gray-200 hover:border-blue-300'"
                      (click)="toggleSelection(item)">
 
-                    <mat-checkbox
-                        [(ngModel)]="item.selected"
-                        color="primary"
-                        class="mr-3"
-                        (click)="$event.stopPropagation()">
-                    </mat-checkbox>
-
-                    <div class="flex-1 min-w-0"> <div class="font-bold text-gray-800 truncate">{{ item.data.nombre }}</div>
-                        <div class="text-xs text-gray-500">Unidad: {{ item.data.unidad }}</div>
+                    <div class="absolute top-2 right-2" (click)="$event.stopPropagation()">
+                        <mat-checkbox
+                            [(ngModel)]="item.selected"
+                            color="primary"
+                            (click)="toggleSelection(item)">
+                        </mat-checkbox>
                     </div>
 
-                    <div class="w-28 pl-4 border-l border-gray-100" (click)="$event.stopPropagation()">
-                        <mat-form-field appearance="outline" class="w-full bg-white rounded-lg no-bottom-space density-compact" subscriptSizing="dynamic">
-                            <mat-label>Cant.</mat-label>
-                            <input matInput type="number" min="1" [(ngModel)]="item.cantidad" [disabled]="!item.selected">
-                        </mat-form-field>
+                    <div class="pr-8 flex-1 min-w-0">
+                        <div class="font-bold text-gray-800 text-sm leading-tight">{{ item.data.nombre }}</div>
+                        <div class="text-xs text-gray-500 mt-1">Unidad: {{ item.data.unidad }}</div>
                     </div>
+
+                    @if (item.selected) {
+                        <div class="mt-3 pt-2 border-t border-blue-100 animate-in fade-in duration-200"
+                             (click)="$event.stopPropagation()">
+                            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Cantidad</mat-label>
+                                <input matInput type="number" min="1" [(ngModel)]="item.cantidad">
+                            </mat-form-field>
+                        </div>
+                    }
                 </div>
             }
         </div>

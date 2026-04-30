@@ -10,6 +10,7 @@ import {
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -19,11 +20,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 interface ItemCierre {
     itemId: number;
     nombre: string;
-    unidad: string; // Agregué unidad para mejor detalle
+    unidad: string;
     cantidadCargada: number;
     remanente: number;
     consumido: number;
     estado: 'Normal' | 'Merma' | 'Desecho';
+    verificado: boolean;
 }
 
 @Component({
@@ -38,6 +40,7 @@ interface ItemCierre {
         MatSelectModule,
         MatInputModule,
         MatButtonModule,
+        MatCheckboxModule,
         MatIconModule,
         MatTooltipModule,
     ],
@@ -118,15 +121,15 @@ export class CierreVueloComponent implements OnInit {
     cargarDatosVuelo(vueloId: number): void {
         console.log('Cargando manifiesto del vuelo:', vueloId);
 
-        // Simulamos la carga desde el backend
         this.listaItems = this.datosCargaMock.map((item) => ({
             itemId: item.itemId,
             nombre: item.nombre,
             unidad: item.unidad,
             cantidadCargada: item.cantidad,
-            remanente: 0, // Por defecto asumimos que todo se consumió (0 sobrante), el usuario corregirá
+            remanente: 0,
             consumido: item.cantidad,
             estado: 'Normal',
+            verificado: false,
         }));
 
         this.snackBar.open(
@@ -156,6 +159,19 @@ export class CierreVueloComponent implements OnInit {
 
         // Cálculo automático
         item.consumido = item.cantidadCargada - item.remanente;
+    }
+
+    get countVerificados(): number {
+        return this.listaItems.filter(i => i.verificado).length;
+    }
+
+    get todosVerificados(): boolean {
+        return this.listaItems.length > 0 && this.listaItems.every(i => i.verificado);
+    }
+
+    toggleVerificarTodos(): void {
+        const nuevoEstado = !this.todosVerificados;
+        this.listaItems.forEach(i => i.verificado = nuevoEstado);
     }
 
     guardarCierre(): void {

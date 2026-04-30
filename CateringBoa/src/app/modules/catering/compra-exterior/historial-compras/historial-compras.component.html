@@ -5,6 +5,24 @@
             <h2 class="text-3xl font-bold tracking-tight text-blue-900">Historial de Compras</h2>
             <p class="text-gray-500">Gestión de entregas parciales y cierres de orden.</p>
         </div>
+
+        <div class="flex gap-3 items-center">
+            <button mat-stroked-button class="h-[42px] border-red-300 text-red-700 hover:bg-red-50"
+                    [disabled]="listaVisible.length === 0"
+                    (click)="exportarPDF()"
+                    matTooltip="Exportar historial a PDF">
+                <mat-icon class="text-red-600">picture_as_pdf</mat-icon>
+                <span class="ml-1">PDF</span>
+            </button>
+
+            <button mat-stroked-button class="h-[42px] border-green-300 text-green-700 hover:bg-green-50"
+                    [disabled]="listaVisible.length === 0"
+                    (click)="exportarExcel()"
+                    matTooltip="Exportar historial a Excel">
+                <mat-icon class="text-green-600">table_view</mat-icon>
+                <span class="ml-1">Excel</span>
+            </button>
+        </div>
     </div>
 
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">

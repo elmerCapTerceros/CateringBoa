@@ -9,7 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 
-// SERVICIO INTEGRADO
+import { ComprasExportService } from '../../services/compras-export.service';
 import { ComprasService } from '../../services/compras.service';
 
 @Component({
@@ -34,7 +34,10 @@ export class ListaComprasComponent implements OnInit {
     ordenesVisibles: any[] = [];
     ordenes: any[] = [];
 
-    constructor(private comprasService: ComprasService) {}
+    constructor(
+        private comprasService: ComprasService,
+        private exportService: ComprasExportService,
+    ) {}
 
     ngOnInit() {
         this.cargarDatos();
@@ -95,6 +98,19 @@ export class ListaComprasComponent implements OnInit {
                 o.proveedor.toLowerCase().includes(term) ||
                 o.id.toLowerCase().includes(term)
         );
+    }
+
+    exportarPDF(): void {
+        this.exportService.exportarListaPDF(this.ordenesVisibles);
+    }
+
+    exportarExcel(): void {
+        this.exportService.exportarListaExcel(this.ordenesVisibles);
+    }
+
+    exportarOrdenPDF(orden: any, event: Event): void {
+        event.stopPropagation();
+        this.exportService.exportarOrdenPDF(orden);
     }
 
     getEstadoClass(estado: string): string {

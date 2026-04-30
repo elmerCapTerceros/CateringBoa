@@ -6,13 +6,29 @@
             <p class="text-gray-500">Consulta de órdenes pasadas, costos y estados de entrega.</p>
         </div>
 
-        <div class="flex gap-3 w-full md:w-auto items-center">
+        <div class="flex gap-3 w-full md:w-auto items-center flex-wrap">
             <div class="relative w-full md:w-64">
                 <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
                 <input type="text" [(ngModel)]="filtroTexto" (keyup)="filtrarOrdenes()"
                        placeholder="Buscar orden o proveedor..."
                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white h-[42px]">
             </div>
+
+            <button mat-stroked-button class="h-[42px] border-red-300 text-red-700 hover:bg-red-50"
+                    [disabled]="ordenesVisibles.length === 0"
+                    (click)="exportarPDF()"
+                    matTooltip="Exportar tabla a PDF">
+                <mat-icon class="text-red-600">picture_as_pdf</mat-icon>
+                <span class="ml-1 hidden sm:inline">PDF</span>
+            </button>
+
+            <button mat-stroked-button class="h-[42px] border-green-300 text-green-700 hover:bg-green-50"
+                    [disabled]="ordenesVisibles.length === 0"
+                    (click)="exportarExcel()"
+                    matTooltip="Exportar tabla a Excel">
+                <mat-icon class="text-green-600">table_view</mat-icon>
+                <span class="ml-1 hidden sm:inline">Excel</span>
+            </button>
 
             <button mat-raised-button color="primary" class="h-[42px]" style="background-color: #0B1E47;" [routerLink]="['../compra']">
                 <mat-icon>add</mat-icon> Nueva
@@ -75,9 +91,17 @@
                         <tr class="bg-slate-50 border-b border-gray-200 shadow-inner animate-in fade-in slide-in-from-top-2 duration-200">
                             <td colspan="8" class="p-0">
                                 <div class="p-6">
-                                    <h4 class="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2 uppercase tracking-wide">
-                                        <mat-icon class="icon-size-4 text-gray-400">receipt_long</mat-icon> Detalle de la Orden
-                                    </h4>
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="font-bold text-gray-700 text-sm flex items-center gap-2 uppercase tracking-wide">
+                                            <mat-icon class="icon-size-4 text-gray-400">receipt_long</mat-icon> Detalle de la Orden
+                                        </h4>
+                                        <button mat-stroked-button class="h-8 text-xs border-red-300 text-red-700 hover:bg-red-50"
+                                                (click)="exportarOrdenPDF(orden, $event)"
+                                                matTooltip="Descargar PDF de esta orden">
+                                            <mat-icon class="icon-size-4 text-red-600">picture_as_pdf</mat-icon>
+                                            <span class="ml-1">Descargar PDF</span>
+                                        </button>
+                                    </div>
 
                                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                                         <table class="w-full text-sm">

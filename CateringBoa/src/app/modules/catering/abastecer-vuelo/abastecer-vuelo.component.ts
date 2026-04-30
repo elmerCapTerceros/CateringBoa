@@ -255,7 +255,8 @@ export class AbastecerVueloComponent implements OnInit {
         this.searchStockTerm = '';
         this.cargarStockBackend();
         this.dialog.open(this.modalAgregarItem, {
-            width: '800px',
+            width: '960px',
+            maxWidth: '95vw',
             maxHeight: '90vh',
         });
     }

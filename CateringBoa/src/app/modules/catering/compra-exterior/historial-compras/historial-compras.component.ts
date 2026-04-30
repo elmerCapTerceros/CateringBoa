@@ -17,7 +17,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { ComprasExportService } from '../../services/compras-export.service';
 import { ComprasService } from '../../services/compras.service';
 
 @Component({
@@ -38,6 +40,7 @@ import { ComprasService } from '../../services/compras.service';
         MatSnackBarModule,
         MatDialogModule,
         MatProgressBarModule,
+        MatTooltipModule,
     ],
     templateUrl: './historial-compras.component.html',
     styleUrl: './historial-compras.component.scss',
@@ -54,8 +57,9 @@ export class HistorialComprasComponent implements OnInit {
     constructor(
         private fb: FormBuilder,
         private snackBar: MatSnackBar,
-        public dialog: MatDialog, // CAMBIO: de private a public para que el HTML lo vea
-        private comprasService: ComprasService
+        public dialog: MatDialog,
+        private comprasService: ComprasService,
+        private exportService: ComprasExportService,
     ) {
         this.filterForm = this.fb.group({
             fechaInicio: [null],
@@ -166,6 +170,14 @@ export class HistorialComprasComponent implements OnInit {
             error: (err) =>
                 this.snackBar.open('❌ Error: ' + err.error?.message, 'Cerrar'),
         });
+    }
+
+    exportarPDF(): void {
+        this.exportService.exportarHistorialPDF(this.listaVisible);
+    }
+
+    exportarExcel(): void {
+        this.exportService.exportarHistorialExcel(this.listaVisible);
     }
 
     getProgreso(item: any): number {

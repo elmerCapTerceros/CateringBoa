@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -29,7 +30,7 @@ export class CrearMovimientoComponent {
     movimientoForm: FormGroup;
     stockForm: FormGroup;
 
-    constructor(private fb: FormBuilder) {
+    constructor(private fb: FormBuilder, private location: Location) {
         // Formulario de MOVIMIENTOS
         this.movimientoForm = this.fb.group({
             almacen: ['', Validators.required],
@@ -47,6 +48,10 @@ export class CrearMovimientoComponent {
             cantidad: ['', [Validators.required, Validators.min(1)]],
             tipo: ['', Validators.required],
         });
+    }
+
+    cancelar(): void {
+        this.location.back();
     }
 
     guardarMovimiento() {

@@ -26,6 +26,7 @@ export class CatalogoController {
     async getAll() {
         const [almacenes, aeronaves, items] = await Promise.all([
             this.catalogoService.getAlmacenes(),
+            
             this.catalogoService.getAeronaves(),
             this.catalogoService.getItems(),
         ]);

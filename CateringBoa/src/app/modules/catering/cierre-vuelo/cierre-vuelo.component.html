@@ -1,172 +1,389 @@
-<div class="w-full flex-auto p-6 sm:p-10">
+<div class="flex flex-col w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 p-6 sm:p-10 gap-8 pb-40">
 
-    <!-- ── Encabezado ─────────────────────────────────────────────────── -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <div>
-            <h2 class="text-3xl font-bold tracking-tight">Cierre de Vuelo</h2>
-            <p class="text-gray-500">Registro de remanentes y cálculo de consumo.</p>
-        </div>
-        <div class="mt-4 sm:mt-0 px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-green-800 font-medium flex items-center gap-2">
-            <mat-icon class="icon-size-5">flight_land</mat-icon>
-            Estado: Post-Vuelo
-        </div>
-    </div>
+    <!-- ── Hero Header ────────────────────────────────────────────────────────── -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 p-8 text-white shadow-lg">
+        <mat-icon class="absolute right-0 bottom-0 text-white/10 text-[180px] -rotate-12 pointer-events-none">flight_land</mat-icon>
+        <div class="absolute top-8 right-24 w-2 h-2 bg-blue-400 rounded-full animate-ping opacity-50"></div>
+        <div class="absolute bottom-8 left-32 w-3 h-3 bg-cyan-400 rounded-full animate-pulse opacity-30"></div>
 
-    <!-- ── Formulario vuelo + observaciones ──────────────────────────── -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <form [formGroup]="cierreForm" class="flex flex-col md:flex-row gap-6 items-start">
-
-            <mat-form-field appearance="outline" class="w-full md:w-1/3">
-                <mat-label>Seleccionar Vuelo Aterrizado</mat-label>
-                <mat-select formControlName="vueloId">
-                    @for (vuelo of vuelosPendientes; track vuelo.id) {
-                        <mat-option [value]="vuelo.id">
-                            {{ vuelo.codigo }} | {{ vuelo.fecha }}
-                        </mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full md:w-2/3">
-                <mat-label>Observaciones del Jefe de Cabina</mat-label>
-                <input matInput formControlName="observaciones" placeholder="Ej. Se rompieron 2 botellas durante turbulencia">
-            </mat-form-field>
-
-        </form>
-    </div>
-
-    <!-- ── Barra de progreso de verificación ─────────────────────────── -->
-    @if (listaItems.length > 0) {
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3 mb-4 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <mat-icon [ngClass]="todosVerificados ? 'text-green-600' : 'text-gray-400'">
-                    {{ todosVerificados ? 'task_alt' : 'pending_actions' }}
-                </mat-icon>
-                <span class="text-sm font-medium text-gray-700">
-                    Verificación:
-                    <span class="font-bold" [ngClass]="todosVerificados ? 'text-green-600' : 'text-slate-800'">
-                        {{ countVerificados }} / {{ listaItems.length }}
-                    </span>
-                    ítems confirmados
-                </span>
+        <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-4xl font-black tracking-tight mb-2">Cierre de Vuelo</h2>
+                <p class="text-blue-200 text-lg max-w-xl leading-relaxed opacity-90">
+                    Registro de remanentes, cálculo de consumo y verificación del manifiesto de carga.
+                </p>
             </div>
-            <div class="flex items-center gap-2">
-                <div class="w-40 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div class="h-full bg-green-500 rounded-full transition-all duration-300"
-                         [style.width.%]="listaItems.length ? (countVerificados / listaItems.length) * 100 : 0"></div>
+            <div class="inline-flex items-center gap-2 bg-white/10 px-5 py-2.5 rounded-2xl border border-white/20 backdrop-blur-md shadow-sm shrink-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 animate-pulse shadow-sm"></span>
+                <span class="font-bold text-sm tracking-wide">ESTADO: POST-VUELO</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Paso 1 — Selección de vuelo ───────────────────────────────────────── -->
+    <section>
+        <div class="flex items-center gap-3 mb-5">
+            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">1</div>
+            <h3 class="text-xl font-bold text-slate-800">Seleccionar Vuelo Aterrizado</h3>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            @if (cargandoVuelos) {
+                <div class="flex items-center gap-3 text-gray-500 py-2 mb-4">
+                    <mat-spinner diameter="20"></mat-spinner>
+                    <span class="text-sm">Cargando vuelos pendientes de cierre…</span>
                 </div>
-                <button mat-stroked-button class="h-8 text-xs"
+            } @else if (!cargandoVuelos && vuelosPendientes.length === 0) {
+                <div class="flex items-center gap-3 text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+                    <mat-icon class="icon-size-5 shrink-0">info</mat-icon>
+                    <span class="text-sm font-medium">No hay vuelos pendientes de cierre. Los vuelos aparecen aquí luego de ser despachados desde <strong>Abastecer Vuelo</strong>.</span>
+                </div>
+            }
+
+            <form [formGroup]="cierreForm" class="flex flex-col md:flex-row gap-5 items-start">
+
+                <mat-form-field appearance="outline" class="w-full md:w-96">
+                    <mat-label>Vuelo aterrizado</mat-label>
+                    <mat-icon matPrefix class="mr-2 text-gray-400">flight_land</mat-icon>
+                    <mat-select formControlName="vueloId" [disabled]="cargandoVuelos || vuelosPendientes.length === 0">
+                        @for (vuelo of vuelosPendientes; track vuelo.id) {
+                            <mat-option [value]="vuelo.id">
+                                <span class="font-bold">{{ vuelo.codigo }}</span>
+                                <span class="text-gray-400 ml-2 text-xs">{{ vuelo.ruta }} · {{ vuelo.fecha }}</span>
+                            </mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="flex-1 w-full">
+                    <mat-label>Observaciones del Jefe de Cabina</mat-label>
+                    <mat-icon matPrefix class="mr-2 text-gray-400">notes</mat-icon>
+                    <input matInput formControlName="observaciones"
+                           placeholder="Ej. Se rompieron 2 botellas durante turbulencia">
+                </mat-form-field>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- ── Paso 2 — Resumen + verificación (sólo cuando hay datos) ───────────── -->
+    @if (listaItems.length > 0) {
+        <section>
+            <div class="flex items-center gap-3 mb-5">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">2</div>
+                <h3 class="text-xl font-bold text-slate-800">Resumen del Vuelo</h3>
+            </div>
+
+            <!-- KPI cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Ítems</div>
+                    <div class="text-3xl font-black text-slate-800">{{ listaItems.length }}</div>
+                    <div class="text-xs text-gray-400">en manifiesto</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Verificados</div>
+                    <div class="text-3xl font-black" [ngClass]="todosVerificados ? 'text-green-600' : 'text-slate-800'">
+                        {{ countVerificados }}<span class="text-base text-gray-300">/{{ listaItems.length }}</span>
+                    </div>
+                    <div class="text-xs text-gray-400">confirmados</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col gap-1">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Carga Inicial</div>
+                    <div class="text-3xl font-black text-slate-800">{{ totalCargado }}</div>
+                    <div class="text-xs text-gray-400">unidades totales</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-blue-100 shadow-sm flex flex-col gap-1 bg-blue-50/40">
+                    <div class="text-xs font-bold text-blue-500 uppercase tracking-wider">Consumo Real</div>
+                    <div class="text-3xl font-black text-blue-700">{{ totalConsumido }}</div>
+                    <div class="text-xs text-blue-400">unidades consumidas</div>
+                </div>
+            </div>
+
+            <!-- Barra de progreso -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <mat-icon class="icon-size-5" [ngClass]="todosVerificados ? 'text-green-500' : 'text-gray-300'">
+                        {{ todosVerificados ? 'task_alt' : 'pending_actions' }}
+                    </mat-icon>
+                    <div>
+                        <div class="text-sm font-bold text-slate-700">
+                            Verificación:
+                            <span [ngClass]="todosVerificados ? 'text-green-600' : 'text-slate-800'">
+                                {{ countVerificados }} / {{ listaItems.length }}
+                            </span>
+                            ítems confirmados
+                        </div>
+                        <div class="w-56 h-2 bg-gray-100 rounded-full overflow-hidden mt-1.5">
+                            <div class="h-full rounded-full transition-all duration-500"
+                                 [ngClass]="todosVerificados ? 'bg-green-500' : 'bg-blue-500'"
+                                 [style.width.%]="listaItems.length ? (countVerificados / listaItems.length) * 100 : 0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button mat-stroked-button
                         [ngClass]="todosVerificados ? 'border-red-200 text-red-600' : 'border-green-300 text-green-700'"
                         (click)="toggleVerificarTodos()">
+                    <mat-icon class="mr-1 icon-size-4">{{ todosVerificados ? 'remove_done' : 'done_all' }}</mat-icon>
                     {{ todosVerificados ? 'Desmarcar todos' : 'Verificar todos' }}
                 </button>
             </div>
+        </section>
+    }
+
+    <!-- ── Paso 3 — Tabla de remanentes ──────────────────────────────────────── -->
+    <section>
+        @if (listaItems.length > 0) {
+            <div class="flex items-center gap-3 mb-5">
+                <div class="bg-gradient-to-r from-teal-500 to-emerald-500 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-sm">3</div>
+                <h3 class="text-xl font-bold text-slate-800">Registro de Remanentes</h3>
+            </div>
+        }
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-left text-white text-sm"
+                        style="background: linear-gradient(135deg, #0B1E47 0%, #1e3a8a 100%);">
+                        <th class="p-4 font-semibold">Ítem / Unidad</th>
+                        <th class="p-4 font-semibold text-center w-32">
+                            <div class="flex flex-col items-center">
+                                <mat-icon class="icon-size-4 mb-0.5">inventory_2</mat-icon>
+                                Cargado
+                            </div>
+                        </th>
+                        <th class="p-4 font-semibold text-center w-36" style="background:rgba(255,255,255,0.08)">
+                            <div class="flex flex-col items-center">
+                                <mat-icon class="icon-size-4 mb-0.5">undo</mat-icon>
+                                Remanente
+                            </div>
+                        </th>
+                        <th class="p-4 font-semibold text-center w-32">
+                            <div class="flex flex-col items-center">
+                                <mat-icon class="icon-size-4 mb-0.5">check_circle</mat-icon>
+                                Consumido
+                            </div>
+                        </th>
+                        <th class="p-4 font-semibold w-44">Estado Retorno</th>
+                        <th class="p-4 font-semibold text-center w-32">
+                            <div class="flex flex-col items-center">
+                                <mat-icon class="icon-size-4 mb-0.5">verified</mat-icon>
+                                Verificado
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @for (item of listaItems; track $index) {
+                        <tr class="transition-colors"
+                            [ngClass]="item.verificado ? 'bg-green-50/50 hover:bg-green-50' : 'hover:bg-slate-50/80'">
+
+                            <!-- Ítem -->
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                         [ngClass]="item.verificado ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'">
+                                        <mat-icon class="icon-size-4">
+                                            {{ item.verificado ? 'check_circle' : 'radio_button_unchecked' }}
+                                        </mat-icon>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-800">{{ item.nombre }}</div>
+                                        <div class="text-xs text-gray-400 mt-0.5 bg-gray-100 px-2 py-0.5 rounded-full w-fit">
+                                            {{ item.unidad }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Cargado -->
+                            <td class="p-4 text-center">
+                                <span class="text-slate-700 font-bold text-lg">{{ item.cantidadCargada }}</span>
+                            </td>
+
+                            <!-- Remanente -->
+                            <td class="p-4" style="background:rgba(219,234,254,0.35)">
+                                <div class="flex items-center justify-center gap-1">
+                                    <button
+                                        class="w-7 h-7 flex items-center justify-center bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-bold transition-colors text-sm"
+                                        (click)="ajustarRemanente($index, -1)">−</button>
+                                    <input
+                                        type="number" min="0" [max]="item.cantidadCargada"
+                                        class="w-16 text-center border border-blue-200 rounded-lg font-bold text-blue-900 p-1.5 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none"
+                                        [(ngModel)]="item.remanente"
+                                        (change)="calcularConsumo($index)"
+                                        (keyup)="calcularConsumo($index)">
+                                    <button
+                                        class="w-7 h-7 flex items-center justify-center bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-bold transition-colors text-sm"
+                                        (click)="ajustarRemanente($index, 1)">+</button>
+                                </div>
+                            </td>
+
+                            <!-- Consumido -->
+                            <td class="p-4 text-center">
+                                <span class="text-xl font-black"
+                                      [ngClass]="item.consumido > 0 ? 'text-emerald-600' : 'text-gray-300'">
+                                    {{ item.consumido }}
+                                </span>
+                            </td>
+
+                            <!-- Estado retorno -->
+                            <td class="p-4">
+                                <select
+                                    class="w-full text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none p-2 bg-white cursor-pointer"
+                                    [(ngModel)]="item.estado">
+                                    <option value="Normal">↩ Retorno a Stock</option>
+                                    <option value="Desecho">🗑 Desechar</option>
+                                    <option value="Merma">⚠ Merma / Roto</option>
+                                </select>
+                            </td>
+
+                            <!-- Verificado -->
+                            <td class="p-4 text-center">
+                                <div class="flex flex-col items-center gap-1">
+                                    <mat-checkbox color="primary" [(ngModel)]="item.verificado"
+                                                  [matTooltip]="item.verificado ? 'Ítem verificado' : 'Marcar como verificado'">
+                                    </mat-checkbox>
+                                    @if (item.verificado) {
+                                        <span class="text-[10px] text-green-600 font-black tracking-wider">OK</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    <!-- Fila totales -->
+                    @if (listaItems.length > 0) {
+                        <tr class="bg-slate-800 text-white text-sm font-bold">
+                            <td class="p-4">TOTALES</td>
+                            <td class="p-4 text-center text-lg">{{ totalCargado }}</td>
+                            <td class="p-4 text-center text-blue-300 text-lg">{{ totalRemanente }}</td>
+                            <td class="p-4 text-center text-emerald-400 text-lg">{{ totalConsumido }}</td>
+                            <td class="p-4 text-gray-400 text-xs">—</td>
+                            <td class="p-4 text-center text-green-400">
+                                {{ countVerificados }}/{{ listaItems.length }}
+                            </td>
+                        </tr>
+                    }
+
+                    @if (cargandoManifiesto) {
+                        <tr>
+                            <td colspan="6" class="p-16 text-center text-gray-400">
+                                <div class="flex flex-col items-center gap-3">
+                                    <mat-spinner diameter="36"></mat-spinner>
+                                    <p class="text-sm">Cargando manifiesto de carga…</p>
+                                </div>
+                            </td>
+                        </tr>
+                    } @else if (listaItems.length === 0) {
+                        <tr>
+                            <td colspan="6" class="p-16 text-center text-gray-400">
+                                <div class="flex flex-col items-center gap-3">
+                                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <mat-icon class="icon-size-8 opacity-30">flight_land</mat-icon>
+                                    </div>
+                                    <p class="font-medium text-slate-500">Seleccione un vuelo aterrizado para ver su manifiesto.</p>
+                                    @if (vuelosPendientes.length === 0 && !cargandoVuelos) {
+                                        <p class="text-xs text-amber-500">Aún no hay vuelos despachados pendientes de cierre.</p>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ── Botón guardar ──────────────────────────────────────────────────────── -->
+    @if (listaItems.length > 0) {
+        <div class="flex justify-between items-center">
+            @if (!todosVerificados) {
+                <span class="text-sm text-amber-600 font-semibold flex items-center gap-2
+                             bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl">
+                    <mat-icon class="icon-size-4">warning_amber</mat-icon>
+                    {{ listaItems.length - countVerificados }} ítems pendientes de verificar
+                </span>
+            } @else {
+                <span class="text-sm text-green-600 font-semibold flex items-center gap-2
+                             bg-green-50 border border-green-200 px-4 py-2 rounded-xl">
+                    <mat-icon class="icon-size-4">task_alt</mat-icon>
+                    Todos los ítems verificados — listo para cerrar
+                </span>
+            }
+
+            <button mat-raised-button
+                    class="px-10 font-bold text-base shadow-lg transition-all hover:scale-[1.02]"
+                    style="background: linear-gradient(135deg,#0B1E47 0%,#1e3a8a 100%); color:white; height:52px; border-radius:16px;"
+                    [matTooltip]="!todosVerificados ? 'Hay ítems sin verificar' : ''"
+                    [disabled]="guardando"
+                    (click)="guardarCierre()">
+                @if (guardando) {
+                    <mat-spinner diameter="20" class="mr-2" style="display:inline-block"></mat-spinner>
+                    Guardando…
+                } @else {
+                    <mat-icon class="mr-2">save</mat-icon>
+                    Cerrar Vuelo y Guardar
+                }
+            </button>
         </div>
     }
 
-    <!-- ── Tabla de ítems ─────────────────────────────────────────────── -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full">
-            <thead>
-            <tr class="text-left text-white" style="background-color: #0B1E47;">
-                <th class="p-4 font-medium">Ítem</th>
-                <th class="p-4 font-medium text-center w-32">Carga Inicial</th>
-                <th class="p-4 font-medium text-center w-36 bg-blue-900">Remanente (Sobrante)</th>
-                <th class="p-4 font-medium text-center w-32">Consumo Real</th>
-                <th class="p-4 font-medium w-40">Estado Retorno</th>
-                <th class="p-4 font-medium text-center w-32">
-                    <div class="flex items-center justify-center gap-2">
-                        Verificado
-                    </div>
-                </th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @for (item of listaItems; track $index) {
-                    <tr class="hover:bg-gray-50 transition-colors"
-                        [ngClass]="item.verificado ? 'bg-green-50/40' : ''">
+</div>
 
-                        <td class="p-4">
-                            <div class="font-medium text-gray-800">{{ item.nombre }}</div>
-                            <div class="text-xs text-gray-400 mt-0.5">{{ item.unidad }}</div>
-                        </td>
+<!-- ── Diálogo confirmación cierre ───────────────────────────────────────── -->
+<ng-template #dialogConfirmar>
+    <div class="p-6 flex flex-col gap-4 w-full">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
+                <mat-icon class="text-red-600 icon-size-6">flight_land</mat-icon>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Confirmar Cierre de Vuelo</h2>
+                <p class="text-sm text-gray-500">Esta acción es irreversible.</p>
+            </div>
+        </div>
 
-                        <td class="p-4 text-center text-gray-600 font-medium">
-                            {{ item.cantidadCargada }}
-                        </td>
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-sm space-y-1">
+            <div class="flex justify-between">
+                <span class="text-gray-500">Ítems a registrar</span>
+                <span class="font-bold text-slate-800">{{ listaItems.length }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Remanente a retornar</span>
+                <span class="font-bold text-blue-700">{{ totalRemanente }} unidades</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Consumo registrado</span>
+                <span class="font-bold text-emerald-700">{{ totalConsumido }} unidades</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Verificados</span>
+                <span class="font-bold" [class.text-green-600]="todosVerificados" [class.text-amber-600]="!todosVerificados">
+                    {{ countVerificados }}/{{ listaItems.length }}
+                </span>
+            </div>
+        </div>
 
-                        <td class="p-4 bg-blue-50">
-                            <input
-                                type="number"
-                                min="0"
-                                [max]="item.cantidadCargada"
-                                class="w-full text-center border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-bold text-blue-900 p-2 border"
-                                [(ngModel)]="item.remanente"
-                                (change)="calcularConsumo($index)"
-                                (keyup)="calcularConsumo($index)">
-                        </td>
-
-                        <td class="p-4 text-center font-bold text-lg text-green-700">
-                            {{ item.consumido }}
-                        </td>
-
-                        <td class="p-4">
-                            <select
-                                class="w-full text-sm border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 p-2 border"
-                                [(ngModel)]="item.estado">
-                                <option value="Normal">Retorno a Stock</option>
-                                <option value="Desecho">Desechar</option>
-                                <option value="Merma">Merma/Roto</option>
-                            </select>
-                        </td>
-
-                        <!-- Columna Verificado -->
-                        <td class="p-4 text-center">
-                            <div class="flex flex-col items-center gap-1">
-                                <mat-checkbox
-                                    color="primary"
-                                    [(ngModel)]="item.verificado"
-                                    [matTooltip]="item.verificado ? 'Ítem verificado' : 'Marcar como verificado'">
-                                </mat-checkbox>
-                                @if (item.verificado) {
-                                    <span class="text-[10px] text-green-600 font-bold">OK</span>
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                }
-                @if (listaItems.length === 0) {
-                    <tr>
-                        <td colspan="6" class="p-12 text-center text-gray-400">
-                            <mat-icon class="icon-size-10 opacity-20 mb-2">inventory</mat-icon>
-                            <p>Seleccione un vuelo arriba para cargar el manifiesto de carga.</p>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <!-- ── Botón guardar ──────────────────────────────────────────────── -->
-    <div class="mt-6 flex justify-between items-center">
-        @if (listaItems.length > 0 && !todosVerificados) {
-            <span class="text-sm text-amber-600 font-medium flex items-center gap-2">
-                <mat-icon class="icon-size-5">warning_amber</mat-icon>
-                {{ listaItems.length - countVerificados }} ítems pendientes de verificar
-            </span>
-        } @else {
-            <span></span>
+        @if (!todosVerificados) {
+            <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                <mat-icon class="icon-size-4 shrink-0">warning_amber</mat-icon>
+                {{ listaItems.length - countVerificados }} ítems sin verificar. ¿Cerrar de todas formas?
+            </p>
         }
 
-        <button
-            mat-raised-button
-            color="primary"
-            class="px-8 py-2 text-lg"
-            style="background-color: #0B1E47; height: 50px;"
-            [matTooltip]="!todosVerificados && listaItems.length > 0 ? 'Hay ítems sin verificar' : ''"
-            (click)="guardarCierre()">
-            <mat-icon class="mr-2">save</mat-icon>
-            Cerrar Vuelo y Guardar
-        </button>
+        <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-2">
+            <mat-icon class="icon-size-4 shrink-0">info</mat-icon>
+            Los remanentes en estado "Retorno a Stock" se sumarán al inventario del almacén.
+        </p>
+
+        <div class="flex justify-end gap-3 pt-1">
+            <button mat-stroked-button mat-dialog-close>Cancelar</button>
+            <button mat-flat-button [mat-dialog-close]="true"
+                    style="background: linear-gradient(135deg,#0B1E47,#1e3a8a); color:white">
+                <mat-icon class="mr-1">save</mat-icon> Confirmar Cierre
+            </button>
+        </div>
     </div>
-</div>
+</ng-template>

@@ -6,9 +6,14 @@
             <h2 class="text-3xl font-bold tracking-tight text-slate-800">Historial de Operaciones</h2>
             <p class="text-secondary">Registro histórico de abastecimiento y despachos de vuelo.</p>
         </div>
-        <button mat-stroked-button color="primary" (click)="exportarReporte()">
-            <mat-icon class="mr-2">download</mat-icon> Exportar Reporte
-        </button>
+        <div class="flex gap-2">
+            <button mat-stroked-button (click)="exportarExcel()" matTooltip="Descargar como Excel (.xlsx)">
+                <mat-icon class="mr-1">table_chart</mat-icon> Excel
+            </button>
+            <button mat-stroked-button color="primary" (click)="exportarPDF()" matTooltip="Descargar como PDF">
+                <mat-icon class="mr-1">picture_as_pdf</mat-icon> PDF
+            </button>
+        </div>
     </div>
 
     <!-- ── KPIs ───────────────────────────────────────────────────────── -->
@@ -198,12 +203,25 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"
                     class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 cursor-default"></tr>
 
-                <!-- Fila vacía -->
+                <!-- Cargando -->
                 <tr class="mat-row" *matNoDataRow>
                     <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-                        <div class="text-center py-16 text-gray-400">
-                            <mat-icon class="icon-size-12 opacity-20 mb-2">search_off</mat-icon>
-                            <p>No se encontraron registros.</p>
+                        <div class="text-center py-16 text-gray-400 flex flex-col items-center gap-3">
+                            @if (cargando) {
+                                <mat-spinner diameter="40"></mat-spinner>
+                                <p class="text-sm">Cargando historial…</p>
+                            } @else if (hayFiltrosActivos) {
+                                <mat-icon class="icon-size-12 opacity-20">search_off</mat-icon>
+                                <p class="font-medium text-slate-600">Sin resultados para los filtros aplicados.</p>
+                                <p class="text-sm">Intenta cambiar el rango de fechas o la búsqueda por texto.</p>
+                                <button mat-stroked-button (click)="limpiarFechas()" class="mt-1">
+                                    <mat-icon class="mr-1">filter_alt_off</mat-icon> Limpiar filtros
+                                </button>
+                            } @else {
+                                <mat-icon class="icon-size-12 opacity-20">flight</mat-icon>
+                                <p class="font-medium text-slate-600">No hay despachos registrados aún.</p>
+                                <p class="text-sm">Los vuelos despachados aparecerán aquí automáticamente.</p>
+                            }
                         </div>
                     </td>
                 </tr>

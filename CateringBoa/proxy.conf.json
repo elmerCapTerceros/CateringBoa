@@ -1,0 +1,8 @@
+{
+  "/MS_Catering": {
+    "target": "https://preprod-intra.boa.bo",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

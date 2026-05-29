@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TransferenciaService } from '../transferencia.service';
 import { CatalogosService, Almacen } from '../../../services/catalogo.service';
 import { HttpClient } from '@angular/common/http';
@@ -33,6 +34,7 @@ interface ItemConStock {
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
+    MatTooltipModule,
   ],
   templateUrl: './crear-transferencia.component.html',
   styleUrl: './crear-transferencia.component.scss'

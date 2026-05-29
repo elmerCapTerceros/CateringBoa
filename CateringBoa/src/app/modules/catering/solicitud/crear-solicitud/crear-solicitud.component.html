@@ -102,7 +102,9 @@
                 </div>
                 <button mat-button color="primary" type="button"
                         (click)="agregarDetalle()" class="flex items-center gap-1"
-                        [disabled]="isLoadingCatalogos">
+                        [disabled]="isLoadingCatalogos"
+                        [matTooltip]="isLoadingCatalogos ? 'Cargando catálogos, espera un momento…' : 'Agregar un nuevo ítem a la solicitud'"
+                        matTooltipShowDelay="200">
                     <mat-icon>add</mat-icon>
                     Agregar detalle
                 </button>

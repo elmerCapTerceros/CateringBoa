@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npx ng *)",
-      "WebFetch(domain:preprod-intra.boa.bo)"
-    ]
-  }
-}

@@ -9,12 +9,15 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-// SERVICIO REAL
 import { AbastecimientoService } from '../services/abastecimiento.service';
 
 @Component({
@@ -24,7 +27,8 @@ import { AbastecimientoService } from '../services/abastecimiento.service';
         CommonModule, FormsModule, MatIconModule, MatButtonModule,
         MatInputModule, MatDatepickerModule, MatNativeDateModule,
         MatTableModule, MatPaginatorModule, MatSortModule,
-        MatChipsModule, MatDialogModule, MatTooltipModule, MatSnackBarModule,
+        MatChipsModule, MatDialogModule, MatTooltipModule,
+        MatSnackBarModule, MatProgressSpinnerModule,
     ],
     templateUrl: './historial-abastecimiento.component.html',
 })
@@ -33,37 +37,29 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
     @ViewChild(MatSort) sort!: MatSort;
     @ViewChild('modalDetalle') modalDetalle!: TemplateRef<any>;
 
-    // --- FUENTE DE DATOS ---
     dataSource: MatTableDataSource<any>;
     displayedColumns: string[] = ['fecha', 'vuelo', 'ruta', 'matricula', 'items', 'totalUnidades', 'responsable', 'estado', 'acciones'];
 
-    // Filtros
     fechaInicio: Date | null = null;
     fechaFin: Date | null = null;
-
-    // Estado Detalle
     registroSeleccionado: any | null = null;
-
-    // Datos crudos del backend
     datosBackend: any[] = [];
+    cargando = false;
 
-    // KPIs
-    kpiVuelosTotal: number = 0;
-    kpiItemsCargados: number = 0;
-    kpiVuelosVerificados: number = 0;
+    kpiVuelosTotal      = 0;
+    kpiItemsCargados    = 0;
+    kpiVuelosVerificados = 0;
 
     constructor(
         public dialog: MatDialog,
         private _snackBar: MatSnackBar,
-        private abastecimientoService: AbastecimientoService // <--- INYECCIÓN REAL
+        private abastecimientoService: AbastecimientoService
     ) {
         this.dataSource = new MatTableDataSource([]);
     }
 
     ngOnInit(): void {
         this.cargarDatosReales();
-
-        // Configurar filtro personalizado
         this.dataSource.filterPredicate = (data: any, filter: string) => {
             const dataStr = (data.codigoVuelo + data.matricula + data.responsable).toLowerCase();
             return dataStr.indexOf(filter) !== -1;
@@ -75,38 +71,42 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
         this.dataSource.sort = this.sort;
     }
 
-    // --- CARGA DE DATOS REALES ---
     cargarDatosReales() {
+        this.cargando = true;
         this.abastecimientoService.getHistorial().subscribe({
             next: (data) => {
-                // Mapeo de la respuesta del Backend a la estructura de la tabla
                 this.datosBackend = data.map((registro: any) => ({
-                    id: registro.idAbastecimiento,
-                    codigoVuelo: registro.codigoVuelo,
-                    fecha: new Date(registro.fechaDespacho),
-                    ruta: this.extraerRuta(registro.observaciones),
-                    matricula: registro.aeronave?.matricula || 'N/A',
-                    totalItems: registro.detalles.length,
+                    id:            registro.idAbastecimiento,
+                    codigoVuelo:   registro.codigoVuelo,
+                    fecha:         new Date(registro.fechaDespacho),
+                    ruta:          this.extraerRuta(registro.observaciones),
+                    matricula:     registro.aeronave?.matricula || 'N/A',
+                    totalItems:    registro.detalles.length,
                     totalUnidades: registro.detalles.reduce((s: number, d: any) => s + d.cantidad, 0),
-                    responsable: registro.usuario?.name || 'Desconocido',
-                    estado: registro.estado,
-                    verificado: false,
-                    detalles: registro.detalles.map((d: any) => ({
-                        nombre: d.item.nombreItem,
+                    responsable:   registro.usuario?.name || 'Desconocido',
+                    estado:        registro.estado,
+                    verificado:    false,
+                    detalles:      registro.detalles.map((d: any) => ({
+                        nombre:   d.item.nombreItem,
                         cantidad: d.cantidad,
-                        unidad: d.item.unidadMedida,
-                        tipo: d.tipo || 'Base'
+                        unidad:   d.item.unidadMedida,
+                        tipo:     d.tipo || 'Base'
                     }))
                 }));
-
                 this.dataSource.data = this.datosBackend;
                 this.calcularKPIs();
             },
-            error: (err) => console.error('Error cargando historial', err)
+            error: () => {
+                this.cargando = false;
+                this._snackBar.open('❌ Error cargando historial. Verifica la conexión.', 'Reintentar', { duration: 5000 })
+                    .onAction().subscribe(() => this.cargarDatosReales());
+            },
+            complete: () => { this.cargando = false; }
         });
     }
 
-    // --- FILTROS ---
+    // ── Filtros ───────────────────────────────────────────────────────────────
+
     aplicarFiltroTexto(event: Event) {
         const valor = (event.target as HTMLInputElement).value;
         this.dataSource.filter = valor.trim().toLowerCase();
@@ -126,12 +126,18 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
 
     limpiarFechas() {
         this.fechaInicio = null;
-        this.fechaFin = null;
+        this.fechaFin    = null;
         this.dataSource.data = this.datosBackend;
+        this.dataSource.filter = '';
         this.calcularKPIs();
     }
 
-    // --- ACCIONES ---
+    get hayFiltrosActivos(): boolean {
+        return !!(this.fechaInicio || this.fechaFin || this.dataSource.filter);
+    }
+
+    // ── Acciones ──────────────────────────────────────────────────────────────
+
     verDetalle(registro: any) {
         this.registroSeleccionado = registro;
         this.dialog.open(this.modalDetalle, { width: '700px', maxHeight: '90vh' });
@@ -145,17 +151,97 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
         this._snackBar.open(`✅ Operación #${registro.id} verificada`, 'Cerrar', { duration: 2500 });
     }
 
-    exportarReporte() {
-        this._snackBar.open('📄 Reporte PDF generado (Simulado)', 'Cerrar', { duration: 3000 });
+    // ── Exportar Excel ────────────────────────────────────────────────────────
+
+    exportarExcel() {
+        const datos = this.dataSource.filteredData.length > 0
+            ? this.dataSource.filteredData
+            : this.dataSource.data;
+
+        if (!datos.length) {
+            this._snackBar.open('No hay datos para exportar', 'Cerrar', { duration: 2000 });
+            return;
+        }
+
+        const filas = datos.map(r => ({
+            'ID':           r.id,
+            'Fecha':        r.fecha instanceof Date
+                ? r.fecha.toLocaleDateString('es-BO') + ' ' + r.fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })
+                : r.fecha,
+            'Código Vuelo': r.codigoVuelo,
+            'Ruta':         r.ruta,
+            'Aeronave':     r.matricula,
+            'Tipos Ítem':   r.totalItems,
+            'Unidades':     r.totalUnidades,
+            'Despachador':  r.responsable,
+            'Estado':       r.estado,
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(filas);
+        ws['!cols'] = [8, 20, 14, 12, 12, 10, 10, 20, 12].map(w => ({ wch: w }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+
+        const fecha = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `historial-abastecimiento-${fecha}.xlsx`);
+        this._snackBar.open('✅ Excel exportado correctamente', 'Cerrar', { duration: 2000 });
     }
 
-    // --- HELPERS ---
+    // ── Exportar PDF ──────────────────────────────────────────────────────────
+
+    exportarPDF() {
+        const datos = this.dataSource.filteredData.length > 0
+            ? this.dataSource.filteredData
+            : this.dataSource.data;
+
+        if (!datos.length) {
+            this._snackBar.open('No hay datos para exportar', 'Cerrar', { duration: 2000 });
+            return;
+        }
+
+        const doc = new jsPDF({ orientation: 'landscape' });
+        const fecha = new Date().toLocaleDateString('es-BO');
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Historial de Abastecimiento', 14, 16);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generado: ${fecha}  |  Total registros: ${datos.length}`, 14, 23);
+
+        autoTable(doc, {
+            startY: 28,
+            head: [['ID', 'Fecha', 'Vuelo', 'Ruta', 'Aeronave', 'Tipos', 'Unidades', 'Despachador', 'Estado']],
+            body: datos.map(r => [
+                r.id,
+                r.fecha instanceof Date
+                    ? r.fecha.toLocaleDateString('es-BO')
+                    : r.fecha,
+                r.codigoVuelo,
+                r.ruta,
+                r.matricula,
+                r.totalItems,
+                r.totalUnidades,
+                r.responsable,
+                r.estado,
+            ]),
+            headStyles: { fillColor: [11, 30, 71], fontSize: 8, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 8 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            margin: { left: 14, right: 14 },
+        });
+
+        const fechaArchivo = new Date().toISOString().slice(0, 10);
+        doc.save(`historial-abastecimiento-${fechaArchivo}.pdf`);
+        this._snackBar.open('✅ PDF exportado correctamente', 'Cerrar', { duration: 2000 });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     calcularKPIs() {
         const datos = this.dataSource.filteredData.length > 0 ? this.dataSource.filteredData : this.dataSource.data;
-        this.kpiVuelosTotal = datos.length;
-        this.kpiItemsCargados = datos.reduce((acc, curr) => {
-            return acc + curr.detalles.reduce((sum: number, d: any) => sum + d.cantidad, 0);
-        }, 0);
+        this.kpiVuelosTotal      = datos.length;
+        this.kpiItemsCargados    = datos.reduce((acc, curr) => acc + curr.detalles.reduce((s: number, d: any) => s + d.cantidad, 0), 0);
         this.kpiVuelosVerificados = datos.filter(d => d.estado === 'VERIFICADO').length;
     }
 
@@ -165,10 +251,11 @@ export class HistorialAbastecimientoComponent implements OnInit, AfterViewInit {
 
     getEstadoClass(estado: string): string {
         switch (estado) {
-            case 'DESPACHADO':  return 'bg-green-100 text-green-700';
-            case 'VERIFICADO':  return 'bg-blue-100 text-blue-700';
-            case 'BORRADOR':    return 'bg-orange-100 text-orange-700';
-            default:            return 'bg-gray-100 text-gray-700';
+            case 'DESPACHADO': return 'bg-green-100 text-green-700';
+            case 'VERIFICADO': return 'bg-blue-100 text-blue-700';
+            case 'BORRADOR':   return 'bg-orange-100 text-orange-700';
+            case 'CERRADO':    return 'bg-slate-100 text-slate-600';
+            default:           return 'bg-gray-100 text-gray-700';
         }
     }
 

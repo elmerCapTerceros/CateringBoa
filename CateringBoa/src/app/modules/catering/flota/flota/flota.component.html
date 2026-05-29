@@ -65,7 +65,19 @@
                     Aeronaves Disponibles
                     <span class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">{{ flotaSeleccionada.nombre }}</span>
                 </h3>
+                @if (cargandoAeronaves) {
+                    <mat-spinner diameter="20" class="ml-2"></mat-spinner>
+                    <span class="text-xs text-gray-400">Cargando aeronaves…</span>
+                }
             </div>
+
+            @if (!cargandoAeronaves && aeronavesVisibles.length === 0) {
+                <div class="p-10 text-center text-amber-600 bg-amber-50 rounded-2xl border border-dashed border-amber-200 flex flex-col items-center gap-2">
+                    <mat-icon class="icon-size-10 opacity-40">flight_land</mat-icon>
+                    <p class="font-semibold">No se encontraron aeronaves para <strong>{{ flotaSeleccionada?.nombre }}</strong> en el sistema BOA.</p>
+                    <p class="text-sm text-amber-500">Verifica que la flota tenga aeronaves asignadas en BOA o que la API esté disponible.</p>
+                </div>
+            }
 
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 @for (avion of aeronavesVisibles; track avion.id) {
@@ -104,9 +116,15 @@
                         Rutas Programadas <span class="text-indigo-600 font-mono font-black text-lg bg-indigo-50 px-2 rounded">{{ aeronaveSeleccionada.matricula }}</span>
                     </h3>
                 </div>
-                <button mat-flat-button color="primary" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md hover:shadow-lg transition-all" (click)="abrirModalRuta()">
-                    <mat-icon class="mr-2 animate-bounce-short">add_road</mat-icon> Nueva Ruta
-                </button>
+                <div class="flex items-center gap-3">
+                    @if (cargandoRutas) {
+                        <mat-spinner diameter="20"></mat-spinner>
+                        <span class="text-xs text-gray-400">Cargando rutas…</span>
+                    }
+                    <button mat-flat-button color="primary" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md hover:shadow-lg transition-all" (click)="abrirModalRuta()">
+                        <mat-icon class="mr-2 animate-bounce-short">add_road</mat-icon> Nueva Ruta
+                    </button>
+                </div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -147,6 +165,8 @@
                                                 @for (tramo of ruta.tramos; track tramo.id) {
                                                     <button (click)="seleccionarTramo(tramo, ruta)"
                                                             [disabled]="!ruta.activa"
+                                                            [matTooltip]="!ruta.activa ? 'Activa la ruta con el toggle para poder seleccionar tramos' : ''"
+                                                            matTooltipShowDelay="200"
                                                             class="group relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 overflow-hidden"
                                                             [ngClass]="tramoSeleccionado?.id === tramo.id ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-lg ring-2 ring-blue-200 scale-105' : 'bg-white border-gray-200 hover:border-blue-400 hover:shadow-md text-gray-700 enabled:hover:scale-105'">
 
@@ -165,7 +185,9 @@
                                             </div>
                                         </td>
                                         <td class="p-5 text-right">
-                                            <button mat-icon-button color="warn" class="hover:bg-red-50 rounded-xl transition-colors" (click)="confirmarEliminarRuta($event, ruta.id)">
+                                            <button mat-icon-button color="warn" class="hover:bg-red-50 rounded-xl transition-colors"
+                                                    matTooltip="Eliminar ruta"
+                                                    (click)="eliminarRuta($event, ruta.id)">
                                                 <mat-icon>delete_outline</mat-icon>
                                             </button>
                                         </td>
@@ -179,8 +201,11 @@
                         <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
                             <mat-icon class="icon-size-8 opacity-30">add_road</mat-icon>
                         </div>
-                        <p class="font-medium">No hay rutas programadas para esta aeronave.</p>
-                        <button mat-stroked-button color="primary" (click)="abrirModalRuta()">Crear la primera ruta</button>
+                        <p class="font-medium text-slate-500">No hay rutas activas para <strong>{{ aeronaveSeleccionada?.matricula }}</strong> hoy.</p>
+                        <p class="text-sm text-gray-400">Puede que el vuelo no opere hoy o que el avión no esté programado. También puedes agregar una ruta manual.</p>
+                        <button mat-stroked-button color="primary" (click)="abrirModalRuta()">
+                            <mat-icon class="mr-1">add_road</mat-icon> Agregar ruta manualmente
+                        </button>
                     </div>
                 }
             </div>
@@ -223,8 +248,16 @@
                                 <div class="text-xs font-bold text-blue-200 uppercase tracking-widest">Items Seleccionados</div>
                             </div>
                             <div>
-                                <button mat-raised-button class="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-green-500/30 py-3 px-8 rounded-xl text-lg font-bold transform hover:scale-105 transition-all" (click)="guardarAbastecimiento()">
-                                    <mat-icon class="mr-2 animate-bounce-short">check_circle</mat-icon> Confirmar Carga
+                                <button mat-raised-button
+                                        [disabled]="guardandoAbastecimiento"
+                                        class="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-green-500/30 py-3 px-8 rounded-xl text-lg font-bold transform hover:scale-105 transition-all"
+                                        (click)="guardarAbastecimiento()">
+                                    @if (guardandoAbastecimiento) {
+                                        <mat-spinner diameter="22" class="mr-2" style="display:inline-block"></mat-spinner>
+                                        Enviando…
+                                    } @else {
+                                        <mat-icon class="mr-2 animate-bounce-short">check_circle</mat-icon> Confirmar Carga
+                                    }
                                 </button>
                             </div>
                         </div>
@@ -348,124 +381,47 @@
     }
 </div>
 
-<ng-template #modalCrearRuta>
-    <div class="flex flex-col h-[520px] w-full max-w-[90vw] bg-white rounded-xl overflow-hidden">
-
-        <!-- Header -->
-        <div class="p-5 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center">
-                    <mat-icon class="text-white icon-size-5">add_road</mat-icon>
-                </div>
-                <h2 class="text-xl font-bold text-slate-800">Nueva Ruta Programada</h2>
-            </div>
-            <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
-        </div>
-
-        <!-- Body con Reactive Form -->
-        <form [formGroup]="rutaForm" class="flex-1 overflow-y-auto p-6">
-
-            <!-- Cabecera -->
-            <div class="grid grid-cols-12 gap-4 mb-6">
-                <mat-form-field appearance="outline" class="col-span-4">
-                    <mat-label>Código de Vuelo</mat-label>
-                    <input matInput formControlName="codigo" placeholder="Ej: OB-760" style="text-transform:uppercase; font-weight:700;">
-                    @if (rutaForm.get('codigo')?.invalid && rutaForm.get('codigo')?.touched) {
-                        <mat-error>Requerido</mat-error>
-                    }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="col-span-8">
-                    <mat-label>Nombre de la Ruta</mat-label>
-                    <input matInput formControlName="nombre" placeholder="Ej: Regular VVI-MIA">
-                    @if (rutaForm.get('nombre')?.invalid && rutaForm.get('nombre')?.touched) {
-                        <mat-error>Requerido</mat-error>
-                    }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="col-span-6">
-                    <mat-label>Fecha Inicio</mat-label>
-                    <input matInput [matDatepicker]="pickerInicio" formControlName="fechaInicio">
-                    <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
-                    <mat-datepicker #pickerInicio></mat-datepicker>
-                    @if (rutaForm.get('fechaInicio')?.invalid && rutaForm.get('fechaInicio')?.touched) {
-                        <mat-error>Requerido</mat-error>
-                    }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="col-span-6">
-                    <mat-label>Fecha Fin</mat-label>
-                    <input matInput [matDatepicker]="pickerFin" formControlName="fechaFin">
-                    <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
-                    <mat-datepicker #pickerFin></mat-datepicker>
-                    @if (rutaForm.get('fechaFin')?.invalid && rutaForm.get('fechaFin')?.touched) {
-                        <mat-error>Requerido</mat-error>
-                    }
-                </mat-form-field>
-            </div>
-
-            <!-- Tramos (FormArray) -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-gray-200" formArrayName="tramos">
-                <div class="flex justify-between items-center mb-3">
-                    <h4 class="font-bold text-slate-700 flex items-center gap-2">
-                        <mat-icon class="icon-size-5 text-indigo-500">route</mat-icon> Tramos
-                    </h4>
-                    <button mat-stroked-button color="primary" type="button" (click)="agregarTramoAlFormulario()">
-                        <mat-icon>add</mat-icon> Agregar tramo
-                    </button>
-                </div>
-
-                @for (ctrl of tramosArray.controls; track $index) {
-                    <div class="flex gap-2 mb-2 items-center" [formGroupName]="$index">
-
-                        <input formControlName="origen" maxlength="3"
-                               class="w-16 p-2 border rounded text-center uppercase font-bold text-sm focus:outline-none focus:border-indigo-400"
-                               [class.border-red-400]="ctrl.get('origen')?.invalid && ctrl.get('origen')?.touched"
-                               placeholder="ORG">
-
-                        <mat-icon class="text-gray-400 icon-size-4 shrink-0">arrow_forward</mat-icon>
-
-                        <input formControlName="destino" maxlength="3"
-                               class="w-16 p-2 border rounded text-center uppercase font-bold text-sm focus:outline-none focus:border-indigo-400"
-                               [class.border-red-400]="ctrl.get('destino')?.invalid && ctrl.get('destino')?.touched"
-                               placeholder="DST">
-
-                        <input formControlName="vuelo"
-                               class="w-24 p-2 border rounded text-center text-sm focus:outline-none focus:border-indigo-400"
-                               [class.border-red-400]="ctrl.get('vuelo')?.invalid && ctrl.get('vuelo')?.touched"
-                               placeholder="Nro. Vuelo">
-
-                        <input formControlName="hora" type="time"
-                               class="w-24 p-2 border rounded text-center text-sm focus:outline-none focus:border-indigo-400"
-                               [class.border-red-400]="ctrl.get('hora')?.invalid && ctrl.get('hora')?.touched">
-
-                        <button mat-icon-button color="warn" type="button"
-                                [disabled]="tramosArray.length === 1"
-                                (click)="eliminarTramoDelFormulario($index)">
-                            <mat-icon>close</mat-icon>
-                        </button>
-                    </div>
-                }
-            </div>
-        </form>
-
-        <!-- Footer -->
-        <div class="p-4 bg-gray-50 flex justify-end gap-2 border-t">
-            <button mat-button mat-dialog-close type="button">Cancelar</button>
-            <button mat-raised-button color="primary" type="button" (click)="guardarRuta()">
-                <mat-icon class="mr-1">save</mat-icon> Guardar Ruta
-            </button>
-        </div>
-    </div>
-</ng-template>
-
+<!-- ── Diálogo confirmación carga ────────────────────────────────────────── -->
 <ng-template #dialogConfirmar>
-    <div class="p-6 text-center">
-        <h3 class="font-bold text-lg mb-2">¿Eliminar Ruta?</h3>
-        <p class="text-sm text-gray-500 mb-4">Esta acción no se puede deshacer.</p>
-        <div class="flex justify-center gap-2">
+    <div class="p-6 flex flex-col gap-4 w-full">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center shrink-0">
+                <mat-icon class="text-green-600 icon-size-6">inventory_2</mat-icon>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Confirmar Carga al Vuelo</h2>
+                <p class="text-sm text-gray-500">Se descontará el stock del almacén.</p>
+            </div>
+        </div>
+
+        @if (tramoSeleccionado) {
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-sm space-y-1">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Vuelo</span>
+                    <span class="font-bold text-slate-800 font-mono">{{ tramoSeleccionado.vuelo }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Tramo</span>
+                    <span class="font-bold text-slate-800">{{ tramoSeleccionado.origen }} → {{ tramoSeleccionado.destino }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Ítems a despachar</span>
+                    <span class="font-bold text-green-700">{{ conteoSeleccionados }}</span>
+                </div>
+            </div>
+        }
+
+        <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2">
+            <mat-icon class="icon-size-4 shrink-0">warning_amber</mat-icon>
+            Esta acción no se puede deshacer. El stock se descontará inmediatamente.
+        </p>
+
+        <div class="flex justify-end gap-3 pt-1">
             <button mat-stroked-button mat-dialog-close>Cancelar</button>
-            <button mat-flat-button color="warn" (click)="ejecutarEliminacionRuta()">Eliminar</button>
+            <button mat-flat-button [mat-dialog-close]="true"
+                    class="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+                <mat-icon class="mr-1">check_circle</mat-icon> Confirmar
+            </button>
         </div>
     </div>
 </ng-template>

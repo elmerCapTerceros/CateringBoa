@@ -60,6 +60,8 @@
           <h3 class="text-lg font-semibold text-gray-700">Items a transferir</h3>
           <button type="button" (click)="agregarDetalle()"
             [disabled]="!form.get('almacenOrigenId')?.value || loadingItems"
+            [matTooltip]="!form.get('almacenOrigenId')?.value ? 'Selecciona un almacén origen primero' : loadingItems ? 'Cargando items del almacén…' : ''"
+            matTooltipShowDelay="200"
             class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
             <mat-icon class="icon-size-4">add</mat-icon> Agregar item
           </button>

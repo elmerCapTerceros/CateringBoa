@@ -1,0 +1,44 @@
+/* BOA Catering — Light Administrative Theme */
+:root {
+  /* BOA brand */
+  --boa-navy:      #003087;
+  --boa-blue:      #0050C8;
+  --boa-blue-soft: #1A6FE8;
+  --boa-gold:      #F5A800;
+  --boa-gold-dark: #D4920A;
+
+  /* Surfaces */
+  --surface-bg:      #F0F4FA;
+  --surface-card:    #FFFFFF;
+  --surface-header:  #003087;
+
+  /* Text */
+  --text-primary:   #0D1B3E;
+  --text-secondary: #4A5568;
+  --text-muted:     #8A9BB4;
+
+  /* Status */
+  --status-pending:  #F59E0B;
+  --status-success:  #10B981;
+  --status-danger:   #EF4444;
+  --status-info:     #3B82F6;
+
+  /* Ionic overrides */
+  --ion-color-primary:          #003087;
+  --ion-color-primary-rgb:      0,48,135;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade:    #002570;
+  --ion-color-primary-tint:     #1A4FA0;
+
+  --ion-color-warning:          #F5A800;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-success:          #10B981;
+  --ion-color-danger:           #EF4444;
+  --ion-color-medium:           #8A9BB4;
+
+  --ion-background-color:       #F0F4FA;
+  --ion-text-color:             #0D1B3E;
+  --ion-card-background:        #FFFFFF;
+  --ion-item-background:        #FFFFFF;
+  --ion-toolbar-background:     #003087;
+}

@@ -1,0 +1,16 @@
+{
+  "name": "BOA Catering",
+  "short_name": "BOA Catering",
+  "theme_color": "#1565c0",
+  "background_color": "#0a1628",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "assets/icon/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
